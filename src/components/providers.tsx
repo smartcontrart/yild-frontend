@@ -5,7 +5,7 @@ import {
 } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
-import { mainnet, sepolia, optimism, arbitrum } from 'wagmi/chains';
+import { mainnet, sepolia, optimism, arbitrum, base } from 'wagmi/chains';
 
 const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID;
 
@@ -16,7 +16,7 @@ if (!projectId) {
 const config = getDefaultConfig({
   appName: 'Yild Finance',
   projectId,
-  chains: [mainnet, sepolia, optimism, arbitrum],
+  chains: [base, mainnet, sepolia, optimism, arbitrum],
   ssr: true,
 });
 

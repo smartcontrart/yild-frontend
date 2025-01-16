@@ -11,11 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAccount } from "wagmi";
+import { ethers } from "ethers";
+import { useAccount, useWriteContract } from "wagmi";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { DEPLOYED_ADDRESS, TOKEN_LIST } from "@/constant";
+import Abi from "@/abi/PositionManager.json";
 
 const formSchema = z.object({
   token0: z.string().min(1, "Token 0 is required"),
@@ -28,7 +31,9 @@ const formSchema = z.object({
 });
 
 export default function NewPositionPage() {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
+  const { writeContract } = useWriteContract()
+
   // const { chain } = useChains();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -45,8 +50,29 @@ export default function NewPositionPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      console.log(values);
       // Implement position creation logic here
+      writeContract({
+        abi: Abi.abi,
+        address: `0x${DEPLOYED_ADDRESS.base}`,
+        functionName: 'openPosition',
+        args: [
+          {
+            token0: TOKEN_LIST[Number(values.token0)].address,
+            token1: TOKEN_LIST[Number(values.token1)].address,
+            fee: values.feeTier,
+            tickLower: values.minPrice,
+            tickUpper: values.maxPrice,
+            amount0Desired: ethers.parseUnits(values.amount0, TOKEN_LIST[Number(values.token0)].decimal),
+            amount1Desired: ethers.parseUnits(values.amount1, TOKEN_LIST[Number(values.token1)].decimal),
+            amount0Min: 0,
+            amount1Min: 0,
+            recipient: address,
+            deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from now
+          },
+          address,
+          "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" //usdc address
+        ],
+      })
     } catch (error) {
       console.error("Error creating position:", error);
     }
@@ -88,9 +114,9 @@ export default function NewPositionPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="eth">ETH</SelectItem>
-                          <SelectItem value="usdc">USDC</SelectItem>
-                          <SelectItem value="wbtc">WBTC</SelectItem>
+                          {
+                            TOKEN_LIST.map((v, i) => <SelectItem key={"key1" + v.name} value={i.toString()}>{v.name}</SelectItem>)
+                          }
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -111,9 +137,9 @@ export default function NewPositionPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="eth">ETH</SelectItem>
-                          <SelectItem value="usdc">USDC</SelectItem>
-                          <SelectItem value="wbtc">WBTC</SelectItem>
+                          {
+                            TOKEN_LIST.map((v, i) => <SelectItem key={"key2" + v.name} value={i.toString()}>{v.name}</SelectItem>)
+                          }
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -135,10 +161,10 @@ export default function NewPositionPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="0.01">0.01%</SelectItem>
-                        <SelectItem value="0.05">0.05%</SelectItem>
-                        <SelectItem value="0.3">0.3%</SelectItem>
-                        <SelectItem value="1">1%</SelectItem>
+                        <SelectItem value="100">0.01%</SelectItem>
+                        <SelectItem value="500">0.05%</SelectItem>
+                        <SelectItem value="3000">0.3%</SelectItem>
+                        <SelectItem value="10000">1%</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
