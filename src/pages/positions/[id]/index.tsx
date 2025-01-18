@@ -132,6 +132,34 @@ export default function PositionPage() {
     // })
   }
 
+  const compoundPosition = () => {
+    // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } 
+    //         = useReadContract({
+    //           abi: Abi.abi,
+    //           address: `0x${DEPLOYED_ADDRESS.base}`,
+    //           functionName: 'getSwapInfo',
+    //           args: [positionId]
+    //         })
+
+    // const token0Amount = principal0 + tokensOwed0 - protocolFee0
+    // const token1Amount = principal1 + tokensOwed1 - protocolFee1
+    // const swapData0 = getParaswapData(token0, token1, ethers.parseUnits(token0Amount, token0Decimals), SLIPPAGE * 100)
+    // const swapData1 = getParaswapData(token1, token0, ethers.parseUnits(token1Amount, token1Decimals), SLIPPAGE * 100)
+    
+    // writeContract({
+    //   abi: Abi.abi,
+    //   address: `0x${DEPLOYED_ADDRESS.base}`,
+    //   functionName: 'compoundPosition',
+    //   args: [
+    //     positionId,
+    //     swapData0,
+    //     swapData1,
+    //     token0Amount,
+    //     token1Amount
+    //   ],
+    // })
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -263,7 +291,7 @@ export default function PositionPage() {
               <Coins className="mr-2 h-4 w-4" />
               Collect Fees
             </Button>
-            <Button className="w-full" onClick={() => { }}>
+            <Button className="w-full" onClick={compoundPosition}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Compound Fees
             </Button>
