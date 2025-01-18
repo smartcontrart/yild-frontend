@@ -10,3 +10,4 @@ export const TOKEN_LIST = [
 ]
 
 export const SLIPPAGE = 5 // 5%
+export const BPS = 5 // 5%

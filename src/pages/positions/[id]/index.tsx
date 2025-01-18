@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useAccount, useWriteContract, useReadContract } from "wagmi";
-import { DEPLOYED_ADDRESS, SLIPPAGE } from "@/utils/constant";
+import { DEPLOYED_ADDRESS, SLIPPAGE, BPS } from "@/utils/constant";
 import Abi from "@/abi/PositionManager.json";
 import { useState } from "react";
 import { ethers } from "ethers";
@@ -75,6 +75,33 @@ export default function PositionPage() {
         increaseToken1Amount
       ],
     })
+  }
+
+  const decreasePosition = () => {
+    // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } 
+    //         = useReadContract({
+    //           abi: Abi.abi,
+    //           address: `0x${DEPLOYED_ADDRESS.base}`,
+    //           functionName: 'getSwapInfo',
+    //           args: [positionId]
+    //         })
+
+    // const token0Amount = principal0 + tokensOwed0 - protocolFee0
+    // const token1Amount = principal1 + tokensOwed1 - protocolFee1
+    // const swapData0 = getParaswapData(token0, token1, ethers.parseUnits(token0Amount, token0Decimals), SLIPPAGE * 100)
+    // const swapData1 = getParaswapData(token1, token0, ethers.parseUnits(token1Amount, token1Decimals), SLIPPAGE * 100)
+    
+    // writeContract({
+    //   abi: Abi.abi,
+    //   address: `0x${DEPLOYED_ADDRESS.base}`,
+    //   functionName: 'decreaseLiquidity',
+    //   args: [
+    //     positionId,
+    //     BPS,
+    //     swapData0,
+    //     swapData1,
+    //   ],
+    // })
   }
 
   const closePosition = () => {
@@ -199,7 +226,7 @@ export default function PositionPage() {
               </DialogContent>
             </Dialog>
 
-            <Button className="w-full" variant="secondary" onClick={() => { }}>
+            <Button className="w-full" variant="secondary" onClick={decreasePosition}>
               <MinusCircle className="mr-2 h-4 w-4" />
               Decrease Position
             </Button>
