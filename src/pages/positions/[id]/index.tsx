@@ -24,11 +24,12 @@ import {
   X,
 } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useAccount, useWriteContract } from "wagmi";
-import { DEPLOYED_ADDRESS } from "@/constant";
+import { useAccount, useWriteContract, useReadContract } from "wagmi";
+import { DEPLOYED_ADDRESS, SLIPPAGE } from "@/utils/constant";
 import Abi from "@/abi/PositionManager.json";
 import { useState } from "react";
 import { ethers } from "ethers";
+import { getParaswapData } from "@/utils/request";
 
 export default function PositionPage() {
   const { isConnected, address } = useAccount();
@@ -74,6 +75,34 @@ export default function PositionPage() {
         increaseToken1Amount
       ],
     })
+  }
+
+  const closePosition = () => {
+    // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } 
+    //         = useReadContract({
+    //           abi: Abi.abi,
+    //           address: `0x${DEPLOYED_ADDRESS.base}`,
+    //           functionName: 'getSwapInfo',
+    //           args: [positionId]
+    //         })
+
+    // const token0Amount = principal0 + tokensOwed0 - protocolFee0
+    // const token1Amount = principal1 + tokensOwed1 - protocolFee1
+    // const swapData0 = getParaswapData(token0, token1, ethers.parseUnits(token0Amount, token0Decimals), SLIPPAGE * 100)
+    // const swapData1 = getParaswapData(token1, token0, ethers.parseUnits(token1Amount, token1Decimals), SLIPPAGE * 100)
+    
+    // writeContract({
+    //   abi: Abi.abi,
+    //   address: `0x${DEPLOYED_ADDRESS.base}`,
+    //   functionName: 'closePosition',
+    //   args: [
+    //     positionId,
+    //     swapData0,
+    //     swapData1,
+    //     token0Amount,
+    //     token1Amount
+    //   ],
+    // })
   }
 
   return (
@@ -155,13 +184,13 @@ export default function PositionPage() {
                     <Label htmlFor="name" className="text-right">
                       Token0
                     </Label>
-                    <Input type="number" className="col-span-3" onChange={e => setIncreaseToken0Amount(Number(e.target.value))} value={increaseToken0Amount}/>
+                    <Input type="number" className="col-span-3" onChange={e => setIncreaseToken0Amount(Number(e.target.value))} value={increaseToken0Amount} />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="name" className="text-right">
                       Token1
                     </Label>
-                    <Input type="number" className="col-span-3" onChange={e => setIncreaseToken1Amount(Number(e.target.value))} value={increaseToken1Amount}/>
+                    <Input type="number" className="col-span-3" onChange={e => setIncreaseToken1Amount(Number(e.target.value))} value={increaseToken1Amount} />
                   </div>
                 </div>
                 <DialogFooter>
@@ -174,10 +203,30 @@ export default function PositionPage() {
               <MinusCircle className="mr-2 h-4 w-4" />
               Decrease Position
             </Button>
-            <Button className="w-full" variant="destructive" onClick={() => { }}>
-              <X className="mr-2 h-4 w-4" />
-              Close Position
-            </Button>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="destructive">
+                  <X className="mr-2 h-4 w-4" />
+                  Close Position
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Are you Sure?</DialogTitle>
+                </DialogHeader>
+                <div className="text-center">
+                  <Button className="px-8" onClick={closePosition}>
+                    Yes
+                  </Button>
+                  <DialogClose asChild>
+                    <Button className="px-8 ml-4" variant="secondary">
+                      No
+                    </Button>
+                  </DialogClose>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </TabsContent>
 

@@ -17,7 +17,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { DEPLOYED_ADDRESS, TOKEN_LIST } from "@/constant";
+import { DEPLOYED_ADDRESS, TOKEN_LIST } from "@/utils/constant";
 import Abi from "@/abi/PositionManager.json";
 
 const formSchema = z.object({
