@@ -11,14 +11,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ethers } from "ethers";
-import { useAccount, useWriteContract } from "wagmi";
+import { parseEther, parseUnits } from "viem";
+import { useAccount, useWriteContract, useChainId } from "wagmi";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { DEPLOYED_ADDRESS, TOKEN_LIST } from "@/utils/constant";
-import Abi from "@/abi/PositionManager.json";
+// import Abi from "@/abi/PositionManager.json";
+import { erc20Abi } from "viem";
 
 const formSchema = z.object({
   token0: z.string().min(1, "Token 0 is required"),
@@ -49,32 +50,53 @@ export default function NewPositionPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
+    if (Number(values.token0) != 0) {
       writeContract({
-        abi: Abi.abi,
-        address: `0x${DEPLOYED_ADDRESS.base}`,
-        functionName: 'openPosition',
-        args: [
-          {
-            token0: TOKEN_LIST[Number(values.token0)].address,
-            token1: TOKEN_LIST[Number(values.token1)].address,
-            fee: values.feeTier,
-            tickLower: values.minPrice,
-            tickUpper: values.maxPrice,
-            amount0Desired: ethers.parseUnits(values.amount0, TOKEN_LIST[Number(values.token0)].decimal),
-            amount1Desired: ethers.parseUnits(values.amount1, TOKEN_LIST[Number(values.token1)].decimal),
-            amount0Min: 0,
-            amount1Min: 0,
-            recipient: address,
-            deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from now
-          },
-          address,
-          "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" //usdc address
-        ],
+        abi: erc20Abi,
+        address: TOKEN_LIST[Number(values.token0)].address as `0x${string}`,
+        functionName: 'approve',
+        args: [DEPLOYED_ADDRESS['base'] as `0x${string}`, parseUnits(values.amount1, TOKEN_LIST[Number(values.token0)].decimal)]
       })
-    } catch (error) {
-      console.error("Error creating position:", error);
     }
+
+    if (Number(values.token1) != 0) {
+      writeContract({
+        abi: erc20Abi,
+        address: TOKEN_LIST[Number(values.token1)].address as `0x${string}`,
+        functionName: 'approve',
+        args: [DEPLOYED_ADDRESS['base'] as `0x${string}`, parseUnits(values.amount1, TOKEN_LIST[Number(values.token1)].decimal)]
+      })
+    }
+
+    // try {
+    //   const args = [
+    //     {
+    //       token0: TOKEN_LIST[Number(values.token0)].address,
+    //       token1: TOKEN_LIST[Number(values.token1)].address,
+    //       fee: values.feeTier,
+    //       tickLower: values.minPrice,
+    //       tickUpper: values.maxPrice,
+    //       amount0Desired: parseUnits(values.amount0, TOKEN_LIST[Number(values.token0)].decimal),
+    //       amount1Desired: parseUnits(values.amount1, TOKEN_LIST[Number(values.token1)].decimal),
+    //       amount0Min: 0,
+    //       amount1Min: 0,
+    //       recipient: "0x853B1Ca01984eE6cC2842D68BD40dC9c868eBb1A",
+    //       deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from now
+    //     },
+    //     address,
+    //     "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" //usdc address
+    //   ]
+    //   console.log('args = ', args)
+
+    //   writeContract({
+    //     abi: Abi.abi,
+    //     address: DEPLOYED_ADDRESS["base"] as `0x${string}`,
+    //     functionName: 'openPosition',
+    //     args
+    //   })
+    // } catch (error) {
+    //   console.error("Error creating position:", error);
+    // }
   }
 
   if (!isConnected) {

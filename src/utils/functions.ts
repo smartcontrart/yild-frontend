@@ -9,7 +9,7 @@ import {
 } from 'wagmi/chains';
 import { DEPLOYED_ADDRESS } from "./constant";
 import Abi from "@/abi/PositionManager.json";
-import tokenAbi from "@/abi/erc20.json";
+import { erc20Abi } from "viem"; 
 
 export const getDeployedContract = (chainId: number) => {
     if (chainId == 8453) { //base
@@ -24,7 +24,7 @@ export const getTokenContract = (address: string, chainId: number) => {
     if (chainId == 8453) { //base
         const rpcUrl = base.rpcUrls.default.http[0]
         const provider = new ethers.JsonRpcProvider(rpcUrl)
-        const contract = new ethers.Contract(address, tokenAbi, provider)
+        const contract = new ethers.Contract(address, erc20Abi, provider)
         return contract
     }
 }

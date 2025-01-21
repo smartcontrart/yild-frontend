@@ -1,5 +1,5 @@
 export const DEPLOYED_ADDRESS = {
-    base: '0x853B1Ca01984eE6cC2842D68BD40dC9c868eBb1A',
+    base: "0xf410fb8d5862060182495ba5d23705cdc3f5af91",
     ethereum: '',
     arbitrum: ''
 }
