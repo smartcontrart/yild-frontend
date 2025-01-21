@@ -50,7 +50,6 @@ export default function NewPositionPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      // Implement position creation logic here
       writeContract({
         abi: Abi.abi,
         address: `0x${DEPLOYED_ADDRESS.base}`,

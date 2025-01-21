@@ -1,5 +1,5 @@
 export const DEPLOYED_ADDRESS = {
-    base: '853B1Ca01984eE6cC2842D68BD40dC9c868eBb1A',
+    base: '0x853B1Ca01984eE6cC2842D68BD40dC9c868eBb1A',
     ethereum: '',
     arbitrum: ''
 }
@@ -11,3 +11,4 @@ export const TOKEN_LIST = [
 
 export const SLIPPAGE = 5 // 5%
 export const BPS = 5 // 5%
+export const API_URL = "http://ec2-3-134-221-156.us-east-2.compute.amazonaws.com:3000"

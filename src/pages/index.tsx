@@ -4,10 +4,46 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { useAccount } from "wagmi";
+import { useEffect, useState } from "react";
+import { useAccount, useChainId } from "wagmi";
+import { getPositions } from "@/utils/request";
+import { getDeployedContract, getSymbol } from "@/utils/functions";
 
 export default function Home() {
   const { isConnected } = useAccount();
+  const chainId = useChainId();
+
+  const [positions, setPositions] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const resData = await getPositions("0xD03C35C0fA5bc0a0A274E25EE002216ab303000c", chainId)
+
+        if (resData.length) {
+          const contract = getDeployedContract(chainId)
+
+          if (contract) {
+            let temp: any = []
+            for (let i = 0; i < resData.length; i++) {
+              const symbol = await getSymbol(resData[i].tokenId, chainId, contract)
+              if (symbol) {
+                temp = [...temp, { symbol, lower: resData[i].lowerTick, upper: resData[i].upperTick }]
+              }
+            }
+            setPositions(temp)
+            setLoading(false)
+          }
+        }
+      } catch (err) {
+        console.log('error: ', err)
+      }
+    }
+
+    fetchData();
+  }, [])
 
   if (!isConnected) {
     return (
@@ -31,35 +67,39 @@ export default function Home() {
           </Button>
         </Link>
       </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* Position cards will be mapped here */}
-        <Card className="p-6">
-          <div className="space-y-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-semibold">ETH/USDC</h3>
-                <p className="text-sm text-muted-foreground">Range: $1,800 - $2,200</p>
-              </div>
-              <Link href="/positions/1">
-                <Button variant="outline" size="sm">
-                  Manage
-                </Button>
-              </Link>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">TVL</span>
-                <span className="font-medium">$10,000</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Unclaimed Fees</span>
-                <span className="font-medium">$50</span>
-              </div>
-            </div>
+      {
+        loading ? <p className="text-center">please wait...</p> :
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {
+              positions.length && positions.map((e:any, i) =>
+                <Card className="p-6" key={i}>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold">{e.symbol}</h3>
+                        <p className="text-sm text-muted-foreground">Range: ${e.lower} ~ ${e.upper}</p>
+                      </div>
+                      <Link href="/positions/1">
+                        <Button variant="outline" size="sm">
+                          Manage
+                        </Button>
+                      </Link>
+                    </div>
+                    {/* <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">TVL</span>
+                        <span className="font-medium">$10,000</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Unclaimed Fees</span>
+                        <span className="font-medium">$50</span>
+                      </div>
+                    </div> */}
+                  </div>
+                </Card>)
+            }
           </div>
-        </Card>
-      </div>
+      }
     </div>
   );
 }
