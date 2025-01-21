@@ -10,7 +10,7 @@ import { getPositions } from "@/utils/request";
 import { getDeployedContract, getSymbol } from "@/utils/functions";
 
 export default function Home() {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const chainId = useChainId();
 
   const [positions, setPositions] = useState([]);
@@ -20,7 +20,7 @@ export default function Home() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const resData = await getPositions("0xD03C35C0fA5bc0a0A274E25EE002216ab303000c", chainId)
+        const resData = await getPositions(address as `0x${string}`, chainId)
 
         if (resData.length) {
           const contract = getDeployedContract(chainId)
@@ -34,9 +34,9 @@ export default function Home() {
               }
             }
             setPositions(temp)
-            setLoading(false)
           }
         }
+        setLoading(false)
       } catch (err) {
         console.log('error: ', err)
       }
@@ -71,7 +71,7 @@ export default function Home() {
         loading ? <p className="text-center">please wait...</p> :
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {
-              positions.length && positions.map((e:any, i) =>
+              positions.length > 0 && positions.map((e:any, i) =>
                 <Card className="p-6" key={i}>
                   <div className="space-y-4">
                     <div className="flex justify-between items-start">
