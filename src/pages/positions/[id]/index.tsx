@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useAccount, useWriteContract, useReadContract } from "wagmi";
-import { DEPLOYED_ADDRESS, SLIPPAGE, BPS } from "@/utils/constant";
+import { POSITION_MANAGER_CONTRACT_ADDRESS, SLIPPAGE, BPS } from "@/utils/constant";
 import Abi from "@/abi/PositionManager.json";
 import { useState } from "react";
 import { ethers } from "ethers";
@@ -55,7 +55,7 @@ export default function PositionPage() {
   const collectFees = () => {
     writeContract({
       abi: Abi.abi,
-      address: `0x${DEPLOYED_ADDRESS.base}`,
+      address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.BASE}`,
       functionName: 'collectFees',
       args: [
         positionId,
@@ -67,7 +67,7 @@ export default function PositionPage() {
   const increasePosition = () => {
     writeContract({
       abi: Abi.abi,
-      address: `0x${DEPLOYED_ADDRESS.base}`,
+      address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.BASE}`,
       functionName: 'increaseLiquidity',
       args: [
         positionId,
@@ -81,7 +81,7 @@ export default function PositionPage() {
     // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } 
     //         = useReadContract({
     //           abi: Abi.abi,
-    //           address: `0x${DEPLOYED_ADDRESS.base}`,
+    //           address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
     //           functionName: 'getSwapInfo',
     //           args: [positionId]
     //         })
@@ -93,7 +93,7 @@ export default function PositionPage() {
     
     // writeContract({
     //   abi: Abi.abi,
-    //   address: `0x${DEPLOYED_ADDRESS.base}`,
+    //   address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
     //   functionName: 'decreaseLiquidity',
     //   args: [
     //     positionId,
@@ -108,7 +108,7 @@ export default function PositionPage() {
     // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } 
     //         = useReadContract({
     //           abi: Abi.abi,
-    //           address: `0x${DEPLOYED_ADDRESS.base}`,
+    //           address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
     //           functionName: 'getSwapInfo',
     //           args: [positionId]
     //         })
@@ -120,7 +120,7 @@ export default function PositionPage() {
     
     // writeContract({
     //   abi: Abi.abi,
-    //   address: `0x${DEPLOYED_ADDRESS.base}`,
+    //   address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
     //   functionName: 'closePosition',
     //   args: [
     //     positionId,
@@ -136,7 +136,7 @@ export default function PositionPage() {
     // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } 
     //         = useReadContract({
     //           abi: Abi.abi,
-    //           address: `0x${DEPLOYED_ADDRESS.base}`,
+    //           address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
     //           functionName: 'getSwapInfo',
     //           args: [positionId]
     //         })
@@ -148,7 +148,7 @@ export default function PositionPage() {
     
     // writeContract({
     //   abi: Abi.abi,
-    //   address: `0x${DEPLOYED_ADDRESS.base}`,
+    //   address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
     //   functionName: 'compoundPosition',
     //   args: [
     //     positionId,
