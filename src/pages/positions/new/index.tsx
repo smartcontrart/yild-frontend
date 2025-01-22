@@ -17,7 +17,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { DEPLOYED_ADDRESS, TOKEN_LIST } from "@/utils/constant";
+import { POSITION_MANAGER_CONTRACT_ADDRESS, TOKEN_LIST } from "@/utils/constant";
 // import Abi from "@/abi/PositionManager.json";
 import { erc20Abi } from "viem";
 
@@ -50,23 +50,21 @@ export default function NewPositionPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (Number(values.token0) != 0) {
-      writeContract({
-        abi: erc20Abi,
-        address: TOKEN_LIST[Number(values.token0)].address as `0x${string}`,
-        functionName: 'approve',
-        args: [DEPLOYED_ADDRESS['base'] as `0x${string}`, parseUnits(values.amount1, TOKEN_LIST[Number(values.token0)].decimal)]
-      })
-    }
 
-    if (Number(values.token1) != 0) {
-      writeContract({
-        abi: erc20Abi,
-        address: TOKEN_LIST[Number(values.token1)].address as `0x${string}`,
-        functionName: 'approve',
-        args: [DEPLOYED_ADDRESS['base'] as `0x${string}`, parseUnits(values.amount1, TOKEN_LIST[Number(values.token1)].decimal)]
-      })
-    }
+    writeContract({
+      abi: erc20Abi,
+      address: TOKEN_LIST[Number(values.token0)].ADDRESS.BASE,
+      functionName: 'approve',
+      args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount1, TOKEN_LIST[Number(values.token0)].DECIMAL)]
+    })
+
+
+    writeContract({
+      abi: erc20Abi,
+      address: TOKEN_LIST[Number(values.token1)].ADDRESS.BASE as `0x${string}`,
+      functionName: 'approve',
+      args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount1, TOKEN_LIST[Number(values.token1)].DECIMAL)]
+    })
 
     // try {
     //   const args = [
@@ -90,7 +88,7 @@ export default function NewPositionPage() {
 
     //   writeContract({
     //     abi: Abi.abi,
-    //     address: DEPLOYED_ADDRESS["base"] as `0x${string}`,
+    //     address: POSITION_MANAGER_CONTRACT_ADDRESS as `0x${string}`,
     //     functionName: 'openPosition',
     //     args
     //   })
@@ -136,7 +134,7 @@ export default function NewPositionPage() {
                         </FormControl>
                         <SelectContent>
                           {
-                            TOKEN_LIST.map((v, i) => <SelectItem key={"key1" + v.name} value={i.toString()}>{v.name}</SelectItem>)
+                            TOKEN_LIST.map((v, i) => <SelectItem key={"key1" + v.NAME} value={i.toString()}>{v.NAME}</SelectItem>)
                           }
                         </SelectContent>
                       </Select>
@@ -159,7 +157,7 @@ export default function NewPositionPage() {
                         </FormControl>
                         <SelectContent>
                           {
-                            TOKEN_LIST.map((v, i) => <SelectItem key={"key2" + v.name} value={i.toString()}>{v.name}</SelectItem>)
+                            TOKEN_LIST.map((v, i) => <SelectItem key={"key2" + v.NAME} value={i.toString()}>{v.NAME}</SelectItem>)
                           }
                         </SelectContent>
                       </Select>
