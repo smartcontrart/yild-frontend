@@ -1,12 +1,21 @@
 /**
  * Converts a tick to a price
  * @param tick The tick to convert
+ * @param decimalsToken0 Number of decimals for token0
+ * @param decimalsToken1 Number of decimals for token1
+ * @param invert If true, returns price of token1 in token0, otherwise returns price of token0 in token1
  * @returns The price corresponding to the tick
  */
-export function tickToPrice(tick: number): number {
-    // In Uniswap V3, the tick to price formula is:
-    // price = 1.0001^tick
-    return Math.pow(1.0001, tick);
+export function tickToPrice(tick: number, decimalsToken0: number = 6, decimalsToken1: number = 18, invert: boolean = true): number {
+    // Calculate raw price: 1.0001^tick
+    const rawPrice = Math.pow(1.0001, tick);
+    
+    // Adjust for decimals: divide by (10^decimalsToken1 / 10^decimalsToken0)
+    const decimalAdjustment = Math.pow(10, decimalsToken1 - decimalsToken0);
+    const adjustedPrice = rawPrice / decimalAdjustment;
+    
+    // If invert is true, return 1/price to get token1 price in token0
+    return invert ? 1 / adjustedPrice : adjustedPrice;
 }
 
 /**
