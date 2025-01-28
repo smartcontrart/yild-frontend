@@ -1,9 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -13,17 +9,24 @@ import {
 } from "@/components/ui/select";
 import { parseEther, parseUnits } from "viem";
 import { useAccount, useWriteContract, useChainId } from "wagmi";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { POSITION_MANAGER_CONTRACT_ADDRESS, TOKEN_LIST } from "@/utils/constant";
-// import Abi from "@/abi/PositionManager.json";
 import { erc20Abi } from "viem";
+import { TokenSelector } from "@/components/token-selector";
+import { useState, useEffect } from "react";
 
 const formSchema = z.object({
   token0: z.string().min(1, "Token 0 is required"),
   token1: z.string().min(1, "Token 1 is required"),
+  token0Address: z.string().optional(),
+  token1Address: z.string().optional(),
   feeTier: z.string().min(1, "Fee tier is required"),
   minPrice: z.string().min(1, "Min price is required"),
   maxPrice: z.string().min(1, "Max price is required"),
@@ -33,14 +36,18 @@ const formSchema = z.object({
 
 export default function NewPositionPage() {
   const { isConnected, address } = useAccount();
-  const { writeContract } = useWriteContract()
+  const { writeContract } = useWriteContract();
+  const [token0Price, setToken0Price] = useState<string | null>(null);
+  const [token1Price, setToken1Price] = useState<string | null>(null);
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
 
-  // const { chain } = useChains();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       token0: "",
       token1: "",
+      token0Address: "",
+      token1Address: "",
       feeTier: "",
       minPrice: "",
       maxPrice: "",
@@ -49,52 +56,92 @@ export default function NewPositionPage() {
     },
   });
 
+  const fetchLivePrice = async (token0Address: string, token1Address: string) => {
+    try {
+      setIsLoadingPrice(true);
+      const response = await fetch(
+        `https://api.dexscreener.com/latest/dex/tokens/${token0Address},${token1Address}`
+      );
+      const data = await response.json();
+      
+      if (data.pairs && data.pairs.length > 0) {
+        // Initialize prices
+        let token0Price = null;
+        let token1Price = null;
+
+        // Look through pairs to find prices for both tokens
+        data.pairs.forEach((pair: any) => {
+          if (pair.baseToken.address.toLowerCase() === token0Address.toLowerCase()) {
+            token0Price = pair.priceUsd;
+          } else if (pair.baseToken.address.toLowerCase() === token1Address.toLowerCase()) {
+            token1Price = pair.priceUsd;
+          }
+          
+          if (pair.quoteToken.address.toLowerCase() === token0Address.toLowerCase()) {
+            token0Price = pair.priceUsd;
+          } else if (pair.quoteToken.address.toLowerCase() === token1Address.toLowerCase()) {
+            token1Price = pair.priceUsd;
+          }
+        });
+
+        setToken0Price(token0Price);
+        setToken1Price(token1Price);
+      } else {
+        setToken0Price(null);
+        setToken1Price(null);
+      }
+    } catch (error) {
+      console.error("Error fetching prices:", error);
+      setToken0Price(null);
+      setToken1Price(null);
+    } finally {
+      setIsLoadingPrice(false);
+    }
+  };
+
+  // Watch for token changes and update price
+  useEffect(() => {
+    const values = form.getValues();
+    const token0Info = values.token0 === "custom" 
+      ? values.token0Address
+      : values.token0 ? TOKEN_LIST[Number(values.token0)].ADDRESS.BASE
+      : null;
+
+    const token1Info = values.token1 === "custom"
+      ? values.token1Address
+      : values.token1 ? TOKEN_LIST[Number(values.token1)].ADDRESS.BASE
+      : null;
+
+    if (token0Info && token1Info) {
+      fetchLivePrice(token0Info, token1Info);
+    }
+  }, [form.watch("token0"), form.watch("token1"), form.watch("token0Address"), form.watch("token1Address")]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    const token0Info = values.token0 === "custom" 
+      ? { address: values.token0Address as `0x${string}`, decimals: 18 } // You might want to store decimals in state
+      : { address: TOKEN_LIST[Number(values.token0)].ADDRESS.BASE, decimals: TOKEN_LIST[Number(values.token0)].DECIMAL };
+
+    const token1Info = values.token1 === "custom"
+      ? { address: values.token1Address as `0x${string}`, decimals: 18 } // You might want to store decimals in state
+      : { address: TOKEN_LIST[Number(values.token1)].ADDRESS.BASE, decimals: TOKEN_LIST[Number(values.token1)].DECIMAL };
+
+    console.log(token0Info, token1Info)
+    return
+    
+    writeContract({
+      abi: erc20Abi,
+      address: token0Info.address,
+      functionName: 'approve',
+      args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount0, token0Info.decimals)]
+    });
 
     writeContract({
       abi: erc20Abi,
-      address: TOKEN_LIST[Number(values.token0)].ADDRESS.BASE,
+      address: token1Info.address,
       functionName: 'approve',
-      args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount1, TOKEN_LIST[Number(values.token0)].DECIMAL)]
-    })
-
-
-    writeContract({
-      abi: erc20Abi,
-      address: TOKEN_LIST[Number(values.token1)].ADDRESS.BASE as `0x${string}`,
-      functionName: 'approve',
-      args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount1, TOKEN_LIST[Number(values.token1)].DECIMAL)]
-    })
-
-    // try {
-    //   const args = [
-    //     {
-    //       token0: TOKEN_LIST[Number(values.token0)].address,
-    //       token1: TOKEN_LIST[Number(values.token1)].address,
-    //       fee: values.feeTier,
-    //       tickLower: values.minPrice,
-    //       tickUpper: values.maxPrice,
-    //       amount0Desired: parseUnits(values.amount0, TOKEN_LIST[Number(values.token0)].decimal),
-    //       amount1Desired: parseUnits(values.amount1, TOKEN_LIST[Number(values.token1)].decimal),
-    //       amount0Min: 0,
-    //       amount1Min: 0,
-    //       recipient: "0x853B1Ca01984eE6cC2842D68BD40dC9c868eBb1A",
-    //       deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from now
-    //     },
-    //     address,
-    //     "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" //usdc address
-    //   ]
-    //   console.log('args = ', args)
-
-    //   writeContract({
-    //     abi: Abi.abi,
-    //     address: POSITION_MANAGER_CONTRACT_ADDRESS as `0x${string}`,
-    //     functionName: 'openPosition',
-    //     args
-    //   })
-    // } catch (error) {
-    //   console.error("Error creating position:", error);
-    // }
+      args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount1, token1Info.decimals)]
+    });
   }
 
   if (!isConnected) {
@@ -112,58 +159,45 @@ export default function NewPositionPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold">Create New Position</h2>
-        {/* {chain && <p className="text-sm text-muted-foreground">Network: {chain.name}</p>} */}
       </div>
 
       <Card className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="text-xl font-bold">
+                      Token 0: {token0Price} USD
+                      <br />
+                      Token 1: {token1Price} USD
+                    </div>
+            {(isLoadingPrice || token0Price || token1Price) && (
+              <div className="flex items-center justify-center p-4 bg-secondary rounded-lg">
+                {isLoadingPrice ? (
+                  <span>Loading prices...</span>
+                ) : (
+                  <div className="text-center">
+                    <span className="text-sm text-muted-foreground">Current Prices:</span>
+                    <div className="text-xl font-bold">
+                      Token 0: {token0Price} USD
+                      <br />
+                      Token 1: {token1Price} USD
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <FormField
+                <TokenSelector
                   control={form.control}
                   name="token0"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Token 0</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select token" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {
-                            TOKEN_LIST.map((v, i) => <SelectItem key={"key1" + v.NAME} value={i.toString()}>{v.NAME}</SelectItem>)
-                          }
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Token 0"
+                  addressFieldName="token0Address"
                 />
-
-                <FormField
+                <TokenSelector
                   control={form.control}
                   name="token1"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Token 1</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select token" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {
-                            TOKEN_LIST.map((v, i) => <SelectItem key={"key2" + v.NAME} value={i.toString()}>{v.NAME}</SelectItem>)
-                          }
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Token 1"
+                  addressFieldName="token1Address"
                 />
               </div>
 
