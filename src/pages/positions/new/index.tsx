@@ -22,6 +22,7 @@ import { erc20Abi } from "viem";
 import { TokenSelector } from "@/components/token-selector";
 import { useState, useEffect } from "react";
 import { priceToTick, tickToPrice, nearestValidTick } from "@/utils/ticks";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const formSchema = z.object({
   token0: z.string().min(1, "Token 0 is required"),
@@ -38,24 +39,6 @@ const formSchema = z.object({
 export default function NewPositionPage() {
   const { isConnected, address } = useAccount();
   const { writeContract } = useWriteContract();
-  const [token0Price, setToken0Price] = useState<string | null>(null);
-  const [token1Price, setToken1Price] = useState<string | null>(null);
-  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
-
-  const handleMinPriceChange = (value: string, onChange: (value: string) => void) => {
-    if (!value || isNaN(Number(value))) {
-      onChange(value);
-      return;
-    }
-
-    const numericPrice = Number(value);
-    const tick = priceToTick(numericPrice, 18, 6);
-    const feeTier = Number(form.getValues("feeTier") || "3000"); // default to 0.3% if not selected
-    const validTick = nearestValidTick(tick, feeTier);
-    const adjustedPrice = tickToPrice(validTick, 6, 18).toString();
-    onChange(adjustedPrice);
-  };
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -70,8 +53,94 @@ export default function NewPositionPage() {
       amount1: "",
     },
   });
+  
+  const [token0Price, setToken0Price] = useState<string | null>(null);
+  const [token1Price, setToken1Price] = useState<string | null>(null);
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
+  const [minPriceInput, setMinPriceInput] = useState("");
+  const [maxPriceInput, setMaxPriceInput] = useState("");
+  
+  const debouncedMinPrice = useDebounce(minPriceInput, 1000);
+  const debouncedMaxPrice = useDebounce(maxPriceInput, 1000);
 
-  const fetchLivePrice = async (token0Address: string, token1Address: string) => {
+  useEffect(() => {
+    if (!debouncedMinPrice || isNaN(Number(debouncedMinPrice))) return;
+
+    const numericPrice = Number(debouncedMinPrice);
+    const tick = priceToTick(numericPrice, 18, 6);
+    const feeTier = Number(form.getValues("feeTier") || "3000");
+    const validTick = nearestValidTick(tick, feeTier);
+    const adjustedPrice = tickToPrice(validTick, 18, 6).toString();
+    setMinPriceInput(adjustedPrice)
+    form.setValue("minPrice", adjustedPrice);
+  }, [debouncedMinPrice, form]);
+
+  useEffect(() => {
+    if (!debouncedMaxPrice || isNaN(Number(debouncedMaxPrice))) return;
+    
+    const numericPrice = Number(debouncedMaxPrice);
+    const tick = priceToTick(numericPrice, 18, 6);
+    const feeTier = Number(form.getValues("feeTier") || "3000");
+    const validTick = nearestValidTick(tick, feeTier);
+    const adjustedPrice = tickToPrice(validTick, 18, 6).toString();
+    setMaxPriceInput(adjustedPrice)
+    form.setValue("maxPrice", adjustedPrice);
+  }, [debouncedMaxPrice, form]);
+
+  const handleMinPriceChange = (value: string) => {
+    setMinPriceInput(value);
+  };
+
+  const handleMaxPriceChange = (value: string) => {
+    setMaxPriceInput(value);
+  };
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const token0Info = values.token0 === "custom" 
+      ? { address: values.token0Address as `0x${string}`, decimals: 18 } // You might want to store decimals in state
+      : { address: TOKEN_LIST[Number(values.token0)].ADDRESS.BASE, decimals: TOKEN_LIST[Number(values.token0)].DECIMAL };
+
+    const token1Info = values.token1 === "custom"
+      ? { address: values.token1Address as `0x${string}`, decimals: 18 } // You might want to store decimals in state
+      : { address: TOKEN_LIST[Number(values.token1)].ADDRESS.BASE, decimals: TOKEN_LIST[Number(values.token1)].DECIMAL };
+
+    console.log(token0Info, token1Info)
+    return
+    
+    writeContract({
+      abi: erc20Abi,
+      address: token0Info.address,
+      functionName: 'approve',
+      args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount0, token0Info.decimals)]
+    });
+
+    writeContract({
+      abi: erc20Abi,
+      address: token1Info.address,
+      functionName: 'approve',
+      args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount1, token1Info.decimals)]
+    });
+  }
+
+  // Watch for token changes and update price
+  useEffect(() => {
+    const values = form.getValues();
+    const token0Info = values.token0 === "custom" 
+      ? values.token0Address
+      : values.token0 ? TOKEN_LIST[Number(values.token0)].ADDRESS.BASE
+      : null;
+
+    const token1Info = values.token1 === "custom"
+      ? values.token1Address
+      : values.token1 ? TOKEN_LIST[Number(values.token1)].ADDRESS.BASE
+      : null;
+
+    if (token0Info && token1Info) {
+      fetchLivePrice(token0Info, token1Info);
+    }
+  }, [form.watch("token0"), form.watch("token1"), form.watch("token0Address"), form.watch("token1Address")]);
+
+  async function fetchLivePrice(token0Address: string, token1Address: string) {
     try {
       setIsLoadingPrice(true);
       const response = await fetch(
@@ -112,51 +181,6 @@ export default function NewPositionPage() {
     } finally {
       setIsLoadingPrice(false);
     }
-  };
-
-  // Watch for token changes and update price
-  useEffect(() => {
-    const values = form.getValues();
-    const token0Info = values.token0 === "custom" 
-      ? values.token0Address
-      : values.token0 ? TOKEN_LIST[Number(values.token0)].ADDRESS.BASE
-      : null;
-
-    const token1Info = values.token1 === "custom"
-      ? values.token1Address
-      : values.token1 ? TOKEN_LIST[Number(values.token1)].ADDRESS.BASE
-      : null;
-
-    if (token0Info && token1Info) {
-      fetchLivePrice(token0Info, token1Info);
-    }
-  }, [form.watch("token0"), form.watch("token1"), form.watch("token0Address"), form.watch("token1Address")]);
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    const token0Info = values.token0 === "custom" 
-      ? { address: values.token0Address as `0x${string}`, decimals: 18 } // You might want to store decimals in state
-      : { address: TOKEN_LIST[Number(values.token0)].ADDRESS.BASE, decimals: TOKEN_LIST[Number(values.token0)].DECIMAL };
-
-    const token1Info = values.token1 === "custom"
-      ? { address: values.token1Address as `0x${string}`, decimals: 18 } // You might want to store decimals in state
-      : { address: TOKEN_LIST[Number(values.token1)].ADDRESS.BASE, decimals: TOKEN_LIST[Number(values.token1)].DECIMAL };
-
-    console.log(token0Info, token1Info)
-    return
-    
-    writeContract({
-      abi: erc20Abi,
-      address: token0Info.address,
-      functionName: 'approve',
-      args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount0, token0Info.decimals)]
-    });
-
-    writeContract({
-      abi: erc20Abi,
-      address: token1Info.address,
-      functionName: 'approve',
-      args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount1, token1Info.decimals)]
-    });
   }
 
   if (!isConnected) {
@@ -250,8 +274,8 @@ export default function NewPositionPage() {
                       <FormControl>
                         <Input 
                           placeholder="0.0" 
-                          {...field} 
-                          onChange={(e) => handleMinPriceChange(e.target.value, field.onChange)}
+                          value={minPriceInput}
+                          onChange={(e) => handleMinPriceChange(e.target.value)}
                         />
                       </FormControl>
                       <FormMessage />
@@ -266,7 +290,11 @@ export default function NewPositionPage() {
                     <FormItem>
                       <FormLabel>Max Price</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="0.00" {...field} />
+                        <Input 
+                          placeholder="0.0" 
+                          value={maxPriceInput}
+                          onChange={(e) => handleMaxPriceChange(e.target.value)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
