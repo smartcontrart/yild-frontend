@@ -24,6 +24,7 @@ import { TokenSelector } from "@/components/token-selector";
 import { useState, useEffect } from "react";
 import { priceToTick, tickToPrice, nearestValidTick } from "@/utils/ticks";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   token0: z.string().min(1, "Token 0 is required"),
@@ -43,6 +44,7 @@ export default function NewPositionPage() {
   const { isConnected, address } = useAccount();
   const { writeContractAsync, status, error } = useWriteContract();
   const publicClient = usePublicClient();
+  const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -495,9 +497,18 @@ export default function NewPositionPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" size="lg">
-              Create Position
-            </Button>
+            <div className="flex justify-end gap-4 mt-4">
+              <Button
+                variant="outline"
+                onClick={(e) => {
+                  e.preventDefault();
+                  router.push('/');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">Create Position</Button>
+            </div>
           </form>
         </Form>
       </Card>
