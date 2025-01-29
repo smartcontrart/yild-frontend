@@ -14,7 +14,7 @@ export default function TickPage() {
     const handlePriceChange = (value: string) => {
         setPrice(value);
         if (value && !isNaN(Number(value))) {
-            const tick = priceToTick(Number(value));
+            const tick = priceToTick(Number(value), 18, 6);
             setCalculatedTick(tick.toString());
         } else {
             setCalculatedTick("");
@@ -24,7 +24,7 @@ export default function TickPage() {
     const handleTickChange = (value: string) => {
         setTick(value);
         if (value && !isNaN(Number(value))) {
-            const price = tickToPrice(Number(value));
+            const price = tickToPrice(Number(value), 18, 6);
             setCalculatedPrice(price.toFixed(6));
         } else {
             setCalculatedPrice("");

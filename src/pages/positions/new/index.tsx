@@ -21,6 +21,7 @@ import { POSITION_MANAGER_CONTRACT_ADDRESS, TOKEN_LIST } from "@/utils/constant"
 import { erc20Abi } from "viem";
 import { TokenSelector } from "@/components/token-selector";
 import { useState, useEffect } from "react";
+import { priceToTick, tickToPrice, nearestValidTick } from "@/utils/ticks";
 
 const formSchema = z.object({
   token0: z.string().min(1, "Token 0 is required"),
@@ -40,6 +41,20 @@ export default function NewPositionPage() {
   const [token0Price, setToken0Price] = useState<string | null>(null);
   const [token1Price, setToken1Price] = useState<string | null>(null);
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
+
+  const handleMinPriceChange = (value: string, onChange: (value: string) => void) => {
+    if (!value || isNaN(Number(value))) {
+      onChange(value);
+      return;
+    }
+
+    const numericPrice = Number(value);
+    const tick = priceToTick(numericPrice, 18, 6);
+    const feeTier = Number(form.getValues("feeTier") || "3000"); // default to 0.3% if not selected
+    const validTick = nearestValidTick(tick, feeTier);
+    const adjustedPrice = tickToPrice(validTick, 6, 18).toString();
+    onChange(adjustedPrice);
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -233,7 +248,11 @@ export default function NewPositionPage() {
                     <FormItem>
                       <FormLabel>Min Price</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="0.00" {...field} />
+                        <Input 
+                          placeholder="0.0" 
+                          {...field} 
+                          onChange={(e) => handleMinPriceChange(e.target.value, field.onChange)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

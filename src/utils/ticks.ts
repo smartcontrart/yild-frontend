@@ -6,16 +6,13 @@
  * @param invert If true, returns price of token1 in token0, otherwise returns price of token0 in token1
  * @returns The price corresponding to the tick
  */
-export function tickToPrice(tick: number, decimalsToken0: number = 6, decimalsToken1: number = 18, invert: boolean = true): number {
-    // Calculate raw price: 1.0001^tick
+export function tickToPrice(tick: number, decimalsToken0: number, decimalsToken1: number): any {
     const rawPrice = Math.pow(1.0001, tick);
-    
     // Adjust for decimals: divide by (10^decimalsToken1 / 10^decimalsToken0)
-    const decimalAdjustment = Math.pow(10, decimalsToken1 - decimalsToken0);
-    const adjustedPrice = rawPrice / decimalAdjustment;
+    const decimalAdjustment = Math.pow(10, decimalsToken0 - decimalsToken1);
+    const adjustedPrice = 1 / (rawPrice / decimalAdjustment);
     
-    // If invert is true, return 1/price to get token1 price in token0
-    return invert ? 1 / adjustedPrice : adjustedPrice;
+    return adjustedPrice;
 }
 
 /**
@@ -23,11 +20,11 @@ export function tickToPrice(tick: number, decimalsToken0: number = 6, decimalsTo
  * @param price The price to convert
  * @returns The nearest tick for the given price
  */
-export function priceToTick(price: number): number {
-    // In Uniswap V3, the price to tick formula is:
-    // tick = log(price) / log(1.0001)
-    // We round to the nearest integer since ticks must be whole numbers
-    return Math.round(Math.log(price) / Math.log(1.0001));
+export function priceToTick(price: number, decimalsToken0: number, decimalsToken1: number): number {
+    const adjustedPrice = 1 / price;
+    const decimalAdjustment = Math.pow(10, decimalsToken0 - decimalsToken1);
+    const rawPrice = adjustedPrice * decimalAdjustment;
+    return Math.round(Math.log(rawPrice) / Math.log(1.0001));
 }
 
 /**
@@ -37,6 +34,8 @@ export function priceToTick(price: number): number {
  */
 export function getTickSpacing(fee: number): number {
     switch (fee) {
+        case 100: // 0.01%
+            return 2;
         case 500: // 0.05%
             return 10;
         case 3000: // 0.3%
