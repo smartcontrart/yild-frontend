@@ -13,6 +13,18 @@ import { useAccount, useWriteContract, useChainId, usePublicClient } from "wagmi
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -61,7 +73,8 @@ export default function NewPositionPage() {
       amount1: "",
     },
   });
-  
+
+  const [pageStatus, setPageStatus] = useState<string | null>("loaded");
   const [token0Price, setToken0Price] = useState<string | null>(null);
   const [token1Price, setToken1Price] = useState<string | null>(null);
   const [token0Name, setToken0Name] = useState<string | null>(null);
@@ -130,6 +143,8 @@ export default function NewPositionPage() {
       : { address: TOKEN_LIST[Number(values.token1)].ADDRESS.BASE, decimals: TOKEN_LIST[Number(values.token1)].DECIMAL };
 
     try {
+      setPageStatus("approving");
+
       // Approve both tokens
       const token0ApprovalConfig = {
         abi: erc20Abi,
@@ -146,12 +161,37 @@ export default function NewPositionPage() {
       } as const;
 
       console.log('Approving token0...');
-      const token0Hash = await writeContractAsync(token0ApprovalConfig);
-      console.log('Token0 approval tx:', token0Hash);
+      let token0Hash = null;
+      try {
+        token0Hash = await writeContractAsync(token0ApprovalConfig);
+        console.log('Token0 approval tx:', token0Hash);
+      } catch (error: any) {
+        if (error?.message?.includes('User rejected') || error?.code === 4001) {
+          console.log('User rejected token0 approval');
+          setPageStatus("loaded");
+          return;
+        }
+        throw error;
+      }
 
       console.log('Approving token1...');
-      const token1Hash = await writeContractAsync(token1ApprovalConfig);
-      console.log('Token1 approval tx:', token1Hash);
+      let token1Hash = null;
+      try {
+        token1Hash = await writeContractAsync(token1ApprovalConfig);
+        console.log('Token1 approval tx:', token1Hash);
+      } catch (error: any) {
+        if (error?.message?.includes('User rejected') || error?.code === 4001) {
+          console.log('User rejected token1 approval');
+          setPageStatus("loaded");
+          return;
+        }
+      }
+
+      if (!token0Hash || !token1Hash) {
+        console.log('Token approval failed');
+        setPageStatus("loaded");
+        return;
+      }
 
       // Wait for both approval transactions to be confirmed
       if (publicClient) {
@@ -162,6 +202,8 @@ export default function NewPositionPage() {
         ]);
         console.log('Both token approvals confirmed');
       }
+
+      setPageStatus("opening");
 
       if (!publicClient) {
         console.error('publicClient is not available');
@@ -199,9 +241,19 @@ export default function NewPositionPage() {
       console.log(params)
 
       console.log('Opening position...');
-      await openPosition(params);
+      try {
+        await openPosition(params);
+      } catch (error: any) {
+        if (error?.message?.includes('User rejected') || error?.code === 4001) {
+          console.log('User rejected position opening transaction');
+          setPageStatus("loaded");
+          return;
+        }
+        throw error;
+      }
     } catch (error) {
       console.error('Error in transaction process:', error);
+      setPageStatus("error");
     }
   }
 
@@ -216,6 +268,7 @@ export default function NewPositionPage() {
       
       if (result) {
         console.log('Transaction hash:', result);
+        setPageStatus("opened");
         return result;
       }
     } catch (err: any) {
@@ -512,6 +565,37 @@ export default function NewPositionPage() {
           </form>
         </Form>
       </Card>
+
+      <AlertDialog open={pageStatus === "approving" || pageStatus === "opening" || pageStatus === "opened"}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Status</AlertDialogTitle>
+            <AlertDialogDescription>
+              {
+                pageStatus === "approving" ? 
+                  "Approving your tokens to deposit into liquidity pools..." 
+                  : 
+                  pageStatus === "opening" ? 
+                    "Opening your position..."
+                    :
+                    "Position opened successfully!"
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {
+            pageStatus === "opened" && (
+              <AlertDialogFooter>
+                <AlertDialogCancel>Open another position</AlertDialogCancel>
+                <AlertDialogAction onClick={(e) => {
+                  e.preventDefault();
+                  router.push('/');
+                }}>Check open positions</AlertDialogAction>
+              </AlertDialogFooter>
+            )
+          }
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }
