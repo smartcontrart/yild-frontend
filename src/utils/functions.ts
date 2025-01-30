@@ -29,19 +29,23 @@ export const getTokenContract = (address: string, chainId: number) => {
     }
 }
 
-export const getSymbol = async (tokenId: number, chainId: number, contract: any) => {
+export const getSymbolsAndDecimals = async (tokenId: number, chainId: number, contract: any) => {
     try {
         const info = await contract.getSwapInfo(tokenId)
         const token0Contract = getTokenContract(info[0], chainId)
         const token1Contract = getTokenContract(info[1], chainId)
 
         if (token0Contract && token1Contract) {
-            const token0Symbol = await token0Contract.symbol()
-            const token1Symbol = await token1Contract.symbol()
+            const symbol0 = await token0Contract.symbol()
+            const symbol1 = await token1Contract.symbol()
 
-            return token0Symbol + "/" + token1Symbol
+            const decimals0 = parseInt(await token0Contract.decimals())
+            const decimals1 = parseInt(await token1Contract.decimals())
+
+            return { symbol0, symbol1, decimals0, decimals1 }
         }
     } catch (err) {
         console.log('getSwapInfo error: ', err)
     }
+    return { symbol0: "", symbol1: "", decimals0: 0, decimals1: 0 }
 }

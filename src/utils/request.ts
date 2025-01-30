@@ -22,7 +22,10 @@ export const getParaswapData = async (srcToken: string, destToken: string, amoun
 
 export const getPositions = async (address: string, chainId: number) => {
     try {
-        const response = await axios.get(`${API_URL}/api/chain/${chainId}/positions/${address}`)
+        // const response = await axios.get(`${API_URL}/api/chain/${chainId}/positions/${address}`)
+        const response = await axios.get(`${API_URL}/api/chain/${chainId}/positions/0x42DC5C87ee06B590d61b910FeA9cd6679f1e4929`)
+        
+        console.log(response?.data?.data)
         return response?.data?.data || []
     } catch(err) {
         console.log('Get positions error: ', err)

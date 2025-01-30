@@ -7,7 +7,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAccount, useChainId } from "wagmi";
 import { getPositions } from "@/utils/request";
-import { getDeployedContract, getSymbol } from "@/utils/functions";
+import { getDeployedContract, getSymbolsAndDecimals } from "@/utils/functions";
+import { priceToTick, tickToPrice } from "@/utils/ticks";
 
 export default function Home() {
   const { isConnected, address } = useAccount();
@@ -24,13 +25,29 @@ export default function Home() {
 
         if (resData.length) {
           const contract = getDeployedContract(chainId)
-
+          
           if (contract) {
             let temp: any = []
             for (let i = 0; i < resData.length; i++) {
-              const symbol = await getSymbol(resData[i].tokenId, chainId, contract)
-              if (symbol) {
-                temp = [...temp, { symbol, lower: resData[i].lowerTick, upper: resData[i].upperTick }]
+              const {symbol0, symbol1, decimals0, decimals1} = await getSymbolsAndDecimals(resData[i].tokenId, chainId, contract)
+              if (symbol0 && symbol1) {
+                temp = [
+                  ...temp, 
+                  { 
+                    tokenId: resData[i].tokenId,
+                    symbol: symbol0 + "/" + symbol1, 
+                    symbol0: symbol0, 
+                    symbol1: symbol1,
+                    decimals0, 
+                    decimals1,
+                    tickLower: resData[i].lowerTick, 
+                    tickUpper: resData[i].upperTick,
+                    dbId: resData[i].id,
+                    chainId: resData[i].chainId,
+                    createdAt: resData[i].createdAt,
+                    updatedAt: resData[i].updatedAt
+                  }
+                ]
               }
             }
             setPositions(temp)
@@ -43,7 +60,7 @@ export default function Home() {
     }
 
     fetchData();
-  }, [])
+  }, [address, chainId])
 
   if (!isConnected) {
     return (
@@ -77,9 +94,9 @@ export default function Home() {
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-semibold">{e.symbol}</h3>
-                        <p className="text-sm text-muted-foreground">Range: ${e.lower} ~ ${e.upper}</p>
+                        <p className="text-sm text-muted-foreground">${tickToPrice(e.tickLower, e.decimals0, e.decimals1).toFixed(2)} ~ ${tickToPrice(e.tickUpper, e.decimals0, e.decimals1).toFixed(2)}</p>
                       </div>
-                      <Link href="/positions/1">
+                      <Link href={`/positions/${e.tokenId}`}>
                         <Button variant="outline" size="sm">
                           Manage
                         </Button>
