@@ -1,4 +1,3 @@
-import axios from "axios"
 import { API_URL } from "./constant"
 
 export const getParaswapData = async (srcToken: string, destToken: string, amount: number, slippage: number) => {
@@ -22,11 +21,9 @@ export const getParaswapData = async (srcToken: string, destToken: string, amoun
 
 export const getPositions = async (address: string, chainId: number) => {
     try {
-        // const response = await axios.get(`${API_URL}/api/chain/${chainId}/positions/${address}`)
-        const response = await axios.get(`${API_URL}/api/chain/${chainId}/positions/0x42DC5C87ee06B590d61b910FeA9cd6679f1e4929`)
-        
-        console.log(response?.data?.data)
-        return response?.data?.data || []
+        const response = await fetch(`${API_URL}/api/chain/${chainId}/positions/${address}`)
+        const { data } = await response.json()
+        return data || []
     } catch(err) {
         console.log('Get positions error: ', err)
     }
