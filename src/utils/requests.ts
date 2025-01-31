@@ -1,4 +1,4 @@
-import { API_URL } from "./constant"
+import { API_URL } from "./constants"
 
 export const getParaswapData = async (srcToken: string, destToken: string, amount: number, slippage: number) => {
     // const url = 'https://api.paraswap.io/transactions/8453';

@@ -25,11 +25,11 @@ import {
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useAccount, useWriteContract, useReadContract } from "wagmi";
-import { POSITION_MANAGER_CONTRACT_ADDRESS, SLIPPAGE, BPS } from "@/utils/constant";
+import { POSITION_MANAGER_CONTRACT_ADDRESS, SLIPPAGE, BPS } from "@/utils/constants";
 import Abi from "@/abi/PositionManager.json";
 import { useState } from "react";
 import { ethers } from "ethers";
-import { getParaswapData } from "@/utils/request";
+import { getParaswapData } from "@/utils/requests";
 
 export default function PositionPage() {
   const { isConnected, address } = useAccount();

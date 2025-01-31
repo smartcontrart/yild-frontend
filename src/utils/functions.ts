@@ -7,7 +7,7 @@ import {
     polygon,
     sepolia,
 } from 'wagmi/chains';
-import { POSITION_MANAGER_CONTRACT_ADDRESS } from "./constant";
+import { POSITION_MANAGER_CONTRACT_ADDRESS } from "./constants";
 import Abi from "@/abi/PositionManager.json";
 import { erc20Abi } from "viem"; 
 

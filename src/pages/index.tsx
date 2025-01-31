@@ -4,18 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAccount, useChainId } from "wagmi";
-import { getPositions } from "@/utils/request";
+import { getPositions } from "@/utils/requests";
 import { getDeployedContract, getSymbolsAndDecimals } from "@/utils/functions";
 import { priceToTick, tickToPrice } from "@/utils/ticks";
+import { usePositionsStore } from "@/store/usePositionsStore";
 
 export default function Home() {
   const { isConnected, address } = useAccount();
   const chainId = useChainId();
-
-  const [positions, setPositions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { positions, setPositions, loading, setLoading } = usePositionsStore();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,15 +51,21 @@ export default function Home() {
             }
             setPositions(temp)
           }
+        } else {
+          setPositions([])
         }
-        setLoading(false)
       } catch (err) {
-        console.log('error: ', err)
+        console.error('Error fetching positions:', err)
+        setPositions([])
+      } finally {
+        setLoading(false)
       }
     }
 
-    fetchData();
-  }, [address, chainId])
+    if (isConnected && address) {
+      fetchData()
+    }
+  }, [address, chainId, isConnected, setLoading, setPositions])
 
   if (!isConnected) {
     return (

@@ -1,19 +1,14 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator"
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { TOKEN_LIST } from "@/utils/constant";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { usePublicClient } from "wagmi";
-import { getContract } from "viem";
-import { erc20Abi } from "viem";
+import { getContract, erc20Abi } from "viem";
 import { Control } from "react-hook-form";
+
+import { TOKEN_LIST } from "@/utils/constants";
 
 interface TokenSelectorProps {
   control: Control<any>;
