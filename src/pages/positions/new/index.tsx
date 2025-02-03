@@ -186,18 +186,26 @@ export default function NewPositionPage() {
       setPageStatus("approving");
 
       // Approve both tokens
+      if (!token0Address || !token0Address.startsWith('0x')) {
+        throw new Error('Invalid token0 address');
+      }
+
+      if (!token1Address || !token1Address.startsWith('0x')) {
+        throw new Error('Invalid token1 address');
+      }
+
       const token0ApprovalConfig = {
         abi: erc20Abi,
-        address: token0Address,
+        address: token0Address as `0x${string}`,
         functionName: 'approve',
-        args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount0, token0Decimal || 18)]
+        args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount0, token0Decimal || 18)],
       } as const;
 
       const token1ApprovalConfig = {
         abi: erc20Abi,
-        address: token1Address,
+        address: token1Address as `0x${string}`,
         functionName: 'approve',
-        args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount1, token1Decimal || 18)]
+        args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount1, token1Decimal || 18)],
       } as const;
 
       console.log(`Approving ${token0Name}`);
