@@ -4,7 +4,8 @@ import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card"; import {
+import { Card } from "@/components/ui/card"; 
+import {
   Dialog,
   DialogClose,
   DialogContent,
@@ -30,16 +31,19 @@ import Abi from "@/abi/PositionManager.json";
 import { useState } from "react";
 import { ethers } from "ethers";
 import { getParaswapData } from "@/utils/requests";
+import { usePositionsStore } from "@/store/usePositionsStore";
 
 export default function PositionPage() {
   const { isConnected, address } = useAccount();
-  const { writeContract } = useWriteContract()
+  const { writeContract } = useWriteContract();
+  const { positions } = usePositionsStore();
 
   const [increaseToken0Amount, setIncreaseToken0Amount] = useState(0);
   const [increaseToken1Amount, setIncreaseToken1Amount] = useState(0);
 
-  const router = useRouter()
+  const router = useRouter();
   const positionId = router.query.id;
+  const position = positions.find(p => p.tokenId === Number(positionId));
 
   if (!isConnected) {
     return (
@@ -173,19 +177,19 @@ export default function PositionPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Pool</span>
-                <span>ETH/USDC</span>
+                <span>{position?.symbol}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Fee Tier</span>
-                <span>0.3%</span>
+                <span>{position?.symbol}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Price Range</span>
-                <span>$1,800 - $2,200</span>
+                <span>{position?.symbol}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Current Price</span>
-                <span>$2,000</span>
+                <span>{position?.symbol}</span>
               </div>
             </div>
           </div>
@@ -194,19 +198,19 @@ export default function PositionPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">TVL</span>
-                <span>$10,000</span>
+                <span>{position?.symbol}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Token 0</span>
-                <span>2.5 ETH</span>
+                <span>{position?.symbol0}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Token 1</span>
-                <span>5,000 USDC</span>
+                <span>{position?.symbol1}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Unclaimed Fees</span>
-                <span>$50</span>
+                <span>{position?.symbol0}</span>
               </div>
             </div>
           </div>

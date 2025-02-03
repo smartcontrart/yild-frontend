@@ -13,6 +13,7 @@ import { useAccount, useWriteContract, useChainId, usePublicClient } from "wagmi
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,14 +23,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { POSITION_MANAGER_CONTRACT_ADDRESS, TOKEN_LIST } from "@/utils/constants";
+import { POSITION_MANAGER_CONTRACT_ADDRESS } from "@/utils/constants";
 import { erc20Abi } from "viem";
 import positionManagerAbi from "@/abi/OpenPositionABI.json";
 import { TokenSelector } from "@/components/token-selector";
@@ -37,17 +37,18 @@ import { useState, useEffect } from "react";
 import { priceToTick, tickToPrice, nearestValidTick } from "@/utils/ticks";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
+import { getRequiredToken0FromToken1Amount, getRequiredToken1FromToken0Amount } from "../../../utils/liquidity";
 
 const formSchema = z.object({
-  token0: z.string().min(1, "Token 0 is required"),
-  token1: z.string().min(1, "Token 1 is required"),
+  token0: z.string().min(1, "Token is required"),
+  token1: z.string().min(1, "Token is required"),
   token0Address: z.string().optional(),
   token1Address: z.string().optional(),
   feeTier: z.string().min(1, "Fee tier is required"),
   minPrice: z.string().min(1, "Min price is required"),
   maxPrice: z.string().min(1, "Max price is required"),
-  amount0: z.string().min(1, "Token 0 amount is required"),
-  amount1: z.string().min(1, "Token 1 amount is required"),
+  amount0: z.string().min(1, "Token amount is required"),
+  amount1: z.string().min(1, "Token amount is required"),
   tickLower: z.string().min(1, "Tick lower is required"),
   tickUpper: z.string().min(1, "Tick upper is required"),
 });
@@ -77,6 +78,12 @@ export default function NewPositionPage() {
   const [pageStatus, setPageStatus] = useState<string | null>("loaded");
   const [token0Price, setToken0Price] = useState<string | null>(null);
   const [token1Price, setToken1Price] = useState<string | null>(null);
+  const [token0Amount, setToken0Amount] = useState<string | null>(null);
+  const [token1Amount, setToken1Amount] = useState<string | null>(null);
+  const [token0Address, setToken0Address] = useState<string | null>(null);
+  const [token1Address, setToken1Address] = useState<string | null>(null);
+  const [token0Decimal, setToken0Decimal] = useState<number | null>(null);
+  const [token1Decimal, setToken1Decimal] = useState<number | null>(null);
   const [token0Name, setToken0Name] = useState<string | null>(null);
   const [token1Name, setToken1Name] = useState<string | null>(null);
   const [isLoadingToken0Price, setIsLoadingToken0Price] = useState(false);
@@ -85,6 +92,8 @@ export default function NewPositionPage() {
   const [maxPriceInput, setMaxPriceInput] = useState("");
   const [tickLowerInput, setTickLowerInput] = useState("");
   const [tickUpperInput, setTickUpperInput] = useState("");
+  const [feeTier, setFeeTier] = useState<number | null>(3000);
+  const [currentTab, setCurrentTab] = useState<"zpo" | "opz">("zpo");
   
   const debouncedMinPrice = useDebounce(minPriceInput, 1000);
   const debouncedMaxPrice = useDebounce(maxPriceInput, 1000);
@@ -92,13 +101,21 @@ export default function NewPositionPage() {
   useEffect(() => {
     if (!debouncedMinPrice || isNaN(Number(debouncedMinPrice))) return;
 
-    const numericPrice = Number(debouncedMinPrice);
-    const tick = priceToTick(numericPrice, 18, 6);
-    const feeTier = Number(form.getValues("feeTier") || "3000");
-    const validTick = nearestValidTick(tick, feeTier);
+    let numericPrice = Number(debouncedMinPrice);
+    const [realToken0, realToken1] = getRealTokens();
+    if ((realToken0.address === token0Address && currentTab === "opz") || (realToken0.address !== token0Address && currentTab === "zpo"))
+      numericPrice = 1 / numericPrice;
+    
+    const tick = priceToTick(numericPrice, realToken0.decimals, realToken1.decimals);
+    const validTick = nearestValidTick(tick, feeTier || 3000);
+
     setTickLowerInput(validTick.toString());
     form.setValue("tickLower", validTick.toString());
-    const adjustedPrice = tickToPrice(validTick, 18, 6).toString();
+
+    let adjustedPrice = tickToPrice(validTick, realToken0.decimals, realToken1.decimals).toString();
+    if ((realToken0.address === token0Address && currentTab === "opz") || (realToken0.address !== token0Address && currentTab === "zpo"))
+      adjustedPrice = 1 / adjustedPrice;
+
     setMinPriceInput(adjustedPrice)
     form.setValue("minPrice", adjustedPrice);
   }, [debouncedMinPrice, form]);
@@ -106,61 +123,84 @@ export default function NewPositionPage() {
   useEffect(() => {
     if (!debouncedMaxPrice || isNaN(Number(debouncedMaxPrice))) return;
     
-    const numericPrice = Number(debouncedMaxPrice);
-    const tick = priceToTick(numericPrice, 18, 6);
-    const feeTier = Number(form.getValues("feeTier") || "3000");
-    const validTick = nearestValidTick(tick, feeTier);
+    let numericPrice = Number(debouncedMaxPrice);
+    const [realToken0, realToken1] = getRealTokens();
+    if ((realToken0.address === token0Address && currentTab === "opz") || (realToken0.address !== token0Address && currentTab === "zpo"))
+      numericPrice = 1 / numericPrice;
+
+    const tick = priceToTick(numericPrice, realToken0.decimals, realToken1.decimals);
+    const validTick = nearestValidTick(tick, feeTier || 3000);
+
     setTickUpperInput(validTick.toString());
     form.setValue("tickUpper", validTick.toString());  
-    const adjustedPrice = tickToPrice(validTick, 18, 6).toString();
+
+    let adjustedPrice = tickToPrice(validTick, realToken0.decimals, realToken1.decimals).toString();
+    if ((realToken0.address === token0Address && currentTab === "opz") || (realToken0.address !== token0Address && currentTab === "zpo"))
+      adjustedPrice = 1 / adjustedPrice;  
+
     setMaxPriceInput(adjustedPrice)
     form.setValue("maxPrice", adjustedPrice);
   }, [debouncedMaxPrice, form]);
 
-  const handleMinPriceChange = (value: string) => {
-    setMinPriceInput(value);
-  };
+  const getRealTokens = () => {
+    if (!token0Address || !token1Address || token0Address < token1Address) 
+      return [
+        { 
+          address: token0Address as `0x${string}`, 
+          decimals: token0Decimal || 18, 
+          name: token0Name, 
+          price:token0Price 
+        }, 
+        { 
+          address: token1Address as `0x${string}`, 
+          decimals: token1Decimal || 18, 
+          name: token1Name, 
+          price:token1Price 
+        }
+      ];
+    else
+      return [
+        { 
+          address: token1Address as `0x${string}`, 
+          decimals: token1Decimal || 18, 
+          name: token1Name, 
+          price:token1Price 
+        }, 
+        { 
+          address: token0Address as `0x${string}`, 
+          decimals: token0Decimal || 18, 
+          name: token0Name, 
+          price:token0Price 
+        }
+      ];
+  }
 
-  const handleMaxPriceChange = (value: string) => {
-    setMaxPriceInput(value);
-  };
-
-  const handleTickLowerChange = (value: string) => {
-    setTickLowerInput(value);
-  };
-
-  const handleTickUpperChange = (value: string) => {
-    setTickUpperInput(value);
+  const handleTabChange = (value: string) => {
+    setCurrentTab(value as "zpo" | "opz");
+    if (minPriceInput) setMinPriceInput((1 / parseFloat(minPriceInput)).toString())
+    if (maxPriceInput) setMaxPriceInput((1 / parseFloat(maxPriceInput)).toString())
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const token0Info = values.token0 === "custom" 
-      ? { address: values.token0Address as `0x${string}`, decimals: 18 }
-      : { address: TOKEN_LIST[Number(values.token0)].ADDRESS.BASE, decimals: TOKEN_LIST[Number(values.token0)].DECIMAL };
-
-    const token1Info = values.token1 === "custom"
-      ? { address: values.token1Address as `0x${string}`, decimals: 18 }
-      : { address: TOKEN_LIST[Number(values.token1)].ADDRESS.BASE, decimals: TOKEN_LIST[Number(values.token1)].DECIMAL };
-
     try {
       setPageStatus("approving");
 
       // Approve both tokens
       const token0ApprovalConfig = {
         abi: erc20Abi,
-        address: token0Info.address,
+        address: token0Address,
         functionName: 'approve',
-        args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount0, token0Info.decimals)]
+        args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount0, token0Decimal || 18)]
       } as const;
 
       const token1ApprovalConfig = {
         abi: erc20Abi,
-        address: token1Info.address,
+        address: token1Address,
         functionName: 'approve',
-        args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount1, token1Info.decimals)]
+        args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount1, token1Decimal || 18)]
       } as const;
 
-      console.log('Approving token0...');
+      console.log(`Approving ${token0Name}`);
       let token0Hash = null;
       try {
         token0Hash = await writeContractAsync(token0ApprovalConfig);
@@ -174,7 +214,7 @@ export default function NewPositionPage() {
         throw error;
       }
 
-      console.log('Approving token1...');
+      console.log(`Approving ${token1Name}`);
       let token1Hash = null;
       try {
         token1Hash = await writeContractAsync(token1ApprovalConfig);
@@ -185,6 +225,7 @@ export default function NewPositionPage() {
           setPageStatus("loaded");
           return;
         }
+        throw error;
       }
 
       if (!token0Hash || !token1Hash) {
@@ -220,25 +261,43 @@ export default function NewPositionPage() {
         return;
       }
 
+      const [realToken0, realToken1] = getRealTokens();
+      const realToken0Value = realToken0.address === token0Address ? values.amount0 : values.amount1;
+      const realToken1Value = realToken1.address === token1Address ? values.amount1 : values.amount0;
+
+      console.log({
+        token0: realToken0.address,
+        token1: realToken1.address,
+        fee: parseInt(values.feeTier),
+        tickUpper: parseInt(values.tickUpper),
+        tickLower: parseInt(values.tickLower),
+        amount0Desired: parseUnits(realToken0Value, realToken0.decimals),
+        amount1Desired: parseUnits(realToken1Value, realToken1.decimals),
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
+        deadline: deadlineTimestamp
+      })
+      console.log(address)
+      console.log(realToken1.address)
+
       const params = {
         _params: {
-          token0: values.token0Address,
-          token1: values.token1Address,
+          token0: realToken0.address,
+          token1: realToken1.address,
           fee: parseInt(values.feeTier),
-          tickUpper: parseInt(values.tickLower),
-          tickLower: parseInt(values.tickUpper),
-          amount0Desired: parseUnits(values.amount0, token0Info.decimals),
-          amount1Desired: parseUnits(values.amount1, token1Info.decimals),
+          tickUpper: parseInt(values.tickUpper),
+          tickLower: parseInt(values.tickLower),
+          amount0Desired: parseUnits(realToken0Value, realToken0.decimals),
+          amount1Desired: parseUnits(realToken1Value, realToken1.decimals),
           amount0Min: 0,
           amount1Min: 0,
           recipient: POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
           deadline: deadlineTimestamp
         },
         _owner: address,
-        _accountingUnit: values.token1Address
+        _accountingUnit: realToken1.address
       }
-
-      console.log(params)
 
       console.log('Opening position...');
       try {
@@ -273,6 +332,7 @@ export default function NewPositionPage() {
       }
     } catch (err: any) {
       console.error('Error in openPosition:', err);
+      setPageStatus("error");
     }
   }
 
@@ -293,21 +353,9 @@ export default function NewPositionPage() {
 
   useEffect(() => {
     const fetchToken0Price = async () => {
-      const token0Value = form.getValues("token0");
-      if (!token0Value) return;
-
       setIsLoadingToken0Price(true);
       try {
-        let tokenAddress;
-        if (token0Value === "custom") {
-          tokenAddress = form.getValues("token0Address");
-        } else {
-          tokenAddress = TOKEN_LIST[Number(token0Value)].ADDRESS.BASE;
-          form.setValue("token0Address", tokenAddress);
-          setToken0Name(TOKEN_LIST[Number(token0Value)].NAME);
-        }
-
-        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
+        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${token0Address}`);
         const data = await response.json();
         
         if (data.pairs && data.pairs[0]) {
@@ -319,27 +367,14 @@ export default function NewPositionPage() {
         setIsLoadingToken0Price(false);
       }
     };
-
     fetchToken0Price();
-  }, [form.watch("token0"), form.watch("token0Address")]);
+  }, [token0Address]);
 
   useEffect(() => {
     const fetchToken1Price = async () => {
-      const token1Value = form.getValues("token1");
-      if (!token1Value) return;
-
       setIsLoadingToken1Price(true);
       try {
-        let tokenAddress;
-        if (token1Value === "custom") {
-          tokenAddress = form.getValues("token1Address");
-        } else {
-          tokenAddress = TOKEN_LIST[Number(token1Value)].ADDRESS.BASE;
-          form.setValue("token1Address", tokenAddress);
-          setToken1Name(TOKEN_LIST[Number(token1Value)].NAME);
-        }
-
-        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
+        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${token1Address}`);
         const data = await response.json();
         
         if (data.pairs && data.pairs[0]) {
@@ -351,9 +386,28 @@ export default function NewPositionPage() {
         setIsLoadingToken1Price(false);
       }
     };
-
     fetchToken1Price();
-  }, [form.watch("token1"), form.watch("token1Address")]);
+  }, [token1Address]);
+
+  useEffect(() => {
+    form.setValue("amount0", token0Amount || "0");
+    const priceLower = currentTab === "zpo" ? minPriceInput : (1 / parseFloat(minPriceInput)).toString();
+    const priceUpper = currentTab === "zpo" ? maxPriceInput : (1 / parseFloat(maxPriceInput)).toString();
+    const newToken1Amount = getRequiredToken1FromToken0Amount(parseFloat(token0Price || "0.0") / parseFloat(token1Price || "0.0"), parseFloat(priceLower), parseFloat(priceUpper), token0Amount || "0")
+    setToken1Amount(newToken1Amount)
+    form.setValue("amount1", newToken1Amount || "0");
+  }, [token0Amount])
+
+  // temporary comment
+
+  // useEffect(() => {
+  //   const priceLower = currentTab === "opz" ? minPriceInput : (1 / parseFloat(minPriceInput)).toString();
+  //   const priceUpper = currentTab === "opz" ? maxPriceInput : (1 / parseFloat(maxPriceInput)).toString();
+  //   const newToken0Amount = getRequiredToken0FromToken1Amount(parseFloat(token1Price || "0.0") / parseFloat(token0Price || "0.0"), parseFloat(priceLower), parseFloat(priceUpper), token1Amount || "0")
+  //   setToken0Amount(newToken0Amount)
+  // }, [token1Amount])
+
+  
 
   if (!isConnected) {
     return (
@@ -380,8 +434,13 @@ export default function NewPositionPage() {
                 <TokenSelector
                   control={form.control}
                   name="token0"
-                  label="Token 0"
                   addressFieldName="token0Address"
+                  label="Select Token"
+                  onTokenInfoChange={(info) => {
+                    setToken0Name(info.symbol);
+                    setToken0Decimal(info.decimals);
+                    setToken0Address(info.address);
+                  }}
                 />
                 {(isLoadingToken0Price || token0Price) && (
                   <div className="flex items-center mt-2">
@@ -397,8 +456,13 @@ export default function NewPositionPage() {
                 <TokenSelector
                   control={form.control}
                   name="token1"
-                  label="Token 1"
                   addressFieldName="token1Address"
+                  label="Select Token"
+                  onTokenInfoChange={(info) => {
+                    setToken1Name(info.symbol);
+                    setToken1Decimal(info.decimals);
+                    setToken1Address(info.address);
+                  }}
                 />
                 {(isLoadingToken1Price || token1Price) && (
                   <div className="flex items-center mt-2">
@@ -437,117 +501,137 @@ export default function NewPositionPage() {
                 )}
               />
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="minPrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Min Price</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="0.0" 
-                          value={minPriceInput}
-                          onChange={(e) => handleMinPriceChange(e.target.value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className={`${(!token0Name || !token1Name) ? "hidden" : ""}`}>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
+                    <TabsList>
+                      <TabsTrigger value="zpo">{`${token1Name} per ${token0Name}`}</TabsTrigger>
+                      <TabsTrigger value="opz">{`${token0Name} per ${token1Name}`}</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
 
-                <FormField
-                  control={form.control}
-                  name="tickLower"
-                  render={({ field }) => (
-                    <FormItem className="hidden">
-                      <FormLabel>Tick Lower</FormLabel>
-                      <FormControl>
-                        <Input 
-                          value={tickLowerInput}
-                          onChange={(e) => handleTickLowerChange(e.target.value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="minPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Min Price</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="0.0" 
+                            value={minPriceInput}
+                            onChange={(e) => setMinPriceInput(e.target.value)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="maxPrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Max Price</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="0.0" 
-                          value={maxPriceInput}
-                          onChange={(e) => handleMaxPriceChange(e.target.value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="tickLower"
+                    render={({ field }) => (
+                      <FormItem className="hidden">
+                        <FormLabel>Tick Lower</FormLabel>
+                        <FormControl>
+                          <Input 
+                            value={tickLowerInput}
+                            onChange={(e) => setTickLowerInput(e.target.value)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="tickUpper"
-                  render={({ field }) => (
-                    <FormItem className="hidden">
-                      <FormLabel>Tick Upper</FormLabel>
-                      <FormControl>
-                        <Input 
-                          value={tickUpperInput}
-                          onChange={(e) => handleTickUpperChange(e.target.value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="maxPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Max Price</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="0.0" 
+                            value={maxPriceInput}
+                            onChange={(e) => setMaxPriceInput(e.target.value)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="tickUpper"
+                    render={({ field }) => (
+                      <FormItem className="hidden">
+                        <FormLabel>Tick Upper</FormLabel>
+                        <FormControl>
+                          <Input 
+                            value={tickUpperInput}
+                            onChange={(e) => setTickUpperInput(e.target.value)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="amount0"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{`${token0Name} Amount`}</FormLabel>
+                        <FormControl>
+                          <Input 
+                            value={token0Amount || ""}
+                            onChange={(e) => setToken0Amount(e.target.value)}
+                            placeholder="0.0"
+                          />
+                        </FormControl>
+                        {token0Price && !isNaN(Number(token0Amount)) && (
+                          <div className="text-sm text-muted-foreground mt-1">
+                            ≈ ${(Number(token0Amount) * Number(token0Price)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="amount1"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{`${token1Name} Amount`}</FormLabel>
+                        <FormControl>
+                          <Input 
+                            value={token1Amount || ""}
+                            onChange={(e) => setToken1Amount(e.target.value)}
+                            placeholder="0.0" 
+                          />
+                        </FormControl>
+                        {token1Price && !isNaN(Number(token1Amount)) && (
+                          <div className="text-sm text-muted-foreground mt-1">
+                            ≈ ${(Number(token1Amount) * Number(token1Price)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                          </div>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="amount0"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Token 0 Amount</FormLabel>
-                      <FormControl>
-                        <Input placeholder="0.0" {...field} />
-                      </FormControl>
-                      {token0Price && !isNaN(Number(field.value)) && (
-                        <div className="text-sm text-muted-foreground mt-1">
-                          ≈ ${(Number(field.value) * Number(token0Price)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
-                        </div>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="amount1"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Token 1 Amount</FormLabel>
-                      <FormControl>
-                        <Input placeholder="0.0" {...field} />
-                      </FormControl>
-                      {token1Price && !isNaN(Number(field.value)) && (
-                        <div className="text-sm text-muted-foreground mt-1">
-                          ≈ ${(Number(field.value) * Number(token1Price)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
-                        </div>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              
             </div>
 
             <div className="flex justify-end gap-4 mt-4">
@@ -585,7 +669,7 @@ export default function NewPositionPage() {
           {
             pageStatus === "opened" && (
               <AlertDialogFooter>
-                <AlertDialogCancel>Open another position</AlertDialogCancel>
+                <AlertDialogCancel onClick={() => setPageStatus("loaded")}>Open another position</AlertDialogCancel>
                 <AlertDialogAction onClick={(e) => {
                   e.preventDefault();
                   router.push('/');

@@ -8,9 +8,8 @@
  */
 export function tickToPrice(tick: number, decimalsToken0: number, decimalsToken1: number): any {
     const rawPrice = Math.pow(1.0001, tick);
-    // Adjust for decimals: divide by (10^decimalsToken1 / 10^decimalsToken0)
     const decimalAdjustment = Math.pow(10, decimalsToken0 - decimalsToken1);
-    const adjustedPrice = 1 / (rawPrice / decimalAdjustment);
+    const adjustedPrice = rawPrice * decimalAdjustment;
     
     return adjustedPrice;
 }
@@ -21,9 +20,9 @@ export function tickToPrice(tick: number, decimalsToken0: number, decimalsToken1
  * @returns The nearest tick for the given price
  */
 export function priceToTick(price: number, decimalsToken0: number, decimalsToken1: number): number {
-    const adjustedPrice = 1 / price;
+    const adjustedPrice = price;
     const decimalAdjustment = Math.pow(10, decimalsToken0 - decimalsToken1);
-    const rawPrice = adjustedPrice * decimalAdjustment;
+    const rawPrice = adjustedPrice / decimalAdjustment;
     return Math.round(Math.log(rawPrice) / Math.log(1.0001));
 }
 

@@ -10,16 +10,25 @@ import { Control } from "react-hook-form";
 
 import { TOKEN_LIST } from "@/utils/constants";
 
+interface TokenInfo {
+  name: string;
+  symbol: string;
+  decimals: number;
+  address: string;
+}
+
 interface TokenSelectorProps {
   control: Control<any>;
   name: string;
   label: string;
   addressFieldName: string;
+  onTokenInfoChange?: (info: TokenInfo) => void;
 }
 
-export function TokenSelector({ control, name, label, addressFieldName }: TokenSelectorProps) {
+export function TokenSelector({ control, name, label, addressFieldName, onTokenInfoChange }: TokenSelectorProps) {
   const publicClient = usePublicClient();
   const [customToken, setCustomToken] = useState<{ name: string; symbol: string; decimals: number } | null>(null);
+  const [customTokenAddress, setCustomTokenAddress] = useState<string | null>(null);
 
   const fetchTokenInfo = async (address: string): Promise<{ name: string; symbol: string; decimals: number } | null> => {
     try {
@@ -55,7 +64,26 @@ export function TokenSelector({ control, name, label, addressFieldName }: TokenS
         render={({ field }) => (
           <FormItem>
             <FormLabel>{label}</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <Select onValueChange={(value) => {
+              field.onChange(value);
+              if (value !== 'custom') {
+                const token = TOKEN_LIST[Number(value)];
+                onTokenInfoChange?.({
+                  name: token.NAME,
+                  symbol: token.NAME,
+                  decimals: token.DECIMAL,
+                  address: token.ADDRESS.BASE
+                });
+              }
+              else {
+                onTokenInfoChange?.({
+                  name: customToken?.name || '',
+                  symbol: customToken?.symbol || '',
+                  decimals: customToken?.decimals || 18,
+                  address: customTokenAddress || ""
+                });
+              }
+            }} defaultValue={field.value}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Select token" />
@@ -78,7 +106,12 @@ export function TokenSelector({ control, name, label, addressFieldName }: TokenS
                                 if (e.target.value.length === 42) {
                                   fetchTokenInfo(e.target.value).then((info) => {
                                     if (info) {
+                                      setCustomTokenAddress(e.target.value);
                                       setCustomToken(info);
+                                      onTokenInfoChange?.({
+                                        ...info,
+                                        address: e.target.value
+                                      });
                                       // Find the form context and update the token field
                                       const form = (control as any)._formState.form;
                                       if (form) {
