@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card"; 
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowDownUp,
@@ -26,8 +26,12 @@ import {
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useAccount, useWriteContract, useReadContract } from "wagmi";
-import { POSITION_MANAGER_CONTRACT_ADDRESS, SLIPPAGE, BPS } from "@/utils/constants";
-import Abi from "@/abi/PositionManager.json";
+import {
+  POSITION_MANAGER_CONTRACT_ADDRESS,
+  SLIPPAGE,
+  BPS,
+} from "@/utils/constants";
+import { PositionManagerABI } from "@/abi/PositionManager";
 import { useState } from "react";
 import { ethers } from "ethers";
 import { getParaswapData } from "@/utils/requests";
@@ -43,12 +47,14 @@ export default function PositionPage() {
 
   const router = useRouter();
   const positionId = router.query.id;
-  const position = positions.find(p => p.tokenId === Number(positionId));
+  const position = positions.find((p) => p.tokenId === Number(positionId));
 
   if (!isConnected) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <h2 className="text-2xl font-bold mb-4">Connect your wallet to continue</h2>
+        <h2 className="text-2xl font-bold mb-4">
+          Connect your wallet to continue
+        </h2>
         <p className="text-muted-foreground">
           Please connect your wallet to manage your LP position
         </p>
@@ -58,45 +64,36 @@ export default function PositionPage() {
 
   const collectFees = () => {
     writeContract({
-      abi: Abi.abi,
+      abi: PositionManagerABI,
       address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.BASE}`,
-      functionName: 'collectFees',
-      args: [
-        positionId,
-        address
-      ],
-    })
-  }
+      functionName: "collectFees",
+      args: [positionId, address],
+    });
+  };
 
   const increasePosition = () => {
     writeContract({
-      abi: Abi.abi,
+      abi: PositionManagerABI,
       address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.BASE}`,
-      functionName: 'increaseLiquidity',
-      args: [
-        positionId,
-        increaseToken0Amount,
-        increaseToken1Amount
-      ],
-    })
-  }
+      functionName: "increaseLiquidity",
+      args: [positionId, increaseToken0Amount, increaseToken1Amount],
+    });
+  };
 
   const decreasePosition = () => {
-    // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } 
+    // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals }
     //         = useReadContract({
-    //           abi: Abi.abi,
+    //           abi: PositionManagerABI,
     //           address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
     //           functionName: 'getSwapInfo',
     //           args: [positionId]
     //         })
-
     // const token0Amount = principal0 + tokensOwed0 - protocolFee0
     // const token1Amount = principal1 + tokensOwed1 - protocolFee1
     // const swapData0 = getParaswapData(token0, token1, ethers.parseUnits(token0Amount, token0Decimals), SLIPPAGE * 100)
     // const swapData1 = getParaswapData(token1, token0, ethers.parseUnits(token1Amount, token1Decimals), SLIPPAGE * 100)
-    
     // writeContract({
-    //   abi: Abi.abi,
+    //   abi: PositionManagerABI,
     //   address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
     //   functionName: 'decreaseLiquidity',
     //   args: [
@@ -106,24 +103,22 @@ export default function PositionPage() {
     //     swapData1,
     //   ],
     // })
-  }
+  };
 
   const closePosition = () => {
-    // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } 
+    // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals }
     //         = useReadContract({
-    //           abi: Abi.abi,
+    //           abi: PositionManagerABI,
     //           address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
     //           functionName: 'getSwapInfo',
     //           args: [positionId]
     //         })
-
     // const token0Amount = principal0 + tokensOwed0 - protocolFee0
     // const token1Amount = principal1 + tokensOwed1 - protocolFee1
     // const swapData0 = getParaswapData(token0, token1, ethers.parseUnits(token0Amount, token0Decimals), SLIPPAGE * 100)
     // const swapData1 = getParaswapData(token1, token0, ethers.parseUnits(token1Amount, token1Decimals), SLIPPAGE * 100)
-    
     // writeContract({
-    //   abi: Abi.abi,
+    //   abi: PositionManagerABI,
     //   address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
     //   functionName: 'closePosition',
     //   args: [
@@ -134,24 +129,22 @@ export default function PositionPage() {
     //     token1Amount
     //   ],
     // })
-  }
+  };
 
   const compoundPosition = () => {
-    // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } 
+    // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals }
     //         = useReadContract({
-    //           abi: Abi.abi,
+    //           abi: PositionManagerABI,
     //           address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
     //           functionName: 'getSwapInfo',
     //           args: [positionId]
     //         })
-
     // const token0Amount = principal0 + tokensOwed0 - protocolFee0
     // const token1Amount = principal1 + tokensOwed1 - protocolFee1
     // const swapData0 = getParaswapData(token0, token1, ethers.parseUnits(token0Amount, token0Decimals), SLIPPAGE * 100)
     // const swapData1 = getParaswapData(token1, token0, ethers.parseUnits(token1Amount, token1Decimals), SLIPPAGE * 100)
-    
     // writeContract({
-    //   abi: Abi.abi,
+    //   abi: PositionManagerABI,
     //   address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
     //   functionName: 'compoundPosition',
     //   args: [
@@ -162,7 +155,7 @@ export default function PositionPage() {
     //     token1Amount
     //   ],
     // })
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -228,7 +221,8 @@ export default function PositionPage() {
             <Dialog>
               <DialogTrigger asChild>
                 <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" />Increase Position
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Increase Position
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
@@ -243,13 +237,27 @@ export default function PositionPage() {
                     <Label htmlFor="name" className="text-right">
                       Token0
                     </Label>
-                    <Input type="number" className="col-span-3" onChange={e => setIncreaseToken0Amount(Number(e.target.value))} value={increaseToken0Amount} />
+                    <Input
+                      type="number"
+                      className="col-span-3"
+                      onChange={(e) =>
+                        setIncreaseToken0Amount(Number(e.target.value))
+                      }
+                      value={increaseToken0Amount}
+                    />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="name" className="text-right">
                       Token1
                     </Label>
-                    <Input type="number" className="col-span-3" onChange={e => setIncreaseToken1Amount(Number(e.target.value))} value={increaseToken1Amount} />
+                    <Input
+                      type="number"
+                      className="col-span-3"
+                      onChange={(e) =>
+                        setIncreaseToken1Amount(Number(e.target.value))
+                      }
+                      value={increaseToken1Amount}
+                    />
                   </div>
                 </div>
                 <DialogFooter>
@@ -258,7 +266,11 @@ export default function PositionPage() {
               </DialogContent>
             </Dialog>
 
-            <Button className="w-full" variant="secondary" onClick={decreasePosition}>
+            <Button
+              className="w-full"
+              variant="secondary"
+              onClick={decreasePosition}
+            >
               <MinusCircle className="mr-2 h-4 w-4" />
               Decrease Position
             </Button>
