@@ -8,12 +8,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { parseUnits } from "viem";
-import type { Abi } from 'viem';
-import { useAccount, useWriteContract, useChainId, usePublicClient } from "wagmi";
+import type { Abi } from "viem";
+import {
+  useAccount,
+  useWriteContract,
+  useChainId,
+  usePublicClient,
+} from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,21 +28,31 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { POSITION_MANAGER_CONTRACT_ADDRESS } from "@/utils/constants";
 import { erc20Abi } from "viem";
-import positionManagerAbi from "@/abi/OpenPositionABI.json";
+import { PositionManagerABI } from "@/abi/PositionManager";
 import { TokenSelector } from "@/components/token-selector";
 import { useState, useEffect } from "react";
 import { priceToTick, tickToPrice, nearestValidTick } from "@/utils/ticks";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
-import { getRequiredToken0FromToken1Amount, getRequiredToken1FromToken0Amount } from "../../../utils/liquidity";
+import {
+  getRequiredToken0FromToken1Amount,
+  getRequiredToken1FromToken0Amount,
+} from "../../../utils/liquidity";
 
 const formSchema = z.object({
   token0: z.string().min(1, "Token is required"),
@@ -94,7 +109,7 @@ export default function NewPositionPage() {
   const [tickUpperInput, setTickUpperInput] = useState("");
   const [feeTier, setFeeTier] = useState<number | null>(3000);
   const [currentTab, setCurrentTab] = useState<"zpo" | "opz">("zpo");
-  
+
   const debouncedMinPrice = useDebounce(minPriceInput, 1000);
   const debouncedMaxPrice = useDebounce(maxPriceInput, 1000);
 
@@ -103,82 +118,112 @@ export default function NewPositionPage() {
 
     let numericPrice = Number(debouncedMinPrice);
     const [realToken0, realToken1] = getRealTokens();
-    if ((realToken0.address === token0Address && currentTab === "opz") || (realToken0.address !== token0Address && currentTab === "zpo"))
+    if (
+      (realToken0.address === token0Address && currentTab === "opz") ||
+      (realToken0.address !== token0Address && currentTab === "zpo")
+    )
       numericPrice = 1 / numericPrice;
-    
-    const tick = priceToTick(numericPrice, realToken0.decimals, realToken1.decimals);
+
+    const tick = priceToTick(
+      numericPrice,
+      realToken0.decimals,
+      realToken1.decimals
+    );
     const validTick = nearestValidTick(tick, feeTier || 3000);
 
     setTickLowerInput(validTick.toString());
     form.setValue("tickLower", validTick.toString());
 
-    let adjustedPrice = tickToPrice(validTick, realToken0.decimals, realToken1.decimals).toString();
-    if ((realToken0.address === token0Address && currentTab === "opz") || (realToken0.address !== token0Address && currentTab === "zpo"))
+    let adjustedPrice = tickToPrice(
+      validTick,
+      realToken0.decimals,
+      realToken1.decimals
+    ).toString();
+    if (
+      (realToken0.address === token0Address && currentTab === "opz") ||
+      (realToken0.address !== token0Address && currentTab === "zpo")
+    )
       adjustedPrice = 1 / adjustedPrice;
 
-    setMinPriceInput(adjustedPrice)
+    setMinPriceInput(adjustedPrice);
     form.setValue("minPrice", adjustedPrice);
   }, [debouncedMinPrice, form]);
 
   useEffect(() => {
     if (!debouncedMaxPrice || isNaN(Number(debouncedMaxPrice))) return;
-    
+
     let numericPrice = Number(debouncedMaxPrice);
     const [realToken0, realToken1] = getRealTokens();
-    if ((realToken0.address === token0Address && currentTab === "opz") || (realToken0.address !== token0Address && currentTab === "zpo"))
+    if (
+      (realToken0.address === token0Address && currentTab === "opz") ||
+      (realToken0.address !== token0Address && currentTab === "zpo")
+    )
       numericPrice = 1 / numericPrice;
 
-    const tick = priceToTick(numericPrice, realToken0.decimals, realToken1.decimals);
+    const tick = priceToTick(
+      numericPrice,
+      realToken0.decimals,
+      realToken1.decimals
+    );
     const validTick = nearestValidTick(tick, feeTier || 3000);
 
     setTickUpperInput(validTick.toString());
-    form.setValue("tickUpper", validTick.toString());  
+    form.setValue("tickUpper", validTick.toString());
 
-    let adjustedPrice = tickToPrice(validTick, realToken0.decimals, realToken1.decimals).toString();
-    if ((realToken0.address === token0Address && currentTab === "opz") || (realToken0.address !== token0Address && currentTab === "zpo"))
-      adjustedPrice = 1 / adjustedPrice;  
+    let adjustedPrice = tickToPrice(
+      validTick,
+      realToken0.decimals,
+      realToken1.decimals
+    ).toString();
+    if (
+      (realToken0.address === token0Address && currentTab === "opz") ||
+      (realToken0.address !== token0Address && currentTab === "zpo")
+    )
+      adjustedPrice = 1 / adjustedPrice;
 
-    setMaxPriceInput(adjustedPrice)
+    setMaxPriceInput(adjustedPrice);
     form.setValue("maxPrice", adjustedPrice);
   }, [debouncedMaxPrice, form]);
 
   const getRealTokens = () => {
-    if (!token0Address || !token1Address || token0Address < token1Address) 
+    if (!token0Address || !token1Address || token0Address < token1Address)
       return [
-        { 
-          address: token0Address as `0x${string}`, 
-          decimals: token0Decimal || 18, 
-          name: token0Name, 
-          price:token0Price 
-        }, 
-        { 
-          address: token1Address as `0x${string}`, 
-          decimals: token1Decimal || 18, 
-          name: token1Name, 
-          price:token1Price 
-        }
+        {
+          address: token0Address as `0x${string}`,
+          decimals: token0Decimal || 18,
+          name: token0Name,
+          price: token0Price,
+        },
+        {
+          address: token1Address as `0x${string}`,
+          decimals: token1Decimal || 18,
+          name: token1Name,
+          price: token1Price,
+        },
       ];
     else
       return [
-        { 
-          address: token1Address as `0x${string}`, 
-          decimals: token1Decimal || 18, 
-          name: token1Name, 
-          price:token1Price 
-        }, 
-        { 
-          address: token0Address as `0x${string}`, 
-          decimals: token0Decimal || 18, 
-          name: token0Name, 
-          price:token0Price 
-        }
+        {
+          address: token1Address as `0x${string}`,
+          decimals: token1Decimal || 18,
+          name: token1Name,
+          price: token1Price,
+        },
+        {
+          address: token0Address as `0x${string}`,
+          decimals: token0Decimal || 18,
+          name: token0Name,
+          price: token0Price,
+        },
       ];
-  }
+  };
 
   const handleTabChange = (value: string) => {
     setCurrentTab(value as "zpo" | "opz");
-    if (minPriceInput) setMinPriceInput((1 / parseFloat(minPriceInput)).toString())
-    if (maxPriceInput) setMaxPriceInput((1 / parseFloat(maxPriceInput)).toString())
+    if (minPriceInput)
+      setMinPriceInput((1 / parseFloat(minPriceInput)).toString());
+    if (maxPriceInput)
+      setMaxPriceInput((1 / parseFloat(maxPriceInput)).toString());
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -186,36 +231,42 @@ export default function NewPositionPage() {
       setPageStatus("approving");
 
       // Approve both tokens
-      if (!token0Address || !token0Address.startsWith('0x')) {
-        throw new Error('Invalid token0 address');
+      if (!token0Address || !token0Address.startsWith("0x")) {
+        throw new Error("Invalid token0 address");
       }
 
-      if (!token1Address || !token1Address.startsWith('0x')) {
-        throw new Error('Invalid token1 address');
+      if (!token1Address || !token1Address.startsWith("0x")) {
+        throw new Error("Invalid token1 address");
       }
 
       const token0ApprovalConfig = {
         abi: erc20Abi,
         address: token0Address as `0x${string}`,
-        functionName: 'approve',
-        args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount0, token0Decimal || 18)],
+        functionName: "approve",
+        args: [
+          POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
+          parseUnits(values.amount0, token0Decimal || 18),
+        ],
       } as const;
 
       const token1ApprovalConfig = {
         abi: erc20Abi,
         address: token1Address as `0x${string}`,
-        functionName: 'approve',
-        args: [POSITION_MANAGER_CONTRACT_ADDRESS.BASE, parseUnits(values.amount1, token1Decimal || 18)],
+        functionName: "approve",
+        args: [
+          POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
+          parseUnits(values.amount1, token1Decimal || 18),
+        ],
       } as const;
 
       console.log(`Approving ${token0Name}`);
       let token0Hash = null;
       try {
         token0Hash = await writeContractAsync(token0ApprovalConfig);
-        console.log('Token0 approval tx:', token0Hash);
+        console.log("Token0 approval tx:", token0Hash);
       } catch (error: any) {
-        if (error?.message?.includes('User rejected') || error?.code === 4001) {
-          console.log('User rejected token0 approval');
+        if (error?.message?.includes("User rejected") || error?.code === 4001) {
+          console.log("User rejected token0 approval");
           setPageStatus("loaded");
           return;
         }
@@ -226,10 +277,10 @@ export default function NewPositionPage() {
       let token1Hash = null;
       try {
         token1Hash = await writeContractAsync(token1ApprovalConfig);
-        console.log('Token1 approval tx:', token1Hash);
+        console.log("Token1 approval tx:", token1Hash);
       } catch (error: any) {
-        if (error?.message?.includes('User rejected') || error?.code === 4001) {
-          console.log('User rejected token1 approval');
+        if (error?.message?.includes("User rejected") || error?.code === 4001) {
+          console.log("User rejected token1 approval");
           setPageStatus("loaded");
           return;
         }
@@ -237,41 +288,43 @@ export default function NewPositionPage() {
       }
 
       if (!token0Hash || !token1Hash) {
-        console.log('Token approval failed');
+        console.log("Token approval failed");
         setPageStatus("loaded");
         return;
       }
 
       // Wait for both approval transactions to be confirmed
       if (publicClient) {
-        console.log('Waiting for token approvals to be confirmed...');
+        console.log("Waiting for token approvals to be confirmed...");
         await Promise.all([
           publicClient.waitForTransactionReceipt({ hash: token0Hash }),
-          publicClient.waitForTransactionReceipt({ hash: token1Hash })
+          publicClient.waitForTransactionReceipt({ hash: token1Hash }),
         ]);
-        console.log('Both token approvals confirmed');
+        console.log("Both token approvals confirmed");
       }
 
       setPageStatus("opening");
 
       if (!publicClient) {
-        console.error('publicClient is not available');
+        console.error("publicClient is not available");
         return;
       }
 
       const block = await publicClient.getBlock();
       const currentTimestamp = Number(block.timestamp);
-      const deadlineTimestamp = currentTimestamp + (10 * 60); // Add 10 minutes in seconds
+      const deadlineTimestamp = currentTimestamp + 10 * 60; // Add 10 minutes in seconds
 
       // Open position
       if (!writeContractAsync) {
-        console.error('writeContractAsync is not available');
+        console.error("writeContractAsync is not available");
         return;
       }
 
       const [realToken0, realToken1] = getRealTokens();
-      const realToken0Value = realToken0.address === token0Address ? values.amount0 : values.amount1;
-      const realToken1Value = realToken1.address === token1Address ? values.amount1 : values.amount0;
+      const realToken0Value =
+        realToken0.address === token0Address ? values.amount0 : values.amount1;
+      const realToken1Value =
+        realToken1.address === token1Address ? values.amount1 : values.amount0;
 
       console.log({
         token0: realToken0.address,
@@ -284,10 +337,10 @@ export default function NewPositionPage() {
         amount0Min: 0,
         amount1Min: 0,
         recipient: POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
-        deadline: deadlineTimestamp
-      })
-      console.log(address)
-      console.log(realToken1.address)
+        deadline: deadlineTimestamp,
+      });
+      console.log(address);
+      console.log(realToken1.address);
 
       const params = {
         _params: {
@@ -301,25 +354,23 @@ export default function NewPositionPage() {
           amount0Min: 0,
           amount1Min: 0,
           recipient: POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
-          deadline: deadlineTimestamp
+          deadline: deadlineTimestamp,
         },
-        _owner: address,
-        _accountingUnit: realToken1.address
-      }
+      };
 
-      console.log('Opening position...');
+      console.log("Opening position...");
       try {
         await openPosition(params);
       } catch (error: any) {
-        if (error?.message?.includes('User rejected') || error?.code === 4001) {
-          console.log('User rejected position opening transaction');
+        if (error?.message?.includes("User rejected") || error?.code === 4001) {
+          console.log("User rejected position opening transaction");
           setPageStatus("loaded");
           return;
         }
         throw error;
       }
     } catch (error) {
-      console.error('Error in transaction process:', error);
+      console.error("Error in transaction process:", error);
       setPageStatus("error");
     }
   }
@@ -327,30 +378,30 @@ export default function NewPositionPage() {
   const openPosition = async (params: any) => {
     try {
       const result: any = await writeContractAsync({
-        abi: positionManagerAbi as Abi,
+        abi: PositionManagerABI as Abi,
         address: POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
-        functionName: 'openPosition',
-        args: [params._params, params._owner, params._accountingUnit],
+        functionName: "openPosition",
+        args: [params._params],
       });
-      
+
       if (result) {
-        console.log('Transaction hash:', result);
+        console.log("Transaction hash:", result);
         setPageStatus("opened");
         return result;
       }
     } catch (err: any) {
-      console.error('Error in openPosition:', err);
+      console.error("Error in openPosition:", err);
       setPageStatus("error");
     }
-  }
+  };
 
   useEffect(() => {
-    if (status === 'success') {
-      console.log('Transaction successful!');
+    if (status === "success") {
+      console.log("Transaction successful!");
       // Add your success handling here
     }
-    if (status === 'error') {
-      console.error('Transaction failed:', error);
+    if (status === "error") {
+      console.error("Transaction failed:", error);
       // Add your error handling here
     }
     // if (status === 'loading') {
@@ -363,9 +414,11 @@ export default function NewPositionPage() {
     const fetchToken0Price = async () => {
       setIsLoadingToken0Price(true);
       try {
-        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${token0Address}`);
+        const response = await fetch(
+          `https://api.dexscreener.com/latest/dex/tokens/${token0Address}`
+        );
         const data = await response.json();
-        
+
         if (data.pairs && data.pairs[0]) {
           setToken0Price(data.pairs[0].priceUsd);
         }
@@ -382,9 +435,11 @@ export default function NewPositionPage() {
     const fetchToken1Price = async () => {
       setIsLoadingToken1Price(true);
       try {
-        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${token1Address}`);
+        const response = await fetch(
+          `https://api.dexscreener.com/latest/dex/tokens/${token1Address}`
+        );
         const data = await response.json();
-        
+
         if (data.pairs && data.pairs[0]) {
           setToken1Price(data.pairs[0].priceUsd);
         }
@@ -399,12 +454,23 @@ export default function NewPositionPage() {
 
   useEffect(() => {
     form.setValue("amount0", token0Amount || "0");
-    const priceLower = currentTab === "zpo" ? minPriceInput : (1 / parseFloat(minPriceInput)).toString();
-    const priceUpper = currentTab === "zpo" ? maxPriceInput : (1 / parseFloat(maxPriceInput)).toString();
-    const newToken1Amount = getRequiredToken1FromToken0Amount(parseFloat(token0Price || "0.0") / parseFloat(token1Price || "0.0"), parseFloat(priceLower), parseFloat(priceUpper), token0Amount || "0")
-    setToken1Amount(newToken1Amount)
+    const priceLower =
+      currentTab === "zpo"
+        ? minPriceInput
+        : (1 / parseFloat(minPriceInput)).toString();
+    const priceUpper =
+      currentTab === "zpo"
+        ? maxPriceInput
+        : (1 / parseFloat(maxPriceInput)).toString();
+    const newToken1Amount = getRequiredToken1FromToken0Amount(
+      parseFloat(token0Price || "0.0") / parseFloat(token1Price || "0.0"),
+      parseFloat(priceLower),
+      parseFloat(priceUpper),
+      token0Amount || "0"
+    );
+    setToken1Amount(newToken1Amount);
     form.setValue("amount1", newToken1Amount || "0");
-  }, [token0Amount])
+  }, [token0Amount]);
 
   // temporary comment
 
@@ -415,12 +481,12 @@ export default function NewPositionPage() {
   //   setToken0Amount(newToken0Amount)
   // }, [token1Amount])
 
-  
-
   if (!isConnected) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <h2 className="text-2xl font-bold mb-4">Connect your wallet to continue</h2>
+        <h2 className="text-2xl font-bold mb-4">
+          Connect your wallet to continue
+        </h2>
         <p className="text-muted-foreground">
           Please connect your wallet to create a new LP position
         </p>
@@ -453,11 +519,11 @@ export default function NewPositionPage() {
                 {(isLoadingToken0Price || token0Price) && (
                   <div className="flex items-center mt-2">
                     {isLoadingToken0Price ? (
-                      <span className="text-sm text-muted-foreground">Loading price...</span>
-                    ) : (
-                      <span className="text-sm">
-                        ≈ ${token0Price} USD
+                      <span className="text-sm text-muted-foreground">
+                        Loading price...
                       </span>
+                    ) : (
+                      <span className="text-sm">≈ ${token0Price} USD</span>
                     )}
                   </div>
                 )}
@@ -475,11 +541,11 @@ export default function NewPositionPage() {
                 {(isLoadingToken1Price || token1Price) && (
                   <div className="flex items-center mt-2">
                     {isLoadingToken1Price ? (
-                      <span className="text-sm text-muted-foreground">Loading price...</span>
-                    ) : (
-                      <span className="text-sm">
-                        ≈ ${token1Price} USD
+                      <span className="text-sm text-muted-foreground">
+                        Loading price...
                       </span>
+                    ) : (
+                      <span className="text-sm">≈ ${token1Price} USD</span>
                     )}
                   </div>
                 )}
@@ -491,7 +557,10 @@ export default function NewPositionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Fee Tier</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select fee tier" />
@@ -509,9 +578,13 @@ export default function NewPositionPage() {
                 )}
               />
 
-              <div className={`${(!token0Name || !token1Name) ? "hidden" : ""}`}>
+              <div className={`${!token0Name || !token1Name ? "hidden" : ""}`}>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
+                  <Tabs
+                    value={currentTab}
+                    onValueChange={handleTabChange}
+                    className="w-full"
+                  >
                     <TabsList>
                       <TabsTrigger value="zpo">{`${token1Name} per ${token0Name}`}</TabsTrigger>
                       <TabsTrigger value="opz">{`${token0Name} per ${token1Name}`}</TabsTrigger>
@@ -527,8 +600,8 @@ export default function NewPositionPage() {
                       <FormItem>
                         <FormLabel>Min Price</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="0.0" 
+                          <Input
+                            placeholder="0.0"
                             value={minPriceInput}
                             onChange={(e) => setMinPriceInput(e.target.value)}
                           />
@@ -545,7 +618,7 @@ export default function NewPositionPage() {
                       <FormItem className="hidden">
                         <FormLabel>Tick Lower</FormLabel>
                         <FormControl>
-                          <Input 
+                          <Input
                             value={tickLowerInput}
                             onChange={(e) => setTickLowerInput(e.target.value)}
                           />
@@ -562,8 +635,8 @@ export default function NewPositionPage() {
                       <FormItem>
                         <FormLabel>Max Price</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="0.0" 
+                          <Input
+                            placeholder="0.0"
                             value={maxPriceInput}
                             onChange={(e) => setMaxPriceInput(e.target.value)}
                           />
@@ -580,7 +653,7 @@ export default function NewPositionPage() {
                       <FormItem className="hidden">
                         <FormLabel>Tick Upper</FormLabel>
                         <FormControl>
-                          <Input 
+                          <Input
                             value={tickUpperInput}
                             onChange={(e) => setTickUpperInput(e.target.value)}
                           />
@@ -599,7 +672,7 @@ export default function NewPositionPage() {
                       <FormItem>
                         <FormLabel>{`${token0Name} Amount`}</FormLabel>
                         <FormControl>
-                          <Input 
+                          <Input
                             value={token0Amount || ""}
                             onChange={(e) => setToken0Amount(e.target.value)}
                             placeholder="0.0"
@@ -607,7 +680,14 @@ export default function NewPositionPage() {
                         </FormControl>
                         {token0Price && !isNaN(Number(token0Amount)) && (
                           <div className="text-sm text-muted-foreground mt-1">
-                            ≈ ${(Number(token0Amount) * Number(token0Price)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                            ≈ $
+                            {(
+                              Number(token0Amount) * Number(token0Price)
+                            ).toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}{" "}
+                            USD
                           </div>
                         )}
                         <FormMessage />
@@ -622,15 +702,22 @@ export default function NewPositionPage() {
                       <FormItem>
                         <FormLabel>{`${token1Name} Amount`}</FormLabel>
                         <FormControl>
-                          <Input 
+                          <Input
                             value={token1Amount || ""}
                             onChange={(e) => setToken1Amount(e.target.value)}
-                            placeholder="0.0" 
+                            placeholder="0.0"
                           />
                         </FormControl>
                         {token1Price && !isNaN(Number(token1Amount)) && (
                           <div className="text-sm text-muted-foreground mt-1">
-                            ≈ ${(Number(token1Amount) * Number(token1Price)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                            ≈ $
+                            {(
+                              Number(token1Amount) * Number(token1Price)
+                            ).toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}{" "}
+                            USD
                           </div>
                         )}
                         <FormMessage />
@@ -639,7 +726,6 @@ export default function NewPositionPage() {
                   />
                 </div>
               </div>
-              
             </div>
 
             <div className="flex justify-end gap-4 mt-4">
@@ -647,7 +733,7 @@ export default function NewPositionPage() {
                 variant="outline"
                 onClick={(e) => {
                   e.preventDefault();
-                  router.push('/');
+                  router.push("/");
                 }}
               >
                 Cancel
@@ -658,36 +744,41 @@ export default function NewPositionPage() {
         </Form>
       </Card>
 
-      <AlertDialog open={pageStatus === "approving" || pageStatus === "opening" || pageStatus === "opened"}>
+      <AlertDialog
+        open={
+          pageStatus === "approving" ||
+          pageStatus === "opening" ||
+          pageStatus === "opened"
+        }
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Status</AlertDialogTitle>
             <AlertDialogDescription>
-              {
-                pageStatus === "approving" ? 
-                  "Approving your tokens to deposit into liquidity pools..." 
-                  : 
-                  pageStatus === "opening" ? 
-                    "Opening your position..."
-                    :
-                    "Position opened successfully!"
-              }
+              {pageStatus === "approving"
+                ? "Approving your tokens to deposit into liquidity pools..."
+                : pageStatus === "opening"
+                ? "Opening your position..."
+                : "Position opened successfully!"}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {
-            pageStatus === "opened" && (
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setPageStatus("loaded")}>Open another position</AlertDialogCancel>
-                <AlertDialogAction onClick={(e) => {
+          {pageStatus === "opened" && (
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setPageStatus("loaded")}>
+                Open another position
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
                   e.preventDefault();
-                  router.push('/');
-                }}>Check open positions</AlertDialogAction>
-              </AlertDialogFooter>
-            )
-          }
+                  router.push("/");
+                }}
+              >
+                Check open positions
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          )}
         </AlertDialogContent>
       </AlertDialog>
-
     </div>
   );
 }
