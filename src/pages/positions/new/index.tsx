@@ -356,8 +356,6 @@ export default function NewPositionPage() {
           recipient: POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
           deadline: deadlineTimestamp,
         },
-        _owner: address,
-        _accountingUnit: realToken1.address,
       };
 
       console.log("Opening position...");
@@ -383,7 +381,7 @@ export default function NewPositionPage() {
         abi: PositionManagerABI as Abi,
         address: POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
         functionName: "openPosition",
-        args: [params._params, params._owner, params._accountingUnit],
+        args: [params._params],
       });
 
       if (result) {
