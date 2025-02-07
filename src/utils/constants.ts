@@ -1,26 +1,27 @@
 export const POSITION_MANAGER_CONTRACT_ADDRESS = {
-    BASE: "0xf410fb8d5862060182495ba5d23705cdc3f5af91" as `0x${string}`,
-    ETHEREUM: '',
-    ARBITRUM: ''
-}
+  BASE: "0xCa6099Cd42475a7915796c7C6c0D004994F40f6C" as `0x${string}`,
+  ETHEREUM: "",
+  ARBITRUM: "",
+};
 
 export const TOKEN_LIST = [
-    { 
-        NAME: "WETH", 
-        ADDRESS: {
-            BASE: "0x4200000000000000000000000000000000000006" as `0x${string}`, 
-        },
-        DECIMAL: 18 
+  {
+    NAME: "WETH",
+    ADDRESS: {
+      BASE: "0x4200000000000000000000000000000000000006" as `0x${string}`,
     },
-    { 
-        NAME: "USDC", 
-        ADDRESS: {
-            BASE: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as `0x${string}`
-        }, 
-        DECIMAL: 6 
-    }
-]
+    DECIMAL: 18,
+  },
+  {
+    NAME: "USDC",
+    ADDRESS: {
+      BASE: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as `0x${string}`,
+    },
+    DECIMAL: 6,
+  },
+];
 
-export const SLIPPAGE = 5 // 5%
-export const BPS = 5 // 5%
-export const API_URL = "http://ec2-3-132-245-13.us-east-2.compute.amazonaws.com:3000"
+export const SLIPPAGE = 5; // 5%
+export const BPS = 5; // 5%
+export const API_URL =
+  "http://ec2-3-132-245-13.us-east-2.compute.amazonaws.com:3000";
