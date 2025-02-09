@@ -53,6 +53,7 @@ import {
   getRequiredToken0FromToken1Amount,
   getRequiredToken1FromToken0Amount,
 } from "../../../utils/liquidity";
+import { approveToken, fetchTokenPriceWithLoading, reArrangeTokensByContractAddress, openPosition } from "@/utils/functions";
 
 const formSchema = z.object({
   token0: z.string().min(1, "Token is required"),
@@ -70,7 +71,7 @@ const formSchema = z.object({
 
 export default function NewPositionPage() {
   const { isConnected, address } = useAccount();
-  const { writeContractAsync, status, error } = useWriteContract();
+  const { status, error } = useWriteContract();
   const publicClient = usePublicClient();
   const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
@@ -113,110 +114,69 @@ export default function NewPositionPage() {
   const debouncedMinPrice = useDebounce(minPriceInput, 1000);
   const debouncedMaxPrice = useDebounce(maxPriceInput, 1000);
 
-  useEffect(() => {
-    if (!debouncedMinPrice || isNaN(Number(debouncedMinPrice))) return;
-
-    let numericPrice = Number(debouncedMinPrice);
-    const [realToken0, realToken1] = getRealTokens();
+  const setNearestValidPrice = (debouncedValue: string, isMinOrMax: boolean) => {
+    if (!debouncedValue || isNaN(Number(debouncedValue))) return;
+    let numericPrice = Number(debouncedValue);
+    const [token0, token1] = getReArrangedTokens();
     if (
-      (realToken0.address === token0Address && currentTab === "opz") ||
-      (realToken0.address !== token0Address && currentTab === "zpo")
+      (token0.address === token0Address && currentTab === "opz") ||
+      (token0.address !== token0Address && currentTab === "zpo")
     )
       numericPrice = 1 / numericPrice;
 
     const tick = priceToTick(
       numericPrice,
-      realToken0.decimals,
-      realToken1.decimals
+      token0.decimals,
+      token1.decimals
     );
     const validTick = nearestValidTick(tick, feeTier || 3000);
-
-    setTickLowerInput(validTick.toString());
-    form.setValue("tickLower", validTick.toString());
-
     let adjustedPrice = tickToPrice(
       validTick,
-      realToken0.decimals,
-      realToken1.decimals
+      token0.decimals,
+      token1.decimals
     ).toString();
     if (
-      (realToken0.address === token0Address && currentTab === "opz") ||
-      (realToken0.address !== token0Address && currentTab === "zpo")
+      (token0.address === token0Address && currentTab === "opz") ||
+      (token0.address !== token0Address && currentTab === "zpo")
     )
       adjustedPrice = 1 / adjustedPrice;
 
-    setMinPriceInput(adjustedPrice);
-    form.setValue("minPrice", adjustedPrice);
-  }, [debouncedMinPrice, form]);
+    if (isMinOrMax) {
+      setTickLowerInput(validTick.toString());
+      form.setValue("tickLower", validTick.toString());
+      setMinPriceInput(adjustedPrice);
+      form.setValue("minPrice", adjustedPrice);
+    }
+    else {
+      setTickUpperInput(validTick.toString());
+      form.setValue("tickUpper", validTick.toString());
+      setMaxPriceInput(adjustedPrice);
+      form.setValue("maxPrice", adjustedPrice);
+    }
+  }
 
   useEffect(() => {
-    if (!debouncedMaxPrice || isNaN(Number(debouncedMaxPrice))) return;
+    setNearestValidPrice(debouncedMinPrice, true);
+  }, [debouncedMinPrice]);
 
-    let numericPrice = Number(debouncedMaxPrice);
-    const [realToken0, realToken1] = getRealTokens();
-    if (
-      (realToken0.address === token0Address && currentTab === "opz") ||
-      (realToken0.address !== token0Address && currentTab === "zpo")
-    )
-      numericPrice = 1 / numericPrice;
+  useEffect(() => {
+    setNearestValidPrice(debouncedMaxPrice, false);
+  }, [debouncedMaxPrice]);
 
-    const tick = priceToTick(
-      numericPrice,
-      realToken0.decimals,
-      realToken1.decimals
-    );
-    const validTick = nearestValidTick(tick, feeTier || 3000);
-
-    setTickUpperInput(validTick.toString());
-    form.setValue("tickUpper", validTick.toString());
-
-    let adjustedPrice = tickToPrice(
-      validTick,
-      realToken0.decimals,
-      realToken1.decimals
-    ).toString();
-    if (
-      (realToken0.address === token0Address && currentTab === "opz") ||
-      (realToken0.address !== token0Address && currentTab === "zpo")
-    )
-      adjustedPrice = 1 / adjustedPrice;
-
-    setMaxPriceInput(adjustedPrice);
-    form.setValue("maxPrice", adjustedPrice);
-  }, [debouncedMaxPrice, form]);
-
-  const getRealTokens = () => {
-    if (!token0Address || !token1Address || token0Address < token1Address)
-      return [
-        {
-          address: token0Address as `0x${string}`,
-          decimals: token0Decimal || 18,
-          name: token0Name,
-          price: token0Price,
-        },
-        {
-          address: token1Address as `0x${string}`,
-          decimals: token1Decimal || 18,
-          name: token1Name,
-          price: token1Price,
-        },
-      ];
-    else
-      return [
-        {
-          address: token1Address as `0x${string}`,
-          decimals: token1Decimal || 18,
-          name: token1Name,
-          price: token1Price,
-        },
-        {
-          address: token0Address as `0x${string}`,
-          decimals: token0Decimal || 18,
-          name: token0Name,
-          price: token0Price,
-        },
-      ];
-  };
+  const getReArrangedTokens = () => reArrangeTokensByContractAddress([
+    {
+      address: token0Address as `0x${string}`,
+      decimals: token0Decimal || 18,
+      name: token0Name,
+      price: token0Price,
+    },
+    {
+      address: token1Address as `0x${string}`,
+      decimals: token1Decimal || 18,
+      name: token1Name,
+      price: token1Price,
+    },
+  ])
 
   const handleTabChange = (value: string) => {
     setCurrentTab(value as "zpo" | "opz");
@@ -229,227 +189,54 @@ export default function NewPositionPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setPageStatus("approving");
-
-      // Approve both tokens
-      if (!token0Address || !token0Address.startsWith("0x")) {
-        throw new Error("Invalid token0 address");
+      
+      const { success: approveToken0Success } = await approveToken(token0Address as `0x${string}`, POSITION_MANAGER_CONTRACT_ADDRESS.BASE, token0Decimal || 18, values.amount0)
+      if (!approveToken0Success) {
+        setPageStatus("approve token failed")
+        return
+      }
+      const { success: approveToken1Success } = await approveToken(token1Address as `0x${string}`, POSITION_MANAGER_CONTRACT_ADDRESS.BASE, token1Decimal || 18, values.amount1)
+      if (!approveToken1Success) {
+        setPageStatus("approve token failed")
+        return
       }
 
-      if (!token1Address || !token1Address.startsWith("0x")) {
-        throw new Error("Invalid token1 address");
-      }
-
-      const token0ApprovalConfig = {
-        abi: erc20Abi,
-        address: token0Address as `0x${string}`,
-        functionName: "approve",
-        args: [
-          POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
-          parseUnits(values.amount0, token0Decimal || 18),
-        ],
-      } as const;
-
-      const token1ApprovalConfig = {
-        abi: erc20Abi,
-        address: token1Address as `0x${string}`,
-        functionName: "approve",
-        args: [
-          POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
-          parseUnits(values.amount1, token1Decimal || 18),
-        ],
-      } as const;
-
-      console.log(`Approving ${token0Name}`);
-      let token0Hash = null;
-      try {
-        token0Hash = await writeContractAsync(token0ApprovalConfig);
-        console.log("Token0 approval tx:", token0Hash);
-      } catch (error: any) {
-        if (error?.message?.includes("User rejected") || error?.code === 4001) {
-          console.log("User rejected token0 approval");
-          setPageStatus("loaded");
-          return;
-        }
-        throw error;
-      }
-
-      console.log(`Approving ${token1Name}`);
-      let token1Hash = null;
-      try {
-        token1Hash = await writeContractAsync(token1ApprovalConfig);
-        console.log("Token1 approval tx:", token1Hash);
-      } catch (error: any) {
-        if (error?.message?.includes("User rejected") || error?.code === 4001) {
-          console.log("User rejected token1 approval");
-          setPageStatus("loaded");
-          return;
-        }
-        throw error;
-      }
-
-      if (!token0Hash || !token1Hash) {
-        console.log("Token approval failed");
-        setPageStatus("loaded");
-        return;
-      }
-
-      // Wait for both approval transactions to be confirmed
-      if (publicClient) {
-        console.log("Waiting for token approvals to be confirmed...");
-        await Promise.all([
-          publicClient.waitForTransactionReceipt({ hash: token0Hash }),
-          publicClient.waitForTransactionReceipt({ hash: token1Hash }),
-        ]);
-        console.log("Both token approvals confirmed");
-      }
-
-      setPageStatus("opening");
-
-      if (!publicClient) {
-        console.error("publicClient is not available");
-        return;
-      }
-
-      const block = await publicClient.getBlock();
-      const currentTimestamp = Number(block.timestamp);
-      const deadlineTimestamp = currentTimestamp + 10 * 60; // Add 10 minutes in seconds
-
-      // Open position
-      if (!writeContractAsync) {
-        console.error("writeContractAsync is not available");
-        return;
-      }
-
-      const [realToken0, realToken1] = getRealTokens();
+      const [realToken0, realToken1] = getReArrangedTokens();
       const realToken0Value =
         realToken0.address === token0Address ? values.amount0 : values.amount1;
       const realToken1Value =
         realToken1.address === token1Address ? values.amount1 : values.amount0;
 
-      console.log({
-        token0: realToken0.address,
-        token1: realToken1.address,
-        fee: parseInt(values.feeTier),
-        tickUpper: parseInt(values.tickUpper),
-        tickLower: parseInt(values.tickLower),
-        amount0Desired: parseUnits(realToken0Value, realToken0.decimals),
-        amount1Desired: parseUnits(realToken1Value, realToken1.decimals),
-        amount0Min: 0,
-        amount1Min: 0,
-        recipient: POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
-        deadline: deadlineTimestamp,
-      });
-      console.log(address);
-      console.log(realToken1.address);
-
-      const params = {
-        _params: {
-          token0: realToken0.address,
-          token1: realToken1.address,
-          fee: parseInt(values.feeTier),
-          tickUpper: parseInt(values.tickUpper),
-          tickLower: parseInt(values.tickLower),
-          amount0Desired: parseUnits(realToken0Value, realToken0.decimals),
-          amount1Desired: parseUnits(realToken1Value, realToken1.decimals),
-          amount0Min: 0,
-          amount1Min: 0,
-          recipient: POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
-          deadline: deadlineTimestamp,
-        },
-      };
-
-      console.log("Opening position...");
-      try {
-        await openPosition(params);
-      } catch (error: any) {
-        if (error?.message?.includes("User rejected") || error?.code === 4001) {
-          console.log("User rejected position opening transaction");
-          setPageStatus("loaded");
-          return;
-        }
-        throw error;
+      setPageStatus("opening");
+      const { success: openPositionSuccess, result } = await openPosition(publicClient, {
+        token0Address: realToken0.address,
+        token1Address: realToken1.address,
+        feeTier: values.feeTier,
+        tickUpper: values.tickUpper,
+        tickLower: values.tickLower,
+        token0Value: realToken0Value,
+        token1Value: realToken1Value,
+        token0Decimal: realToken0.decimals,
+        token1Decimal: realToken1.decimals
+      })
+      if (!openPositionSuccess) {
+        setPageStatus("open position failed")
+        return
       }
-    } catch (error) {
-      console.error("Error in transaction process:", error);
-      setPageStatus("error");
+      setPageStatus("open position success")
+    } catch(err) {
+      console.log(err)
+      setPageStatus("error while open position")
+      return
     }
   }
 
-  const openPosition = async (params: any) => {
-    try {
-      const result: any = await writeContractAsync({
-        abi: PositionManagerABI as Abi,
-        address: POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
-        functionName: "openPosition",
-        args: [params._params],
-      });
-
-      if (result) {
-        console.log("Transaction hash:", result);
-        setPageStatus("opened");
-        return result;
-      }
-    } catch (err: any) {
-      console.error("Error in openPosition:", err);
-      setPageStatus("error");
-    }
-  };
-
   useEffect(() => {
-    if (status === "success") {
-      console.log("Transaction successful!");
-      // Add your success handling here
-    }
-    if (status === "error") {
-      console.error("Transaction failed:", error);
-      // Add your error handling here
-    }
-    // if (status === 'loading') {
-    //   console.log('Transaction is processing...');
-    //   // Add your loading state handling here
-    // }
-  }, [status, error]);
-
-  useEffect(() => {
-    const fetchToken0Price = async () => {
-      setIsLoadingToken0Price(true);
-      try {
-        const response = await fetch(
-          `https://api.dexscreener.com/latest/dex/tokens/${token0Address}`
-        );
-        const data = await response.json();
-
-        if (data.pairs && data.pairs[0]) {
-          setToken0Price(data.pairs[0].priceUsd);
-        }
-      } catch (error) {
-        console.error("Error fetching token0 price:", error);
-      } finally {
-        setIsLoadingToken0Price(false);
-      }
-    };
-    fetchToken0Price();
+    fetchTokenPriceWithLoading(token0Address || "", setToken0Price, setIsLoadingToken0Price);
   }, [token0Address]);
 
   useEffect(() => {
-    const fetchToken1Price = async () => {
-      setIsLoadingToken1Price(true);
-      try {
-        const response = await fetch(
-          `https://api.dexscreener.com/latest/dex/tokens/${token1Address}`
-        );
-        const data = await response.json();
-
-        if (data.pairs && data.pairs[0]) {
-          setToken1Price(data.pairs[0].priceUsd);
-        }
-      } catch (error) {
-        console.error("Error fetching token1 price:", error);
-      } finally {
-        setIsLoadingToken1Price(false);
-      }
-    };
-    fetchToken1Price();
+    fetchTokenPriceWithLoading(token1Address || "", setToken1Price, setIsLoadingToken1Price);
   }, [token1Address]);
 
   useEffect(() => {
@@ -466,20 +253,12 @@ export default function NewPositionPage() {
       parseFloat(token0Price || "0.0") / parseFloat(token1Price || "0.0"),
       parseFloat(priceLower),
       parseFloat(priceUpper),
-      token0Amount || "0"
+      token0Amount || "0",
+      token1Decimal || 18
     );
     setToken1Amount(newToken1Amount);
     form.setValue("amount1", newToken1Amount || "0");
   }, [token0Amount]);
-
-  // temporary comment
-
-  // useEffect(() => {
-  //   const priceLower = currentTab === "opz" ? minPriceInput : (1 / parseFloat(minPriceInput)).toString();
-  //   const priceUpper = currentTab === "opz" ? maxPriceInput : (1 / parseFloat(maxPriceInput)).toString();
-  //   const newToken0Amount = getRequiredToken0FromToken1Amount(parseFloat(token1Price || "0.0") / parseFloat(token0Price || "0.0"), parseFloat(priceLower), parseFloat(priceUpper), token1Amount || "0")
-  //   setToken0Amount(newToken0Amount)
-  // }, [token1Amount])
 
   if (!isConnected) {
     return (

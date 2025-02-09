@@ -13,7 +13,7 @@ if (!projectId) {
   throw new Error('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not defined');
 }
 
-const config = getDefaultConfig({
+export const config = getDefaultConfig({
   appName: 'Yild Finance',
   projectId,
   chains: [base],
