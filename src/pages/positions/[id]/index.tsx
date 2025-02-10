@@ -36,6 +36,7 @@ import { useState } from "react";
 import { ethers } from "ethers";
 import { getParaswapData } from "@/utils/requests";
 import { usePositionsStore } from "@/store/usePositionsStore";
+import { closePosition } from "@/utils/functions";
 
 export default function PositionPage() {
   const { isConnected, address } = useAccount();
@@ -105,7 +106,8 @@ export default function PositionPage() {
     // })
   };
 
-  const closePosition = () => {
+  const confirmClosePosition = async () => {
+    await closePosition(positionId?.toString() || "");
     // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals }
     //         = useReadContract({
     //           abi: PositionManagerABI,
@@ -287,7 +289,7 @@ export default function PositionPage() {
                   <DialogTitle>Are you Sure?</DialogTitle>
                 </DialogHeader>
                 <div className="text-center">
-                  <Button className="px-8" onClick={closePosition}>
+                  <Button className="px-8" onClick={confirmClosePosition}>
                     Yes
                   </Button>
                   <DialogClose asChild>

@@ -7,9 +7,9 @@ import {
   polygon,
   sepolia,
 } from "wagmi/chains";
-import { writeContract, waitForTransactionReceipt } from "@wagmi/core";
+import { writeContract, waitForTransactionReceipt, readContract } from "@wagmi/core";
 import { config as wagmiConfig } from "@/components/providers";
-import { POSITION_MANAGER_CONTRACT_ADDRESS } from "./constants";
+import { POSITION_MANAGER_CONTRACT_ADDRESS, PARASWAP_API_URL } from "./constants";
 import { PositionManagerABI } from "@/abi/PositionManager";
 import { erc20Abi, parseUnits } from "viem";
 
@@ -175,6 +175,78 @@ export const openPosition = async (
       success: false,
       result: "Unknown error"
     };
+  }
+}
+
+export const getSwapInfo = async (tokenId: string) => {
+  const res: any = await readContract(wagmiConfig, {
+    abi: PositionManagerABI, 
+    address: POSITION_MANAGER_CONTRACT_ADDRESS.BASE, 
+    functionName: "getSwapInfo",
+    args: [parseInt(tokenId)]
+  })
+  if (res.length !== 12) {
+    console.log("Invalid data format from getSwapInfo");
+    return null;
+  }
+  const [token0Address, token1Address, token0Decimal, token1Decimal, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimal] = res
+  console.log({
+    token0Address, token1Address, token0Decimal, token1Decimal, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimal
+  })
+  return {
+    token0Address, token1Address, token0Decimal, token1Decimal, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimal
+  }
+}
+
+export const closePosition = async (tokenId: string) => {
+  const swapInfo = await getSwapInfo(tokenId)
+  if (!swapInfo)
+    return
+  const { token0Address, token1Address, token0Decimal, token1Decimal, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimal } = swapInfo
+
+  const totalAmount0ToSwap = parseInt((principal0 + feesEarned0 - protocolFee0).toString())
+  const minBuyAmount0 = (totalAmount0ToSwap * 0.95).toFixed(0)
+  console.log(`${PARASWAP_API_URL}&srcToken=${token0Address}&srcDecimals=${token0Decimal}&destToken=${token1Address}&destDecimals=${token1Decimal}&amount=${totalAmount0ToSwap}&side=SELL&network=8453&slippage=5&userAddress=${POSITION_MANAGER_CONTRACT_ADDRESS.BASE}`)
+
+
+  const response = await fetch(`${PARASWAP_API_URL}&srcToken=${token0Address}&srcDecimals=${token0Decimal}&destToken=${token1Address}&destDecimals=${token1Decimal}&amount=${minBuyAmount0}&side=SELL&network=8453&slippage=5&userAddress=${POSITION_MANAGER_CONTRACT_ADDRESS.BASE}`);
+  const response_json = await response.json();
+  if (response_json && response_json.txParams) {
+    const { data } = response_json.txParams;
+    const params = [
+      BigInt(tokenId), 
+      data.toString(),
+      "",
+      BigInt((principal0 + feesEarned0 - protocolFee0).toString()), 
+      BigInt(0)
+    ]
+    console.log(`-------------------params-----------------------`)
+    console.log(params)
+    try {
+      const hash = await writeContract(wagmiConfig, {
+        abi: PositionManagerABI,
+        address: POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
+        functionName: "closePosition",
+        args: params,
+      });
+      const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
+      return {
+        success: true,
+        result: hash
+      }
+    } catch (error: any) {
+      console.log(error)
+      if (error?.message?.includes("User rejected") || error?.code === 4001) {
+        return {
+          success: false,
+          result: "User rejected open position"
+        };
+      }
+      return {
+        success: false,
+        result: "Unknown error"
+      };
+    }
   }
 }
 
