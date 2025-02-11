@@ -206,18 +206,19 @@ export const closePosition = async (tokenId: string) => {
 
   const totalAmount0ToSwap = parseInt((principal0 + feesEarned0 - protocolFee0).toString())
   const minBuyAmount0 = (totalAmount0ToSwap * 0.95).toFixed(0)
-  console.log(`${PARASWAP_API_URL}&srcToken=${token0Address}&srcDecimals=${token0Decimal}&destToken=${token1Address}&destDecimals=${token1Decimal}&amount=${totalAmount0ToSwap}&side=SELL&network=8453&slippage=5&userAddress=${POSITION_MANAGER_CONTRACT_ADDRESS.BASE}`)
+  console.log(`${PARASWAP_API_URL}&srcToken=${token0Address}&srcDecimals=${token0Decimal}&destToken=${ownerAccountingUnit}&destDecimals=${ownerAccountingUnitDecimal}&amount=${totalAmount0ToSwap}&side=SELL&network=8453&slippage=5&userAddress=${POSITION_MANAGER_CONTRACT_ADDRESS.BASE}`)
 
 
-  const response = await fetch(`${PARASWAP_API_URL}&srcToken=${token0Address}&srcDecimals=${token0Decimal}&destToken=${token1Address}&destDecimals=${token1Decimal}&amount=${minBuyAmount0}&side=SELL&network=8453&slippage=5&userAddress=${POSITION_MANAGER_CONTRACT_ADDRESS.BASE}`);
+  const response = await fetch(`${PARASWAP_API_URL}&srcToken=${token0Address}&srcDecimals=${token0Decimal}&destToken=${ownerAccountingUnit}&destDecimals=${ownerAccountingUnitDecimal}&amount=${minBuyAmount0}&side=SELL&network=8453&slippage=5&userAddress=${POSITION_MANAGER_CONTRACT_ADDRESS.BASE}`);
   const response_json = await response.json();
   if (response_json && response_json.txParams) {
     const { data } = response_json.txParams;
+    console.log((response_json.priceRoute.destAmount * 0.95).toFixed(0))
     const params = [
       BigInt(tokenId), 
       data.toString(),
-      "",
-      BigInt((principal0 + feesEarned0 - protocolFee0).toString()), 
+      "0x",
+      BigInt((response_json.priceRoute.destAmount * 0.95).toFixed(0)), 
       BigInt(0)
     ]
     console.log(`-------------------params-----------------------`)
