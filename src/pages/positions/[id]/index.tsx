@@ -24,21 +24,58 @@ import {
   RefreshCw,
   X,
 } from "lucide-react";
-import { useAccount } from "wagmi";
-import { useState } from "react";
+import { useAccount, useChainId, usePublicClient } from "wagmi";
+import { useState, useEffect } from "react";
 import { usePositionsStore } from "@/store/usePositionsStore";
-import { closePosition } from "@/utils/functions";
+import { approveToken, closePosition, increaseLiquidity, decreaseLiquidity, fetchTokenPrice, getManagerContractAddressFromChainId } from "@/utils/functions";
+import { useDebounce } from "@/hooks/useDebounce";
+import { tickToPrice } from "@/utils/ticks";
+import { getRequiredToken1FromToken0Amount } from "@/utils/liquidity";
 
 export default function PositionPage() {
   const { isConnected } = useAccount();
+  const publicClient = usePublicClient();
+  const chainId = useChainId();
   const { positions } = usePositionsStore();
 
-  const [increaseToken0Amount, setIncreaseToken0Amount] = useState(0);
-  const [increaseToken1Amount, setIncreaseToken1Amount] = useState(0);
+  const [pageStatus, setPageStatus] = useState("loaded");
+  const [increaseToken0Amount, setIncreaseToken0Amount] = useState("");
+  const [increaseToken1Amount, setIncreaseToken1Amount] = useState("");
+  const debouncedIncreaseToken0Amount = useDebounce(increaseToken0Amount, 1000)
+
 
   const router = useRouter();
   const positionId = router.query.id;
   const position = positions.find((p) => p.tokenId === Number(positionId));
+
+  if (!position)
+    return (
+      <div>
+        Position Not Found
+      </div>
+    )
+
+  const { tokenId, tickLower, tickUpper, decimals0, decimals1, token0Address, token1Address, symbol0, symbol1 } = position
+  
+  useEffect(() => {
+    if (!debouncedIncreaseToken0Amount)
+      return
+    const setValidToken1Amount = async () => {
+      const priceLower = tickToPrice(tickLower, decimals0, decimals1)
+      const priceUpper = tickToPrice(tickUpper, decimals0, decimals1)
+      const token0Price = await fetchTokenPrice(token0Address, chainId)
+      const token1Price = await fetchTokenPrice(token1Address, chainId)
+      const newToken1Amount = getRequiredToken1FromToken0Amount(
+        parseFloat(token0Price || "0.0") / parseFloat(token1Price || "0.0"),
+        parseFloat(priceLower),
+        parseFloat(priceUpper),
+        debouncedIncreaseToken0Amount.toString() || "0",
+        decimals1 || 18
+      );
+      setIncreaseToken1Amount(newToken1Amount)
+    }
+    setValidToken1Amount()
+  }, [debouncedIncreaseToken0Amount]);
 
   if (!isConnected) {
     return (
@@ -57,16 +94,56 @@ export default function PositionPage() {
 
   };
 
-  const increasePosition = () => {
+  const increasePosition = async () => {
+    try {
+      setPageStatus("approving");
+      
+      const { success: approveToken0Success } = await approveToken(token0Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), decimals0, increaseToken0Amount)
+      if (!approveToken0Success) {
+        setPageStatus("approve token failed")
+        return
+      }
+      const { success: approveToken1Success } = await approveToken(token1Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), decimals1, increaseToken1Amount)
+      if (!approveToken1Success) {
+        setPageStatus("approve token failed")
+        return
+      }
 
+      setPageStatus("adding");
+      const { success: addLiquiditySuccess, result } = await increaseLiquidity(chainId, {
+        tokenId,
+        amount0: increaseToken0Amount,
+        amount1: increaseToken1Amount,
+        decimals0,
+        decimals1
+      })
+      if (!addLiquiditySuccess) {
+        setPageStatus("add liquidity failed")
+        return
+      }
+      setPageStatus("add liquidity success")
+    } catch(err) {
+      console.log(err)
+      setPageStatus("error while add liquidity")
+      return
+    }
   };
 
-  const decreasePosition = () => {
-
+  const decreasePosition = async () => {
+    const amountInBPS = 500 // 18%
+    try {
+      await decreaseLiquidity(tokenId, chainId, amountInBPS);
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   const confirmClosePosition = async () => {
-    await closePosition(positionId?.toString() || "");
+    try {
+      await closePosition(tokenId.toString(), chainId);
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   const compoundPosition = () => {
@@ -151,26 +228,26 @@ export default function PositionPage() {
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="name" className="text-right">
-                      Token0
+                      {symbol0}
                     </Label>
                     <Input
                       type="number"
                       className="col-span-3"
                       onChange={(e) =>
-                        setIncreaseToken0Amount(Number(e.target.value))
+                        setIncreaseToken0Amount(e.target.value)
                       }
                       value={increaseToken0Amount}
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="name" className="text-right">
-                      Token1
+                      {symbol1}
                     </Label>
                     <Input
                       type="number"
                       className="col-span-3"
                       onChange={(e) =>
-                        setIncreaseToken1Amount(Number(e.target.value))
+                        setIncreaseToken1Amount(e.target.value)
                       }
                       value={increaseToken1Amount}
                     />
