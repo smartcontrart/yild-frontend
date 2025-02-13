@@ -7,11 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { parseUnits } from "viem";
-import type { Abi } from "viem";
 import {
   useAccount,
-  useWriteContract,
   useChainId,
   usePublicClient,
 } from "wagmi";
@@ -41,9 +38,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { POSITION_MANAGER_CONTRACT_ADDRESS } from "@/utils/constants";
-import { erc20Abi } from "viem";
-import { PositionManagerABI } from "@/abi/PositionManager";
 import { TokenSelector } from "@/components/token-selector";
 import { useState, useEffect } from "react";
 import { priceToTick, tickToPrice, nearestValidTick } from "@/utils/ticks";
@@ -53,7 +47,7 @@ import {
   getRequiredToken0FromToken1Amount,
   getRequiredToken1FromToken0Amount,
 } from "../../../utils/liquidity";
-import { approveToken, fetchTokenPriceWithLoading, reArrangeTokensByContractAddress, openPosition } from "@/utils/functions";
+import { approveToken, fetchTokenPriceWithLoading, reArrangeTokensByContractAddress, openPosition, getManagerContractAddressFromChainId } from "@/utils/functions";
 
 const formSchema = z.object({
   token0: z.string().min(1, "Token is required"),
@@ -70,8 +64,8 @@ const formSchema = z.object({
 });
 
 export default function NewPositionPage() {
-  const { isConnected, address } = useAccount();
-  const { status, error } = useWriteContract();
+  const { isConnected } = useAccount();
+  const chainId = useChainId();
   const publicClient = usePublicClient();
   const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
@@ -98,8 +92,8 @@ export default function NewPositionPage() {
   const [token1Amount, setToken1Amount] = useState<string | null>(null);
   const [token0Address, setToken0Address] = useState<string | null>(null);
   const [token1Address, setToken1Address] = useState<string | null>(null);
-  const [token0Decimal, setToken0Decimal] = useState<number | null>(null);
-  const [token1Decimal, setToken1Decimal] = useState<number | null>(null);
+  const [token0Decimals, setToken0Decimals] = useState<number | null>(null);
+  const [token1Decimals, setToken1Decimals] = useState<number | null>(null);
   const [token0Name, setToken0Name] = useState<string | null>(null);
   const [token1Name, setToken1Name] = useState<string | null>(null);
   const [isLoadingToken0Price, setIsLoadingToken0Price] = useState(false);
@@ -166,13 +160,13 @@ export default function NewPositionPage() {
   const getReArrangedTokens = () => reArrangeTokensByContractAddress([
     {
       address: token0Address as `0x${string}`,
-      decimals: token0Decimal || 18,
+      decimals: token0Decimals || 18,
       name: token0Name,
       price: token0Price,
     },
     {
       address: token1Address as `0x${string}`,
-      decimals: token1Decimal || 18,
+      decimals: token1Decimals || 18,
       name: token1Name,
       price: token1Price,
     },
@@ -190,12 +184,12 @@ export default function NewPositionPage() {
     try {
       setPageStatus("approving");
       
-      const { success: approveToken0Success } = await approveToken(token0Address as `0x${string}`, POSITION_MANAGER_CONTRACT_ADDRESS.BASE, token0Decimal || 18, values.amount0)
+      const { success: approveToken0Success } = await approveToken(token0Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token0Decimals || 18, values.amount0)
       if (!approveToken0Success) {
         setPageStatus("approve token failed")
         return
       }
-      const { success: approveToken1Success } = await approveToken(token1Address as `0x${string}`, POSITION_MANAGER_CONTRACT_ADDRESS.BASE, token1Decimal || 18, values.amount1)
+      const { success: approveToken1Success } = await approveToken(token1Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token1Decimals || 18, values.amount1)
       if (!approveToken1Success) {
         setPageStatus("approve token failed")
         return
@@ -208,7 +202,7 @@ export default function NewPositionPage() {
         realToken1.address === token1Address ? values.amount1 : values.amount0;
 
       setPageStatus("opening");
-      const { success: openPositionSuccess, result } = await openPosition(publicClient, {
+      const { success: openPositionSuccess, result } = await openPosition(publicClient, chainId, {
         token0Address: realToken0.address,
         token1Address: realToken1.address,
         feeTier: values.feeTier,
@@ -216,8 +210,8 @@ export default function NewPositionPage() {
         tickLower: values.tickLower,
         token0Value: realToken0Value,
         token1Value: realToken1Value,
-        token0Decimal: realToken0.decimals,
-        token1Decimal: realToken1.decimals
+        token0Decimals: realToken0.decimals,
+        token1Decimals: realToken1.decimals
       })
       if (!openPositionSuccess) {
         setPageStatus("open position failed")
@@ -232,11 +226,11 @@ export default function NewPositionPage() {
   }
 
   useEffect(() => {
-    fetchTokenPriceWithLoading(token0Address || "", setToken0Price, setIsLoadingToken0Price);
+    fetchTokenPriceWithLoading(token0Address || "", setToken0Price, setIsLoadingToken0Price, chainId);
   }, [token0Address]);
 
   useEffect(() => {
-    fetchTokenPriceWithLoading(token1Address || "", setToken1Price, setIsLoadingToken1Price);
+    fetchTokenPriceWithLoading(token1Address || "", setToken1Price, setIsLoadingToken1Price, chainId);
   }, [token1Address]);
 
   useEffect(() => {
@@ -254,7 +248,7 @@ export default function NewPositionPage() {
       parseFloat(priceLower),
       parseFloat(priceUpper),
       token0Amount || "0",
-      token1Decimal || 18
+      token1Decimals || 18
     );
     setToken1Amount(newToken1Amount);
     form.setValue("amount1", newToken1Amount || "0");
@@ -276,7 +270,7 @@ export default function NewPositionPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold">Create New Position</h2>
+        <h2 className="text-3xl font-bold">Create New Position {chainId}</h2>
       </div>
 
       <Card className="p-6">
@@ -291,7 +285,7 @@ export default function NewPositionPage() {
                   label="Select Token"
                   onTokenInfoChange={(info) => {
                     setToken0Name(info.symbol);
-                    setToken0Decimal(info.decimals);
+                    setToken0Decimals(info.decimals);
                     setToken0Address(info.address);
                   }}
                 />
@@ -313,7 +307,7 @@ export default function NewPositionPage() {
                   label="Select Token"
                   onTokenInfoChange={(info) => {
                     setToken1Name(info.symbol);
-                    setToken1Decimal(info.decimals);
+                    setToken1Decimals(info.decimals);
                     setToken1Address(info.address);
                   }}
                 />

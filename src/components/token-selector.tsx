@@ -4,11 +4,12 @@ import { Separator } from "@/components/ui/separator"
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { usePublicClient } from "wagmi";
-import { getContract, erc20Abi } from "viem";
+import { usePublicClient, useChainId } from "wagmi";
 import { Control } from "react-hook-form";
 
 import { TOKEN_LIST } from "@/utils/constants";
+import { getERC20TokenInfo } from "@/utils/functions";
+import { ChainIdKey, SupportedChainId } from "@/utils/constants";
 
 interface TokenInfo {
   name: string;
@@ -27,29 +28,24 @@ interface TokenSelectorProps {
 
 export function TokenSelector({ control, name, label, addressFieldName, onTokenInfoChange }: TokenSelectorProps) {
   const publicClient = usePublicClient();
+  const chainId = useChainId();
   const [customToken, setCustomToken] = useState<{ name: string; symbol: string; decimals: number } | null>(null);
   const [customTokenAddress, setCustomTokenAddress] = useState<string | null>(null);
 
-  const fetchTokenInfo = async (address: string): Promise<{ name: string; symbol: string; decimals: number } | null> => {
+  const fetchTokenInfo = async (address: string) => {
     try {
       if (!publicClient) {
         console.error("Public client not initialized");
         return null;
       }
 
-      const contract = getContract({
-        address: address as `0x${string}`,
-        abi: erc20Abi,
-        client: publicClient,
-      });
+      if (!chainId) {
+        console.error("Chain ID not available");
+        return null;
+      }
 
-      const [name, symbol, decimals] = await Promise.all([
-        contract.read.name(),
-        contract.read.symbol(),
-        contract.read.decimals(),
-      ]);
-
-      return { name, symbol, decimals };
+      const { name, symbol, decimals } = await getERC20TokenInfo(address, chainId)
+      return { name, symbol, decimals }
     } catch (error) {
       console.error("Error fetching token info:", error);
       return null;
@@ -68,11 +64,12 @@ export function TokenSelector({ control, name, label, addressFieldName, onTokenI
               field.onChange(value);
               if (value !== 'custom') {
                 const token = TOKEN_LIST[Number(value)];
+                const chainIdKey: ChainIdKey = `ChainId_${chainId as SupportedChainId}`;
                 onTokenInfoChange?.({
                   name: token.NAME,
                   symbol: token.NAME,
-                  decimals: token.DECIMAL,
-                  address: token.ADDRESS.BASE
+                  decimals: token.DECIMALS,
+                  address: token.ADDRESS[chainIdKey],
                 });
               }
               else {

@@ -7,7 +7,6 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useAccount, useChainId } from "wagmi";
 import { getPositions } from "@/utils/requests";
-import { getDeployedContract, getSymbolsAndDecimals } from "@/utils/functions";
 import { priceToTick, tickToPrice } from "@/utils/ticks";
 import { usePositionsStore } from "@/store/usePositionsStore";
 
@@ -18,48 +17,48 @@ export default function Home() {
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        setLoading(true)
-        const resData = await getPositions(address as `0x${string}`, chainId)
+      // try {
+      //   setLoading(true)
+      //   const resData = await getPositions(address as `0x${string}`, chainId)
 
-        if (resData.length) {
-          const contract = getDeployedContract(chainId)
+      //   if (resData.length) {
+      //     const contract = getDeployedContract(chainId)
           
-          if (contract) {
-            let temp: any = []
-            for (let i = 0; i < resData.length; i++) {
-              const {symbol0, symbol1, decimals0, decimals1} = await getSymbolsAndDecimals(resData[i].tokenId, chainId, contract)
-              if (symbol0 && symbol1) {
-                temp = [
-                  ...temp, 
-                  { 
-                    tokenId: resData[i].tokenId,
-                    symbol: symbol0 + "/" + symbol1, 
-                    symbol0: symbol0, 
-                    symbol1: symbol1,
-                    decimals0, 
-                    decimals1,
-                    tickLower: resData[i].lowerTick, 
-                    tickUpper: resData[i].upperTick,
-                    dbId: resData[i].id,
-                    chainId: resData[i].chainId,
-                    createdAt: resData[i].createdAt,
-                    updatedAt: resData[i].updatedAt
-                  }
-                ]
-              }
-            }
-            setPositions(temp)
-          }
-        } else {
-          setPositions([])
-        }
-      } catch (err) {
-        console.error('Error fetching positions:', err)
-        setPositions([])
-      } finally {
-        setLoading(false)
-      }
+      //     if (contract) {
+      //       let temp: any = []
+      //       for (let i = 0; i < resData.length; i++) {
+      //         const {symbol0, symbol1, decimals0, decimals1} = await getSymbolsAndDecimals(resData[i].tokenId, chainId, contract)
+      //         if (symbol0 && symbol1) {
+      //           temp = [
+      //             ...temp, 
+      //             { 
+      //               tokenId: resData[i].tokenId,
+      //               symbol: symbol0 + "/" + symbol1, 
+      //               symbol0: symbol0, 
+      //               symbol1: symbol1,
+      //               decimals0, 
+      //               decimals1,
+      //               tickLower: resData[i].lowerTick, 
+      //               tickUpper: resData[i].upperTick,
+      //               dbId: resData[i].id,
+      //               chainId: resData[i].chainId,
+      //               createdAt: resData[i].createdAt,
+      //               updatedAt: resData[i].updatedAt
+      //             }
+      //           ]
+      //         }
+      //       }
+      //       setPositions(temp)
+      //     }
+      //   } else {
+      //     setPositions([])
+      //   }
+      // } catch (err) {
+      //   console.error('Error fetching positions:', err)
+      //   setPositions([])
+      // } finally {
+      //   setLoading(false)
+      // }
     }
 
     if (isConnected && address) {

@@ -1,68 +1,53 @@
 import { ethers } from "ethers";
 import {
+  mainnet,
   arbitrum,
   base,
-  mainnet,
-  optimism,
-  polygon,
-  sepolia,
 } from "wagmi/chains";
 import { writeContract, waitForTransactionReceipt, readContract } from "@wagmi/core";
 import { config as wagmiConfig } from "@/components/providers";
-import { POSITION_MANAGER_CONTRACT_ADDRESS, PARASWAP_API_URL } from "./constants";
+import { POSITION_MANAGER_CONTRACT_ADDRESS, PARASWAP_API_URL, ChainIdKey, SupportedChainId } from "./constants";
 import { PositionManagerABI } from "@/abi/PositionManager";
 import { erc20Abi, parseUnits } from "viem";
 
-export const getDeployedContract = (chainId: number) => {
-  if (chainId == 8453) {
-    //base
-    const rpcUrl = base.rpcUrls.default.http[0];
-    const provider = new ethers.JsonRpcProvider(rpcUrl);
-    const contract = new ethers.Contract(
-      POSITION_MANAGER_CONTRACT_ADDRESS["BASE"],
-      PositionManagerABI,
-      provider
-    );
-    return contract;
+export const getNetworkFromChainId = (chainId: number) => {
+  if (chainId === 8453) {
+    return base
   }
+  if (chainId === 42161) {
+    return arbitrum
+  }
+  if (chainId === 1) {
+    return mainnet
+  }
+  return mainnet
+}
+
+export const getManagerContractAddressFromChainId = (chainId: number) => {
+  const chainIdKey: ChainIdKey = `ChainId_${chainId as SupportedChainId}`;
+  return POSITION_MANAGER_CONTRACT_ADDRESS[chainIdKey] as `0x${string}`
+}
+
+export const getERC20TokenInfo = async (address: string, chainId: number) => {
+  const name = await readContract(wagmiConfig, {
+    abi: erc20Abi, 
+    address: address as `0x${string}`, 
+    functionName: "name",
+  })
+  const symbol = await readContract(wagmiConfig, {
+    abi: erc20Abi, 
+    address: address as `0x${string}`, 
+    functionName: "symbol",
+  })
+  const decimals = await readContract(wagmiConfig, {
+    abi: erc20Abi, 
+    address: address as `0x${string}`, 
+    functionName: "decimals",
+  })
+  return { name, symbol, decimals }
 };
 
-export const getTokenContract = (address: string, chainId: number) => {
-  if (chainId == 8453) {
-    //base
-    const rpcUrl = base.rpcUrls.default.http[0];
-    const provider = new ethers.JsonRpcProvider(rpcUrl);
-    const contract = new ethers.Contract(address, erc20Abi, provider);
-    return contract;
-  }
-};
-
-export const getSymbolsAndDecimals = async (
-  tokenId: number,
-  chainId: number,
-  contract: any
-) => {
-  try {
-    const info = await contract.getSwapInfo(tokenId);
-    const token0Contract = getTokenContract(info[0], chainId);
-    const token1Contract = getTokenContract(info[1], chainId);
-
-    if (token0Contract && token1Contract) {
-      const symbol0 = await token0Contract.symbol();
-      const symbol1 = await token1Contract.symbol();
-
-      const decimals0 = parseInt(await token0Contract.decimals());
-      const decimals1 = parseInt(await token1Contract.decimals());
-
-      return { symbol0, symbol1, decimals0, decimals1 };
-    }
-  } catch (err) {
-    console.log("getSwapInfo error: ", err);
-  }
-  return { symbol0: "", symbol1: "", decimals0: 0, decimals1: 0 };
-};
-
-export const approveToken = async (address: string, spender: string, decimal: number, value: any) => {
+export const approveToken = async (address: string, spender: string, decimals: number, value: any) => {
   if (!address || !address.startsWith("0x")) {
     return {
       success: false,
@@ -83,7 +68,7 @@ export const approveToken = async (address: string, spender: string, decimal: nu
     functionName: "approve",
     args: [
       spender as `0x${string}`,
-      parseUnits(value, decimal || 18),
+      parseUnits(value, decimals || 18),
     ],
   } as const;
 
@@ -111,6 +96,7 @@ export const approveToken = async (address: string, spender: string, decimal: nu
 
 export const openPosition = async (
   publicClient: any, 
+  chainId: number,
   data: any
 ) => {
   if (!publicClient) {
@@ -132,8 +118,8 @@ export const openPosition = async (
     tickLower,
     token0Value,
     token1Value,
-    token0Decimal,
-    token1Decimal
+    token0Decimals,
+    token1Decimals
   } = data
 
   const params = {
@@ -143,11 +129,11 @@ export const openPosition = async (
       fee: parseInt(feeTier),
       tickUpper: parseInt(tickUpper),
       tickLower: parseInt(tickLower),
-      amount0Desired: parseUnits(token0Value, token0Decimal),
-      amount1Desired: parseUnits(token1Value, token1Decimal),
+      amount0Desired: parseUnits(token0Value, token0Decimals),
+      amount1Desired: parseUnits(token1Value, token1Decimals),
       amount0Min: 0,
       amount1Min: 0,
-      recipient: POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
+      recipient: getManagerContractAddressFromChainId(chainId),
       deadline: deadlineTimestamp,
     },
   };
@@ -155,7 +141,7 @@ export const openPosition = async (
   try {
     const hash = await writeContract(wagmiConfig, {
       abi: PositionManagerABI,
-      address: POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
+      address: getManagerContractAddressFromChainId(chainId),
       functionName: "openPosition",
       args: [params._params],
     });
@@ -178,10 +164,10 @@ export const openPosition = async (
   }
 }
 
-export const getSwapInfo = async (tokenId: string) => {
+export const getSwapInfo = async (tokenId: string, chainId: number) => {
   const res: any = await readContract(wagmiConfig, {
     abi: PositionManagerABI, 
-    address: POSITION_MANAGER_CONTRACT_ADDRESS.BASE, 
+    address: getManagerContractAddressFromChainId(chainId), 
     functionName: "getSwapInfo",
     args: [parseInt(tokenId)]
   })
@@ -189,31 +175,25 @@ export const getSwapInfo = async (tokenId: string) => {
     console.log("Invalid data format from getSwapInfo");
     return null;
   }
-  const [token0Address, token1Address, token0Decimal, token1Decimal, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimal] = res
-  console.log({
-    token0Address, token1Address, token0Decimal, token1Decimal, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimal
-  })
+  const [token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals] = res
   return {
-    token0Address, token1Address, token0Decimal, token1Decimal, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimal
+    token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals
   }
 }
 
-export const closePosition = async (tokenId: string) => {
-  const swapInfo = await getSwapInfo(tokenId)
+export const closePosition = async (tokenId: string, chainId: number) => {
+  const swapInfo = await getSwapInfo(tokenId, chainId)
   if (!swapInfo)
     return
-  const { token0Address, token1Address, token0Decimal, token1Decimal, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimal } = swapInfo
+  const { token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } = swapInfo
 
   const totalAmount0ToSwap = parseInt((principal0 + feesEarned0 - protocolFee0).toString())
   const minBuyAmount0 = (totalAmount0ToSwap * 0.95).toFixed(0)
-  console.log(`${PARASWAP_API_URL}&srcToken=${token0Address}&srcDecimals=${token0Decimal}&destToken=${ownerAccountingUnit}&destDecimals=${ownerAccountingUnitDecimal}&amount=${totalAmount0ToSwap}&side=SELL&network=8453&slippage=5&userAddress=${POSITION_MANAGER_CONTRACT_ADDRESS.BASE}`)
 
-
-  const response = await fetch(`${PARASWAP_API_URL}&srcToken=${token0Address}&srcDecimals=${token0Decimal}&destToken=${ownerAccountingUnit}&destDecimals=${ownerAccountingUnitDecimal}&amount=${minBuyAmount0}&side=SELL&network=8453&slippage=5&userAddress=${POSITION_MANAGER_CONTRACT_ADDRESS.BASE}`);
+  const response = await fetch(`${PARASWAP_API_URL}&srcToken=${token0Address}&srcDecimals=${token0Decimals}&destToken=${ownerAccountingUnit}&destDecimals=${ownerAccountingUnitDecimals}&amount=${minBuyAmount0}&side=SELL&network=8453&slippage=5&userAddress=${getManagerContractAddressFromChainId(chainId)}`);
   const response_json = await response.json();
   if (response_json && response_json.txParams) {
     const { data } = response_json.txParams;
-    console.log((response_json.priceRoute.destAmount * 0.95).toFixed(0))
     const params = [
       BigInt(tokenId), 
       data.toString(),
@@ -221,12 +201,10 @@ export const closePosition = async (tokenId: string) => {
       BigInt((response_json.priceRoute.destAmount * 0.95).toFixed(0)), 
       BigInt(0)
     ]
-    console.log(`-------------------params-----------------------`)
-    console.log(params)
     try {
       const hash = await writeContract(wagmiConfig, {
         abi: PositionManagerABI,
-        address: POSITION_MANAGER_CONTRACT_ADDRESS.BASE,
+        address: getManagerContractAddressFromChainId(chainId),
         functionName: "closePosition",
         args: params,
       });
@@ -251,7 +229,8 @@ export const closePosition = async (tokenId: string) => {
   }
 }
 
-export const fetchTokenPriceWithLoading = async (tokenAddress: string, setPrice: Function, setIsLoading: Function) => {
+export const fetchTokenPriceWithLoading = async (tokenAddress: string, setPrice: Function, setIsLoading: Function, chainId: number) => {
+  const chainName = chainId === 1 ? "ethereum" : chainId === 8453 ? "base" : chainId === 42161 ? "arbitrum" : "not-supported"
   if (!tokenAddress)
     return
   setIsLoading(true);
@@ -261,8 +240,9 @@ export const fetchTokenPriceWithLoading = async (tokenAddress: string, setPrice:
     );
     const data = await response.json();
 
-    if (data.pairs && data.pairs[0]) {
-      setPrice(data.pairs[0].priceUsd);
+    if (data.pairs && data.pairs.length > 0) {
+      const priceInfo = data.pairs.filter((pair: any) => pair.chainId === chainName || pair.dexId === "uniswap")
+      setPrice(priceInfo[0].priceUsd);
     }
   } catch (error) {
     console.error("Error fetching token1 price:", error);

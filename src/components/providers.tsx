@@ -5,7 +5,7 @@ import {
 } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
-import { base } from 'wagmi/chains';
+import { mainnet, arbitrum, base } from 'wagmi/chains';
 
 const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID;
 
@@ -16,7 +16,7 @@ if (!projectId) {
 export const config = getDefaultConfig({
   appName: 'Yild Finance',
   projectId,
-  chains: [base],
+  chains: [mainnet, arbitrum, base],
   ssr: true,
 });
 

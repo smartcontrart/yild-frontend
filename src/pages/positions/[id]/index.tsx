@@ -24,23 +24,13 @@ import {
   RefreshCw,
   X,
 } from "lucide-react";
-import { useParams } from "next/navigation";
-import { useAccount, useWriteContract, useReadContract } from "wagmi";
-import {
-  POSITION_MANAGER_CONTRACT_ADDRESS,
-  SLIPPAGE,
-  BPS,
-} from "@/utils/constants";
-import { PositionManagerABI } from "@/abi/PositionManager";
+import { useAccount } from "wagmi";
 import { useState } from "react";
-import { ethers } from "ethers";
-import { getParaswapData } from "@/utils/requests";
 import { usePositionsStore } from "@/store/usePositionsStore";
 import { closePosition } from "@/utils/functions";
 
 export default function PositionPage() {
-  const { isConnected, address } = useAccount();
-  const { writeContract } = useWriteContract();
+  const { isConnected } = useAccount();
   const { positions } = usePositionsStore();
 
   const [increaseToken0Amount, setIncreaseToken0Amount] = useState(0);
@@ -64,99 +54,23 @@ export default function PositionPage() {
   }
 
   const collectFees = () => {
-    writeContract({
-      abi: PositionManagerABI,
-      address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.BASE}`,
-      functionName: "collectFees",
-      args: [positionId, address],
-    });
+
   };
 
   const increasePosition = () => {
-    writeContract({
-      abi: PositionManagerABI,
-      address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.BASE}`,
-      functionName: "increaseLiquidity",
-      args: [positionId, increaseToken0Amount, increaseToken1Amount],
-    });
+
   };
 
   const decreasePosition = () => {
-    // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals }
-    //         = useReadContract({
-    //           abi: PositionManagerABI,
-    //           address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
-    //           functionName: 'getSwapInfo',
-    //           args: [positionId]
-    //         })
-    // const token0Amount = principal0 + tokensOwed0 - protocolFee0
-    // const token1Amount = principal1 + tokensOwed1 - protocolFee1
-    // const swapData0 = getParaswapData(token0, token1, ethers.parseUnits(token0Amount, token0Decimals), SLIPPAGE * 100)
-    // const swapData1 = getParaswapData(token1, token0, ethers.parseUnits(token1Amount, token1Decimals), SLIPPAGE * 100)
-    // writeContract({
-    //   abi: PositionManagerABI,
-    //   address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
-    //   functionName: 'decreaseLiquidity',
-    //   args: [
-    //     positionId,
-    //     BPS,
-    //     swapData0,
-    //     swapData1,
-    //   ],
-    // })
+
   };
 
   const confirmClosePosition = async () => {
     await closePosition(positionId?.toString() || "");
-    // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals }
-    //         = useReadContract({
-    //           abi: PositionManagerABI,
-    //           address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
-    //           functionName: 'getSwapInfo',
-    //           args: [positionId]
-    //         })
-    // const token0Amount = principal0 + tokensOwed0 - protocolFee0
-    // const token1Amount = principal1 + tokensOwed1 - protocolFee1
-    // const swapData0 = getParaswapData(token0, token1, ethers.parseUnits(token0Amount, token0Decimals), SLIPPAGE * 100)
-    // const swapData1 = getParaswapData(token1, token0, ethers.parseUnits(token1Amount, token1Decimals), SLIPPAGE * 100)
-    // writeContract({
-    //   abi: PositionManagerABI,
-    //   address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
-    //   functionName: 'closePosition',
-    //   args: [
-    //     positionId,
-    //     swapData0,
-    //     swapData1,
-    //     token0Amount,
-    //     token1Amount
-    //   ],
-    // })
   };
 
   const compoundPosition = () => {
-    // const {token0, token1, token0Decimals, token1Decimals, tokensOwed0, tokensOwed1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals }
-    //         = useReadContract({
-    //           abi: PositionManagerABI,
-    //           address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
-    //           functionName: 'getSwapInfo',
-    //           args: [positionId]
-    //         })
-    // const token0Amount = principal0 + tokensOwed0 - protocolFee0
-    // const token1Amount = principal1 + tokensOwed1 - protocolFee1
-    // const swapData0 = getParaswapData(token0, token1, ethers.parseUnits(token0Amount, token0Decimals), SLIPPAGE * 100)
-    // const swapData1 = getParaswapData(token1, token0, ethers.parseUnits(token1Amount, token1Decimals), SLIPPAGE * 100)
-    // writeContract({
-    //   abi: PositionManagerABI,
-    //   address: `0x${POSITION_MANAGER_CONTRACT_ADDRESS.base}`,
-    //   functionName: 'compoundPosition',
-    //   args: [
-    //     positionId,
-    //     swapData0,
-    //     swapData1,
-    //     token0Amount,
-    //     token1Amount
-    //   ],
-    // })
+    
   };
 
   return (

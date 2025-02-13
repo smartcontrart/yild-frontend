@@ -8,8 +8,8 @@
  */
 export function tickToPrice(tick: number, decimalsToken0: number, decimalsToken1: number): any {
     const rawPrice = Math.pow(1.0001, tick);
-    const decimalAdjustment = Math.pow(10, decimalsToken0 - decimalsToken1);
-    const adjustedPrice = rawPrice * decimalAdjustment;
+    const decimalsAdjustment = Math.pow(10, decimalsToken0 - decimalsToken1);
+    const adjustedPrice = rawPrice * decimalsAdjustment;
     
     return adjustedPrice;
 }
@@ -21,8 +21,8 @@ export function tickToPrice(tick: number, decimalsToken0: number, decimalsToken1
  */
 export function priceToTick(price: number, decimalsToken0: number, decimalsToken1: number): number {
     const adjustedPrice = price;
-    const decimalAdjustment = Math.pow(10, decimalsToken0 - decimalsToken1);
-    const rawPrice = adjustedPrice / decimalAdjustment;
+    const decimalsAdjustment = Math.pow(10, decimalsToken0 - decimalsToken1);
+    const rawPrice = adjustedPrice / decimalsAdjustment;
     return Math.round(Math.log(rawPrice) / Math.log(1.0001));
 }
 
