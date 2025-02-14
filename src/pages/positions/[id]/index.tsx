@@ -27,18 +27,24 @@ import {
 import { useAccount, useChainId, usePublicClient } from "wagmi";
 import { useState, useEffect } from "react";
 import { usePositionsStore } from "@/store/usePositionsStore";
-import { approveToken, closePosition, increaseLiquidity, decreaseLiquidity, fetchTokenPrice, getManagerContractAddressFromChainId } from "@/utils/functions";
+import { approveToken, closePosition, increaseLiquidity, decreaseLiquidity, fetchTokenPrice, getManagerContractAddressFromChainId, getSwapInfo, collectFees, compoundFees } from "@/utils/functions";
 import { useDebounce } from "@/hooks/useDebounce";
 import { tickToPrice } from "@/utils/ticks";
 import { getRequiredToken1FromToken0Amount } from "@/utils/liquidity";
+import { parseUnits, formatUnits } from "viem";
+// import { Token } from "@/utils/constants";
+// import { getTokenMetadataFromCoinGecko } from "@/utils/requests";
 
 export default function PositionPage() {
-  const { isConnected } = useAccount();
-  const publicClient = usePublicClient();
+  const { isConnected, address } = useAccount();
   const chainId = useChainId();
   const { positions } = usePositionsStore();
 
   const [pageStatus, setPageStatus] = useState("loaded");
+  // const [token0, setToken0] = useState<Token>()
+  // const [token1, setToken1] = useState<Token>()
+  const [feesEarned0, setFeesEarned0] = useState("")
+  const [feesEarned1, setFeesEarned1] = useState("")
   const [increaseToken0Amount, setIncreaseToken0Amount] = useState("");
   const [increaseToken1Amount, setIncreaseToken1Amount] = useState("");
   const debouncedIncreaseToken0Amount = useDebounce(increaseToken0Amount, 1000)
@@ -48,6 +54,8 @@ export default function PositionPage() {
   const positionId = router.query.id;
   const position = positions.find((p) => p.tokenId === Number(positionId));
 
+  console.log(position)
+
   if (!position)
     return (
       <div>
@@ -56,7 +64,17 @@ export default function PositionPage() {
     )
 
   const { tokenId, tickLower, tickUpper, decimals0, decimals1, token0Address, token1Address, symbol0, symbol1 } = position
-  
+
+  // useEffect(() => {
+  //   const getTokensMetadata = async () => {
+  //     const token0Metadata = await getTokenMetadataFromCoinGecko(token0Address, chainId)
+  //     setToken0(token0Metadata)
+  //     const token1Metadata = await getTokenMetadataFromCoinGecko(token1Address, chainId)
+  //     setToken1(token1Metadata)
+  //   }
+  //   getTokensMetadata()
+  // }, [])
+
   useEffect(() => {
     if (!debouncedIncreaseToken0Amount)
       return
@@ -90,8 +108,13 @@ export default function PositionPage() {
     );
   }
 
-  const collectFees = () => {
-
+  const getUnCollectedFees = async () => {
+    const swapInfo = await getSwapInfo(tokenId.toString(), chainId)
+    console.log(swapInfo)
+    if (!swapInfo)
+      return null
+    setFeesEarned0(formatUnits((swapInfo.feesEarned0).toString(), decimals0).toString())
+    setFeesEarned1(formatUnits((swapInfo.feesEarned1).toString(), decimals1).toString())
   };
 
   const increasePosition = async () => {
@@ -146,8 +169,20 @@ export default function PositionPage() {
     }
   };
 
-  const compoundPosition = () => {
-    
+  const confirmCollectFees = async () => {
+    try {
+      await collectFees(tokenId, chainId, address || "")
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const compoundPosition = async () => {
+    try {
+      await compoundFees(tokenId, chainId, address || "")
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   return (
@@ -163,7 +198,7 @@ export default function PositionPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Pool</span>
-                <span>{position?.symbol}</span>
+                <span>{position?.symbol0} / {position?.symbol1}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Fee Tier</span>
@@ -296,10 +331,53 @@ export default function PositionPage() {
 
         <TabsContent value="fees" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <Button className="w-full" onClick={collectFees}>
-              <Coins className="mr-2 h-4 w-4" />
-              Collect Fees
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="w-full" onClick={getUnCollectedFees}>
+                <Coins className="mr-2 h-4 w-4" />
+                  Collect Fees
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Collect Fees Earned {feesEarned0}</DialogTitle>
+                  <DialogDescription>
+                    <div className="text-center">
+                      { feesEarned0 } { position.symbol0 }
+
+                      {/* <Input
+                        type="number"
+                        className="col-span-3"
+                        onChange={(e) => setFeesEarned0(e.target.value)}
+                        value={feesEarned0}
+                      /> */}
+                    </div>
+                    <div className="text-center">
+                      { feesEarned1 } { position.symbol1 }
+                      {/* <Input
+                        type="number"
+                        className="col-span-3"
+                        onChange={(e) => setFeesEarned1(e.target.value)}
+                        value={feesEarned1}
+                      /> */}
+                    </div>
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <div className="text-center">
+                    <Button className="px-8" onClick={confirmCollectFees}>
+                      Yes
+                    </Button>
+                    <DialogClose asChild>
+                      <Button className="px-8 ml-4" variant="secondary">
+                        No
+                      </Button>
+                    </DialogClose>
+                  </div>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            
             <Button className="w-full" onClick={compoundPosition}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Compound Fees

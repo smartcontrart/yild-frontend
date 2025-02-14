@@ -1,5 +1,13 @@
 export type SupportedChainId = 8453 | 1 | 42161;
 export type ChainIdKey = `ChainId_${SupportedChainId}`;
+// export type Token = {
+//   chainId: number,
+//   Address: string,
+//   Decimals: number,
+//   Symbol: string,
+//   Name: string,
+//   IconURI: string
+// }
 
 export const POSITION_MANAGER_CONTRACT_ADDRESS: Record<ChainIdKey, `0x${string}`> = {
   "ChainId_8453": "0xCa6099Cd42475a7915796c7C6c0D004994F40f6C" as `0x${string}`,
