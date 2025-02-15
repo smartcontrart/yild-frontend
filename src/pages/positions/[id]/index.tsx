@@ -30,7 +30,7 @@ import { approveToken, closePosition, increaseLiquidity, decreaseLiquidity, getM
 import { fetchTokenPrice } from "@/utils/requests";
 import { useDebounce } from "@/hooks/useDebounce";
 import { tickToPrice } from "@/utils/functions";
-import { getRequiredToken1FromToken0Amount } from "@/utils/functions";
+import { getRequiredToken1FromToken0Amount, visualizeFeeTier } from "@/utils/functions";
 import { parseUnits, formatUnits } from "viem";
 
 export default function PositionPage() {
@@ -54,7 +54,7 @@ export default function PositionPage() {
   const [decimals1, setDecimals1] = useState<number>(18)
   const [token0Address, setToken0Address] = useState("")
   const [token1Address, setToken1Address] = useState("")
-  const [feeTier, setFeeTier] = useState(1400)
+  const [feeTier, setFeeTier] = useState(0)
   const [token0CurrentPrice, setToken0CurrentPrice] = useState(0)
   const [token1CurrentPrice, setToken1CurrentPrice] = useState(0)
   const [unclaimedFees0, setUnclaimedFees0] = useState(0)
@@ -70,6 +70,8 @@ export default function PositionPage() {
 
 
   const refreshPositionInfo = async () => {
+    if (!tokenId || !chainId)
+      return
     const swapInfo = await getSwapInfo(tokenId, chainId)
     if (swapInfo) {
       setFeesEarned0(swapInfo?.feesEarned0)
@@ -95,6 +97,8 @@ export default function PositionPage() {
       setDecimals1(positionDetail?.decimals1)
       setToken0Symbol(positionDetail?.symbol0)
       setToken1Symbol(positionDetail?.symbol1)
+      setTickLower(positionDetail?.tickLower)
+      setTickUpper(positionDetail?.tickUpper)
 
       if (positionDetail?.poolAddress) {
         const feeTierFromPool = await getPoolInfo(positionDetail?.poolAddress, chainId)
@@ -105,7 +109,15 @@ export default function PositionPage() {
   }, [tokenId, address])
 
   useEffect(() => {
-    const interval = setInterval(() => refreshPositionInfo(), 30000);
+    if (tickLower && decimals0 && decimals1)
+      setPriceLower(Number(Number(tickToPrice(tickLower, decimals0, decimals1)).toFixed(2)))
+    if (tickUpper && decimals0 && decimals1)
+      setPriceUpper(Number(Number(tickToPrice(tickUpper, decimals0, decimals1)).toFixed(2)))
+  }, [tickLower, tickUpper, decimals0, decimals1])
+
+  useEffect(() => {
+    refreshPositionInfo()
+    const interval = setInterval(() => refreshPositionInfo(), 10000);
     return () => clearInterval(interval); // Cleanup on unmount
   }, []);
 
@@ -246,11 +258,11 @@ export default function PositionPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Fee Tier</span>
-                {/* <span>{visualizeFeeTier(feeTier)}</span> */}
+                <span>{visualizeFeeTier(feeTier)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Price Range</span>
-                <span>{priceLower} ~ {priceUpper}</span>
+                <span>$ {priceLower} ~ $ {priceUpper}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Current Price</span>
@@ -276,8 +288,8 @@ export default function PositionPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Unclaimed Fees</span>
-                <span>{token0Symbol}: {unclaimedFees0}</span>
-                <span>{token1Symbol}: {unclaimedFees1}</span>
+                <span>{token0Symbol}: {unclaimedFees0 || "asdf"}</span>
+                <span>{token1Symbol}: {unclaimedFees1 || "asdf"}</span>
               </div>
             </div>
           </div>
@@ -390,22 +402,9 @@ export default function PositionPage() {
                   <DialogDescription>
                     <div className="text-center">
                       { feesEarned0 } { token0Symbol }
-
-                      {/* <Input
-                        type="number"
-                        className="col-span-3"
-                        onChange={(e) => setFeesEarned0(e.target.value)}
-                        value={feesEarned0}
-                      /> */}
                     </div>
                     <div className="text-center">
                       { feesEarned1 } { token1Symbol }
-                      {/* <Input
-                        type="number"
-                        className="col-span-3"
-                        onChange={(e) => setFeesEarned1(e.target.value)}
-                        value={feesEarned1}
-                      /> */}
                     </div>
                   </DialogDescription>
                 </DialogHeader>

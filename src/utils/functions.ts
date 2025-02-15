@@ -136,3 +136,14 @@ export const reArrangeTokensByContractAddress = (tokens: any[]) => {
     return result;
   }
 }
+
+export const visualizeFeeTier = (feeTier: number) => {
+  switch(feeTier) {
+    case 500: return "0.05 %";
+    case 1000: return "0.1 %";
+    case 3000: return "0.3 %";
+    case 5000: return "0.5 %";
+    case 10000: return "1 %";
+  }
+  return "0.00%"
+}
