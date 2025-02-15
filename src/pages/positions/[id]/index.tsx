@@ -24,46 +24,90 @@ import {
   RefreshCw,
   X,
 } from "lucide-react";
-import { useAccount, useChainId, usePublicClient } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { useState, useEffect } from "react";
-import { usePositionsStore } from "@/store/usePositionsStore";
-import { approveToken, closePosition, increaseLiquidity, decreaseLiquidity, fetchTokenPrice, getManagerContractAddressFromChainId, getSwapInfo, collectFees, compoundFees } from "@/utils/functions";
+import { approveToken, closePosition, increaseLiquidity, decreaseLiquidity, getManagerContractAddressFromChainId, getSwapInfo, collectFees, compoundFees, getPositionDetail, getPoolInfo } from "@/utils/contract";
+import { fetchTokenPrice } from "@/utils/requests";
 import { useDebounce } from "@/hooks/useDebounce";
-import { tickToPrice } from "@/utils/ticks";
-import { getRequiredToken1FromToken0Amount } from "@/utils/liquidity";
+import { tickToPrice } from "@/utils/functions";
+import { getRequiredToken1FromToken0Amount } from "@/utils/functions";
 import { parseUnits, formatUnits } from "viem";
-// import { Token } from "@/utils/constants";
-// import { getTokenMetadataFromCoinGecko } from "@/utils/requests";
 
 export default function PositionPage() {
   const { isConnected, address } = useAccount();
   const chainId = useChainId();
-  const { positions } = usePositionsStore();
+  // const { positions } = usePositionsStore();
+  const router = useRouter();
+  const tokenId = Number(router.query.id);
+  // const position = positions.find((p) => p.tokenId === Number(positionId)) || {};
+
+  // const { tokenId, tickLower, tickUpper, decimals0, decimals1, token0Address, token1Address, symbol0, symbol1 } = position
 
   const [pageStatus, setPageStatus] = useState("loaded");
-  // const [token0, setToken0] = useState<Token>()
-  // const [token1, setToken1] = useState<Token>()
   const [feesEarned0, setFeesEarned0] = useState("")
   const [feesEarned1, setFeesEarned1] = useState("")
+  const [priceLower, setPriceLower] = useState(0)
+  const [priceUpper, setPriceUpper] = useState(0)
+  const [tickLower, setTickLower] = useState<number>(-600000)
+  const [tickUpper, setTickUpper] = useState<number>(600000)
+  const [decimals0, setDecimals0] = useState<number>(18)
+  const [decimals1, setDecimals1] = useState<number>(18)
+  const [token0Address, setToken0Address] = useState("")
+  const [token1Address, setToken1Address] = useState("")
+  const [feeTier, setFeeTier] = useState(1400)
+  const [token0CurrentPrice, setToken0CurrentPrice] = useState(0)
+  const [token1CurrentPrice, setToken1CurrentPrice] = useState(0)
+  const [unclaimedFees0, setUnclaimedFees0] = useState(0)
+  const [unclaimedFees1, setUnclaimedFees1] = useState(0)
+  const [token0Symbol, setToken0Symbol] = useState("")
+  const [token1Symbol, setToken1Symbol] = useState("")
   const [increaseToken0Amount, setIncreaseToken0Amount] = useState("");
   const [increaseToken1Amount, setIncreaseToken1Amount] = useState("");
   const debouncedIncreaseToken0Amount = useDebounce(increaseToken0Amount, 1000)
 
 
-  const router = useRouter();
-  const positionId = router.query.id;
-  const position = positions.find((p) => p.tokenId === Number(positionId));
 
-  console.log(position)
 
-  if (!position)
-    return (
-      <div>
-        Position Not Found
-      </div>
-    )
 
-  const { tokenId, tickLower, tickUpper, decimals0, decimals1, token0Address, token1Address, symbol0, symbol1 } = position
+  const refreshPositionInfo = async () => {
+    const swapInfo = await getSwapInfo(tokenId, chainId)
+    if (swapInfo) {
+      setFeesEarned0(swapInfo?.feesEarned0)
+      setFeesEarned1(swapInfo?.feesEarned1)
+      setUnclaimedFees0(swapInfo?.feesEarned0 - swapInfo?.protocolFee0)
+      setUnclaimedFees1(swapInfo?.feesEarned1 - swapInfo?.protocolFee1)
+    }
+
+    if (token0Address && token1Address) {
+      const price0 = await fetchTokenPrice(token0Address, chainId)
+      setToken0CurrentPrice(price0)
+      const price1 = await fetchTokenPrice(token1Address, chainId)
+      setToken1CurrentPrice(price1)
+    }
+  }
+
+  useEffect(() => {
+    const fetchPositionDetail = async () => {
+      const positionDetail = await getPositionDetail(address as `0x${string}`, chainId, tokenId)
+      setToken0Address(positionDetail?.token0Address)
+      setToken1Address(positionDetail?.token1Address)
+      setDecimals0(positionDetail?.decimals0)
+      setDecimals1(positionDetail?.decimals1)
+      setToken0Symbol(positionDetail?.symbol0)
+      setToken1Symbol(positionDetail?.symbol1)
+
+      if (positionDetail?.poolAddress) {
+        const feeTierFromPool = await getPoolInfo(positionDetail?.poolAddress, chainId)
+        setFeeTier(feeTierFromPool)
+      }
+    }
+    tokenId && address && fetchPositionDetail()
+  }, [tokenId, address])
+
+  useEffect(() => {
+    const interval = setInterval(() => refreshPositionInfo(), 30000);
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, []);
 
   // useEffect(() => {
   //   const getTokensMetadata = async () => {
@@ -109,7 +153,7 @@ export default function PositionPage() {
   }
 
   const getUnCollectedFees = async () => {
-    const swapInfo = await getSwapInfo(tokenId.toString(), chainId)
+    const swapInfo = await getSwapInfo(tokenId, chainId)
     console.log(swapInfo)
     if (!swapInfo)
       return null
@@ -163,7 +207,7 @@ export default function PositionPage() {
 
   const confirmClosePosition = async () => {
     try {
-      await closePosition(tokenId.toString(), chainId);
+      await closePosition(tokenId, chainId);
     } catch (error) {
       console.log(error)
     }
@@ -179,7 +223,7 @@ export default function PositionPage() {
 
   const compoundPosition = async () => {
     try {
-      await compoundFees(tokenId, chainId, address || "")
+      await compoundFees(tokenId, chainId)
     } catch (error) {
       console.log(error)
     }
@@ -188,7 +232,7 @@ export default function PositionPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold">Manage Position #{positionId}</h2>
+        <h2 className="text-3xl font-bold">Manage Position #{tokenId}</h2>
       </div>
 
       <Card className="p-6">
@@ -198,19 +242,20 @@ export default function PositionPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Pool</span>
-                <span>{position?.symbol0} / {position?.symbol1}</span>
+                <span>{token0Symbol} / {token1Symbol}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Fee Tier</span>
-                <span>{position?.symbol}</span>
+                {/* <span>{visualizeFeeTier(feeTier)}</span> */}
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Price Range</span>
-                <span>{position?.symbol}</span>
+                <span>{priceLower} ~ {priceUpper}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Current Price</span>
-                <span>{position?.symbol}</span>
+                <span>{token0Symbol}: {token0CurrentPrice} USD</span>
+                <span>{token1Symbol}: {token1CurrentPrice} USD</span>
               </div>
             </div>
           </div>
@@ -219,19 +264,20 @@ export default function PositionPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">TVL</span>
-                <span>{position?.symbol}</span>
+                <span>wtf is TVL ?</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Token 0</span>
-                <span>{position?.symbol0}</span>
+                <span>{token0Symbol}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Token 1</span>
-                <span>{position?.symbol1}</span>
+                <span>{token1Symbol}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Unclaimed Fees</span>
-                <span>{position?.symbol0}</span>
+                <span>{token0Symbol}: {unclaimedFees0}</span>
+                <span>{token1Symbol}: {unclaimedFees1}</span>
               </div>
             </div>
           </div>
@@ -263,7 +309,7 @@ export default function PositionPage() {
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="name" className="text-right">
-                      {symbol0}
+                      {token0Symbol}
                     </Label>
                     <Input
                       type="number"
@@ -276,7 +322,7 @@ export default function PositionPage() {
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="name" className="text-right">
-                      {symbol1}
+                      {token1Symbol}
                     </Label>
                     <Input
                       type="number"
@@ -343,7 +389,7 @@ export default function PositionPage() {
                   <DialogTitle>Collect Fees Earned {feesEarned0}</DialogTitle>
                   <DialogDescription>
                     <div className="text-center">
-                      { feesEarned0 } { position.symbol0 }
+                      { feesEarned0 } { token0Symbol }
 
                       {/* <Input
                         type="number"
@@ -353,7 +399,7 @@ export default function PositionPage() {
                       /> */}
                     </div>
                     <div className="text-center">
-                      { feesEarned1 } { position.symbol1 }
+                      { feesEarned1 } { token1Symbol }
                       {/* <Input
                         type="number"
                         className="col-span-3"

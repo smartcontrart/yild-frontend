@@ -40,14 +40,15 @@ import {
 } from "@/components/ui/form";
 import { TokenSelector } from "@/components/token-selector";
 import { useState, useEffect } from "react";
-import { priceToTick, tickToPrice, nearestValidTick } from "@/utils/ticks";
+import { priceToTick, tickToPrice, nearestValidTick, reArrangeTokensByContractAddress } from "@/utils/functions";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import {
   getRequiredToken0FromToken1Amount,
   getRequiredToken1FromToken0Amount,
-} from "../../../utils/liquidity";
-import { approveToken, fetchTokenPriceWithLoading, reArrangeTokensByContractAddress, openPosition, getManagerContractAddressFromChainId } from "@/utils/functions";
+} from "../../../utils/functions";
+import { approveToken, openPosition, getManagerContractAddressFromChainId } from "@/utils/contract";
+import { fetchTokenPriceWithLoading } from "@/utils/requests"
 
 const formSchema = z.object({
   token0: z.string().min(1, "Token is required"),

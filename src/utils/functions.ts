@@ -1,477 +1,129 @@
-import {
-  mainnet,
-  arbitrum,
-  base,
-} from "wagmi/chains";
-import { writeContract, waitForTransactionReceipt, readContract } from "@wagmi/core";
-import { config as wagmiConfig } from "@/components/providers";
-import { POSITION_MANAGER_CONTRACT_ADDRESS, PARASWAP_API_URL, ChainIdKey, SupportedChainId } from "./constants";
-import { PositionManagerABI } from "@/abi/PositionManager";
-import { erc20Abi, parseUnits, formatUnits } from "viem";
+/**
+ * Calculates the required amount of token1 given an amount of token0 and the price range
+ * @param currentPrice Current price of token0 in terms of token1
+ * @param priceLower Lower bound of the price range
+ * @param priceUpper Upper bound of the price range
+ * @param token0Amount Amount of token0 to provide (in human readable form)
+ * @returns Required amount of token1 to provide (in human readable form)
+ */
+export function getRequiredToken1FromToken0Amount(
+  currentPrice: number,
+  priceLower: number,
+  priceUpper: number,
+  token0Amount: string,
+  token1Decimals: number
+): string {
+  // Convert prices to square root prices (prices are already adjusted for decimals)
+  const sqrtPrice = Math.sqrt(currentPrice);
+  const sqrtPriceLower = Math.sqrt(priceLower);
+  const sqrtPriceUpper = Math.sqrt(priceUpper);
 
-export const getNetworkFromChainId = (chainId: number) => {
-  if (chainId === 8453) {
-    return base
+  // Calculate liquidity using token0 amount
+  const liquidity = Number(token0Amount) * (sqrtPriceUpper * sqrtPrice) / (sqrtPriceUpper - sqrtPrice);
+
+  // Calculate required token1 amount using the liquidity
+  let token1Raw = "";
+
+  // If current price is below upper bound, we need some token1
+  if (currentPrice < priceUpper) {
+    token1Raw = (liquidity * (sqrtPrice - sqrtPriceLower)).toFixed(token1Decimals)
   }
-  if (chainId === 42161) {
-    return arbitrum
-  }
-  if (chainId === 1) {
-    return mainnet
-  }
-  return mainnet
+
+  // Convert raw amount back to human readable form
+  return token1Raw;
 }
 
-export const getManagerContractAddressFromChainId = (chainId: number) => {
-  const chainIdKey: ChainIdKey = `ChainId_${chainId as SupportedChainId}`;
-  return POSITION_MANAGER_CONTRACT_ADDRESS[chainIdKey] as `0x${string}`
+/**
+ * Calculates the required amount of token0 given an amount of token1 and the price range
+ * @param currentPrice Current price of token0 in terms of token1
+ * @param priceLower Lower bound of the price range
+ * @param priceUpper Upper bound of the price range
+ * @param token1Amount Amount of token1 to provide (in human readable form)
+ * @returns Required amount of token0 to provide (in human readable form)
+ */
+export function getRequiredToken0FromToken1Amount(
+  currentPrice: number,
+  priceLower: number,
+  priceUpper: number,
+  token1Amount: string,
+): string {
+  // Convert prices to square root prices
+  const sqrtPrice = Math.sqrt(currentPrice);
+  const sqrtPriceLower = Math.sqrt(priceLower);
+  const sqrtPriceUpper = Math.sqrt(priceUpper);
+
+  console.log(sqrtPrice, sqrtPriceLower, sqrtPriceUpper, token1Amount)
+
+  // Calculate liquidity using token1 amount
+  const liquidity = Number(token1Amount) / (1 / sqrtPrice - 1 / sqrtPriceLower);
+  console.log(liquidity)
+
+  // Calculate required token0 amount using the liquidity
+  let token0Raw = 0;
+
+  // For USDC/WETH, if current price is above lower bound, we need some WETH
+  token0Raw = Math.floor(liquidity * (1 / sqrtPriceUpper - 1 / sqrtPrice));
+
+  return (token0Raw * currentPrice).toString();
 }
 
-export const getERC20TokenInfo = async (address: string, chainId: number) => {
-  const name = await readContract(wagmiConfig, {
-    abi: erc20Abi, 
-    address: address as `0x${string}`, 
-    functionName: "name",
-  })
-  const symbol = await readContract(wagmiConfig, {
-    abi: erc20Abi, 
-    address: address as `0x${string}`, 
-    functionName: "symbol",
-  })
-  const decimals = await readContract(wagmiConfig, {
-    abi: erc20Abi, 
-    address: address as `0x${string}`, 
-    functionName: "decimals",
-  })
-  return { name, symbol, decimals }
-};
-
-export const approveToken = async (address: string, spender: string, decimals: number, value: any) => {
-  if (!address || !address.startsWith("0x")) {
-    return {
-      success: false,
-      result: "Invalid token contract address"
-    }
-  }
-
-  if (!spender || !spender.startsWith("0x")) {
-    return {
-      success: false,
-      result: "Invalid spender address"
-    }
-  }
-
-  const tokenApprovalConfig = {
-    abi: erc20Abi,
-    address: address as `0x${string}`,
-    functionName: "approve",
-    args: [
-      spender as `0x${string}`,
-      parseUnits(value, decimals || 18),
-    ],
-  } as const;
-
-  try {
-    const hash = await writeContract(wagmiConfig, tokenApprovalConfig);
-    const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
-    return {
-      success: true,
-      result: hash
-    }
-  } catch (error: any) {
-    if (error?.message?.includes("User rejected") || error?.code === 4001) {
-      console.log("User rejected token0 approval");
-      return {
-        success: false,
-        result: "User rejected token approval"
-      };
-    }
-    return {
-      success: false,
-      result: "Unknown error"
-    };
-  }
-}
-
-export const collectFees = async (
-  tokenId: number,
-  chainId: number,
-  recipient: string
-) => {
-  try {
-    const hash = await writeContract(wagmiConfig, {
-      abi: PositionManagerABI,
-      address: getManagerContractAddressFromChainId(chainId),
-      functionName: "collectFees",
-      args: [tokenId, recipient],
-    });
-    const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
-    return {
-      success: true,
-      result: hash
-    }
-  } catch (error: any) {
-    console.log(error)
-    if (error?.message?.includes("User rejected") || error?.code === 4001) {
-      return {
-        success: false,
-        result: "User rejected open position"
-      };
-    }
-    return {
-      success: false,
-      result: "Unknown error"
-    };
-  }
-}
-
-export const compoundFees = async (
-  tokenId: number,
-  chainId: number,
-  walletAddress: string
-) => {
-  const swapInfo = await getSwapInfo(tokenId.toString(), chainId)
-  if (!swapInfo)
-    return null
-
-  const { principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals, token0Address, token0Decimals, token1Address, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1 } = swapInfo
-
-  console.log(principal0, principal1)
-  console.log(feesEarned0, feesEarned1)
-  console.log(protocolFee0, protocolFee1)
-  const currentLiquidityToken0 = parseFloat(formatUnits(principal0, token0Decimals))
-  const currentLiquidityToken1 = parseFloat(formatUnits(principal1, token1Decimals))
-  const currentRatio = currentLiquidityToken0 / currentLiquidityToken1
-  const availableAmount0 = parseFloat(formatUnits(feesEarned0, token0Decimals)) - parseFloat(formatUnits(protocolFee0, token0Decimals))
-  const availableAmount1 = parseFloat(formatUnits(feesEarned1, token1Decimals)) - parseFloat(formatUnits(protocolFee1, token1Decimals))
-
-  console.log(availableAmount0)
-  console.log(availableAmount1)
-
-  const expectedAmount0 = currentRatio * availableAmount1
-  console.log(expectedAmount0)
-
-  let _pSwapData0 = "0x", _pSwapData1 = "0x", _token0MaxSlippage, _token1MaxSlippage
-  const price0 = await fetchTokenPrice(token0Address, chainId)
-  const price1 = await fetchTokenPrice(token1Address, chainId)
-  console.log(price0)
-  console.log(price1)
-
-  if (expectedAmount0 < availableAmount0) {     // we swap token0 to token1
-    const swapAmount0 = (
-      (availableAmount0 * currentLiquidityToken1) - (availableAmount1 * currentLiquidityToken0)
-    ) / (
-      (currentLiquidityToken0 * price0 / price1) + currentLiquidityToken1
-    )
-    // console.log((availableAmount0 * parseInt(principal0)) - (availableAmount1 * parseInt(principal1)))
-    // console.log(token1Decimals - token0Decimals)
-    // console.log(Math.pow(10, (token1Decimals - token0Decimals)))
-
-    console.log(swapAmount0)
-    console.log(swapAmount0.toString())
-    console.log(availableAmount0 - swapAmount0)
-    console.log((availableAmount0 - swapAmount0) * price0)
-    console.log(swapAmount0 * price0 / price1)
-    console.log(availableAmount1 + swapAmount0 * price0 / price1)
-    console.log((availableAmount1 + swapAmount0 * price0 / price1) * price1)
-    console.log(currentLiquidityToken0 / currentLiquidityToken1)
-    console.log((availableAmount0 - swapAmount0) / (availableAmount1 + swapAmount0 * price0 / price1))
-
-    const response = await fetch(`${PARASWAP_API_URL}&srcToken=${token0Address}&srcDecimals=${token0Decimals}&destToken=${token1Address}&destDecimals=${token1Decimals}&amount=${parseUnits(Number(swapAmount0 / 2).toFixed(token0Decimals), token0Decimals)}&side=SELL&network=${chainId}&slippage=500&userAddress=${getManagerContractAddressFromChainId(chainId)}`);
-    const response_json = await response.json();
-    console.log(response_json)
-    if (response_json && response_json.txParams) {
-      _pSwapData0 = response_json.txParams.data
-      _token0MaxSlippage = parseUnits(Number(swapAmount0).toFixed(token0Decimals), token0Decimals)
-    }
-  }
-  else if (expectedAmount0 > availableAmount0) {      // we swap token1 to token0
-    const swapAmount1 = (
-      (availableAmount1 * currentLiquidityToken0) - (availableAmount0 * currentLiquidityToken1)
-    ) / (
-      currentLiquidityToken1 * price0 / price1 + currentLiquidityToken0
-    )
-  }
+/**
+ * Converts a tick to a price
+ * @param tick The tick to convert
+ * @param decimalsToken0 Number of decimals for token0
+ * @param decimalsToken1 Number of decimals for token1
+ * @param invert If true, returns price of token1 in token0, otherwise returns price of token0 in token1
+ * @returns The price corresponding to the tick
+ */
+export function tickToPrice(tick: number, decimalsToken0: number, decimalsToken1: number): any {
+  const rawPrice = Math.pow(1.0001, tick);
+  const decimalsAdjustment = Math.pow(10, decimalsToken0 - decimalsToken1);
+  const adjustedPrice = rawPrice * decimalsAdjustment;
   
-  try {
-    console.log(tokenId, _pSwapData0, _pSwapData1, _token0MaxSlippage || 0, _token1MaxSlippage || 0)
-    const hash = await writeContract(wagmiConfig, {
-      abi: PositionManagerABI,
-      address: getManagerContractAddressFromChainId(chainId),
-      functionName: "compoundPosition",
-      args: [tokenId, _pSwapData0, _pSwapData1, 500, _token1MaxSlippage || 0],
-    });
-    const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
-    return {
-      success: true,
-      result: hash
-    }
-  } catch (error: any) {
-    console.log(error)
-    if (error?.message?.includes("User rejected") || error?.code === 4001) {
-      return {
-        success: false,
-        result: "User rejected open position"
-      };
-    }
-    return {
-      success: false,
-      result: "Unknown error"
-    };
+  return adjustedPrice;
+}
+
+/**
+* Converts a price to the nearest tick
+* @param price The price to convert
+* @returns The nearest tick for the given price
+*/
+export function priceToTick(price: number, decimalsToken0: number, decimalsToken1: number): number {
+  const adjustedPrice = price;
+  const decimalsAdjustment = Math.pow(10, decimalsToken0 - decimalsToken1);
+  const rawPrice = adjustedPrice / decimalsAdjustment;
+  return Math.round(Math.log(rawPrice) / Math.log(1.0001));
+}
+
+/**
+* Gets the tick spacing for a given fee tier
+* @param fee The fee tier (500 = 0.05%, 3000 = 0.3%, 10000 = 1%)
+* @returns The tick spacing for that fee tier
+*/
+export function getTickSpacing(fee: number): number {
+  switch (fee) {
+      case 100: // 0.01%
+          return 2;
+      case 500: // 0.05%
+          return 10;
+      case 3000: // 0.3%
+          return 60;
+      case 10000: // 1%
+          return 200;
+      default:
+          throw new Error('Unsupported fee tier');
   }
 }
 
-export const increaseLiquidity = async (
-  chainId: number,
-  data: any
-) => {
-  try {
-    const { tokenId, amount0, amount1, decimals0, decimals1 } = data
-    const hash = await writeContract(wagmiConfig, {
-      abi: PositionManagerABI,
-      address: getManagerContractAddressFromChainId(chainId),
-      functionName: "increaseLiquidity",
-      args: [parseInt(tokenId), parseUnits(amount0, decimals0), parseUnits(amount1, decimals1)],
-    });
-    const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
-    return {
-      success: true,
-      result: hash
-    }
-  } catch (error: any) {
-    console.log(error)
-    if (error?.message?.includes("User rejected") || error?.code === 4001) {
-      return {
-        success: false,
-        result: "User rejected open position"
-      };
-    }
-    return {
-      success: false,
-      result: "Unknown error"
-    };
-  }
-}
-
-export const decreaseLiquidity = async (
-  tokenId: number,
-  chainId: number,
-  amountInBPS: number
-) => {
-  const swapInfo = await getSwapInfo(tokenId.toString(), chainId)
-  if (!swapInfo)
-    return null
-
-  const { principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals, token0Address, token0Decimals, token1Address, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1 } = swapInfo
-
-  let _pSwapData0 = "0x", _pSwapData1 = "0x"
-  if (token0Address !== ownerAccountingUnit) {
-    const totalAmount0ToSwap = (parseInt((principal0 + feesEarned0 - protocolFee0).toString()) / 10000 * amountInBPS * 0.95).toFixed(0)
-    console.log(totalAmount0ToSwap)
-    const response = await fetch(`${PARASWAP_API_URL}&srcToken=${token0Address}&srcDecimals=${token0Decimals}&destToken=${ownerAccountingUnit}&destDecimals=${ownerAccountingUnitDecimals}&amount=${totalAmount0ToSwap}&side=SELL&network=${chainId}&slippage=500&userAddress=${getManagerContractAddressFromChainId(chainId)}`);
-    const response_json = await response.json();
-    console.log(response_json)
-    if (response_json && response_json.txParams) {
-      _pSwapData0 = response_json.txParams.data
-    }
-  }
-  if (token1Address !== ownerAccountingUnit) {
-    const totalAmount1ToSwap = (parseInt(principal1) / 10000 * amountInBPS).toFixed(0)
-    const response = await fetch(`${PARASWAP_API_URL}&srcToken=${token1Address}&srcDecimals=${token1Decimals}&destToken=${ownerAccountingUnit}&destDecimals=${ownerAccountingUnitDecimals}&amount=${totalAmount1ToSwap}&side=SELL&network=${chainId}&slippage=500&userAddress=${getManagerContractAddressFromChainId(chainId)}`);
-    const response_json = await response.json();
-    if (response_json && response_json.txParams) {
-      _pSwapData1 = response_json.txParams.data
-    }
-  }
-
-  try {
-    const hash = await writeContract(wagmiConfig, {
-      abi: PositionManagerABI,
-      address: getManagerContractAddressFromChainId(chainId),
-      functionName: "decreaseLiquidity",
-      args: [tokenId, amountInBPS, _pSwapData0, _pSwapData1],
-    });
-    const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
-    return {
-      success: true,
-      result: hash
-    }
-  } catch (error: any) {
-    console.log(error)
-    if (error?.message?.includes("User rejected") || error?.code === 4001) {
-      return {
-        success: false,
-        result: "User rejected open position"
-      };
-    }
-    return {
-      success: false,
-      result: "Unknown error"
-    };
-  }
-
-}
-
-export const openPosition = async (
-  publicClient: any, 
-  chainId: number,
-  data: any
-) => {
-  if (!publicClient) {
-    return {
-      success: false,
-      result: "publicClient not available"
-    }
-  }
-
-  const block = await publicClient.getBlock();
-  const currentTimestamp = Number(block.timestamp);
-  const deadlineTimestamp = currentTimestamp + 10 * 60; // Add 10 minutes in seconds
-
-  const {
-    token0Address,
-    token1Address,
-    feeTier,
-    tickUpper,
-    tickLower,
-    token0Value,
-    token1Value,
-    token0Decimals,
-    token1Decimals
-  } = data
-
-  const params = {
-    _params: {
-      token0: token0Address,
-      token1: token1Address,
-      fee: parseInt(feeTier),
-      tickUpper: parseInt(tickUpper),
-      tickLower: parseInt(tickLower),
-      amount0Desired: parseUnits(token0Value, token0Decimals),
-      amount1Desired: parseUnits(token1Value, token1Decimals),
-      amount0Min: 0,
-      amount1Min: 0,
-      recipient: getManagerContractAddressFromChainId(chainId),
-      deadline: deadlineTimestamp,
-    },
-  };
-
-  try {
-    const hash = await writeContract(wagmiConfig, {
-      abi: PositionManagerABI,
-      address: getManagerContractAddressFromChainId(chainId),
-      functionName: "openPosition",
-      args: [params._params],
-    });
-    const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
-    return {
-      success: true,
-      result: hash
-    }
-  } catch (error: any) {
-    if (error?.message?.includes("User rejected") || error?.code === 4001) {
-      return {
-        success: false,
-        result: "User rejected open position"
-      };
-    }
-    return {
-      success: false,
-      result: "Unknown error"
-    };
-  }
-}
-
-export const getSwapInfo = async (tokenId: string, chainId: number) => {
-  const res: any = await readContract(wagmiConfig, {
-    abi: PositionManagerABI, 
-    address: getManagerContractAddressFromChainId(chainId), 
-    functionName: "getSwapInfo",
-    args: [parseInt(tokenId)]
-  })
-  if (res.length !== 12) {
-    console.log("Invalid data format from getSwapInfo");
-    return null;
-  }
-  const [token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals] = res
-  return {
-    token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals
-  }
-}
-
-export const closePosition = async (tokenId: string, chainId: number) => {
-  const swapInfo = await getSwapInfo(tokenId, chainId)
-  if (!swapInfo)
-    return
-  const { token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } = swapInfo
-
-  const totalAmount0ToSwap = parseInt((principal0 + feesEarned0 - protocolFee0).toString())
-  const minBuyAmount0 = (totalAmount0ToSwap * 0.95).toFixed(0)
-
-  const response = await fetch(`${PARASWAP_API_URL}&srcToken=${token0Address}&srcDecimals=${token0Decimals}&destToken=${ownerAccountingUnit}&destDecimals=${ownerAccountingUnitDecimals}&amount=${minBuyAmount0}&side=SELL&network=8453&slippage=500&userAddress=${getManagerContractAddressFromChainId(chainId)}`);
-  const response_json = await response.json();
-  if (response_json && response_json.txParams) {
-    const { data } = response_json.txParams;
-    const params = [
-      BigInt(tokenId), 
-      data.toString(),
-      "0x",
-      BigInt((response_json.priceRoute.destAmount * 0.95).toFixed(0)), 
-      BigInt(0)
-    ]
-    try {
-      const hash = await writeContract(wagmiConfig, {
-        abi: PositionManagerABI,
-        address: getManagerContractAddressFromChainId(chainId),
-        functionName: "closePosition",
-        args: params,
-      });
-      const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
-      return {
-        success: true,
-        result: hash
-      }
-    } catch (error: any) {
-      console.log(error)
-      if (error?.message?.includes("User rejected") || error?.code === 4001) {
-        return {
-          success: false,
-          result: "User rejected open position"
-        };
-      }
-      return {
-        success: false,
-        result: "Unknown error"
-      };
-    }
-  }
-}
-
-export const fetchTokenPrice = async (tokenAddress: string, chainId: number) => {
-  const chainName = chainId === 1 ? "ethereum" : chainId === 8453 ? "base" : chainId === 42161 ? "arbitrum" : "not-supported"
-  const response = await fetch(
-    `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`
-  );
-  const data = await response.json();
-
-  if (data.pairs && data.pairs.length > 0) {
-    const priceInfo = data.pairs.filter((pair: any) => pair.chainId === chainName || pair.dexId === "uniswap")
-    return priceInfo[0].priceUsd;
-  }
-}
-
-export const fetchTokenPriceWithLoading = async (tokenAddress: string, setPrice: Function, setIsLoading: Function, chainId: number) => {
-  if (!tokenAddress)
-    return
-  setIsLoading(true);
-  try {
-    const price = await fetchTokenPrice(tokenAddress, chainId);
-    setPrice(price);
-  } catch (error) {
-    console.error("Error fetching token1 price:", error);
-  } finally {
-    setIsLoading(false);
-  }
+/**
+* Ensures a tick is spaced correctly for the given fee tier
+* @param tick The tick to check
+* @param fee The fee tier
+* @returns The nearest valid tick for that fee tier
+*/
+export function nearestValidTick(tick: number, fee: number): number {
+  const tickSpacing = getTickSpacing(fee);
+  return Math.round(tick / tickSpacing) * tickSpacing;
 }
 
 export const reArrangeTokensByContractAddress = (tokens: any[]) => {
