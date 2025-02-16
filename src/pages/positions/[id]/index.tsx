@@ -32,6 +32,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { tickToPrice } from "@/utils/functions";
 import { getRequiredToken1FromToken0Amount, visualizeFeeTier } from "@/utils/functions";
 import { parseUnits, formatUnits } from "viem";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function PositionPage() {
   const { isConnected, address } = useAccount();
@@ -63,6 +64,9 @@ export default function PositionPage() {
   const [token1Symbol, setToken1Symbol] = useState("")
   const [increaseToken0Amount, setIncreaseToken0Amount] = useState("");
   const [increaseToken1Amount, setIncreaseToken1Amount] = useState("");
+  const [positionDetailLoading, setPositionDetailLoading] = useState(true);
+  const [swapInfoLoading, setSwapInfoLoading] = useState(true);
+  const [priceInfoLoading, setPriceInfoLoading] = useState(true);
   const debouncedIncreaseToken0Amount = useDebounce(increaseToken0Amount, 1000)
 
 
@@ -70,8 +74,12 @@ export default function PositionPage() {
 
 
   const refreshPositionInfo = async () => {
+    console.log(`refreshing position info`)
+    console.log(tokenId, chainId)
     if (!tokenId || !chainId)
       return
+    
+    setSwapInfoLoading(true)
     const swapInfo = await getSwapInfo(tokenId, chainId)
     if (swapInfo) {
       setFeesEarned0(swapInfo?.feesEarned0)
@@ -79,16 +87,22 @@ export default function PositionPage() {
       setUnclaimedFees0(swapInfo?.feesEarned0 - swapInfo?.protocolFee0)
       setUnclaimedFees1(swapInfo?.feesEarned1 - swapInfo?.protocolFee1)
     }
+    setSwapInfoLoading(false)
 
+    setPriceInfoLoading(true)
     if (token0Address && token1Address) {
       const price0 = await fetchTokenPrice(token0Address, chainId)
+      console.log(price0)
       setToken0CurrentPrice(price0)
       const price1 = await fetchTokenPrice(token1Address, chainId)
+      console.log(price1)
       setToken1CurrentPrice(price1)
     }
+    setPriceInfoLoading(false)
   }
 
   useEffect(() => {
+    setPositionDetailLoading(true)
     const fetchPositionDetail = async () => {
       const positionDetail = await getPositionDetail(address as `0x${string}`, chainId, tokenId)
       setToken0Address(positionDetail?.token0Address)
@@ -104,6 +118,7 @@ export default function PositionPage() {
         const feeTierFromPool = await getPoolInfo(positionDetail?.poolAddress, chainId)
         setFeeTier(feeTierFromPool)
       }
+      setPositionDetailLoading(false)
     }
     tokenId && address && fetchPositionDetail()
   }, [tokenId, address])
@@ -244,25 +259,40 @@ export default function PositionPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold">Manage Position #{tokenId}</h2>
+        <h2 className="text-xl font-bold">Position #{tokenId}</h2>
       </div>
 
       <Card className="p-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div>
-            <h3 className="font-semibold mb-4">Position Details</h3>
+            <h3 className="font-semibold mb-4">- Details</h3>
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Pool</span>
-                <span>{token0Symbol} / {token1Symbol}</span>
+                {
+                  positionDetailLoading ? 
+                    <span><Skeleton className="w-[120px] h-[24px] rounded-l"/></span>
+                    :
+                    <span>{token0Symbol} / {token1Symbol}</span>
+                }
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Fee Tier</span>
-                <span>{visualizeFeeTier(feeTier)}</span>
+                {
+                  positionDetailLoading ? 
+                    <span><Skeleton className="w-[60px] h-[24px] rounded-l"/></span>
+                    :
+                    <span>{visualizeFeeTier(feeTier)}</span>
+                }
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Price Range</span>
-                <span>$ {priceLower} ~ $ {priceUpper}</span>
+                <span className="text-muted-foreground">Price Range {priceInfoLoading ? "true": "false"}</span>
+                {
+                  priceInfoLoading ? 
+                    <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
+                    :
+                    <span>$ {priceLower} ~ $ {priceUpper}</span>
+                }
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Current Price</span>

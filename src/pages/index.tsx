@@ -4,16 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAccount, useChainId } from "wagmi";
 import { getPositions } from "@/utils/requests";
 import { priceToTick, tickToPrice } from "@/utils/functions";
 import { usePositionsStore } from "@/store/usePositionsStore";
+import { Skeleton } from "@/components/ui/skeleton";
+import { YildLoading } from "@/components/yild-loading";
 
 export default function Home() {
   const { isConnected, address } = useAccount();
   const chainId = useChainId();
   const { positions, setPositions, loading, setLoading } = usePositionsStore();
+  const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,12 +37,17 @@ export default function Home() {
     }
   }, [address, chainId, isConnected, setLoading, setPositions])
 
+  useEffect(() => {
+    !hydrated && setHydrated(true)
+  }, [])
+
   if (!isConnected) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <h2 className="text-2xl font-bold mb-4">Connect your wallet to continue</h2>
-        <p className="text-muted-foreground">
-          Please connect your wallet to view and manage your LP positions
+      <div className="flex flex-col items-center justify-center sm:min-h-[60vh] min-h-[80vh]">
+        <YildLoading hydrated={hydrated} />
+        <h2 className="text-xl font-bold mb-4 text-center">Sign in with your wallet to continue</h2>
+        <p className="text-muted-foreground sm:max-w-[60vw]">
+        Yild Finance is a cutting-edge DeFi platform designed to automate Uniswap V3 liquidity provision. By leveraging smart algorithms and on-chain data, Yild Finance dynamically adjusts liquidity positions, optimizing yield generation while reducing impermanent loss. Whether you're a passive investor or an experienced liquidity provider, our platform simplifies LP management, allowing you to maximize profits with minimal effort.
         </p>
       </div>
     );
@@ -47,17 +55,26 @@ export default function Home() {
 
   return (
     <div className="space-y-6">
+      <YildLoading hydrated={hydrated} />
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold">Your Positions</h2>
+        <h2 className="text-xl font-bold">Positions</h2>
         <Link href="/positions/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            New Position
+            Open
           </Button>
         </Link>
       </div>
       {
-        loading ? <p className="text-center">please wait...</p> :
+        loading ? 
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <Skeleton className="h-[125px] rounded-xl" />
+            <Skeleton className="h-[125px] rounded-xl" />
+            <Skeleton className="h-[125px] rounded-xl" />
+            <Skeleton className="h-[125px] rounded-xl" />
+            <Skeleton className="h-[125px] rounded-xl" />
+            <Skeleton className="h-[125px] rounded-xl" />
+          </div> :
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {
               positions.length > 0 && positions.map((e:any, i) =>
