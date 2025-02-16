@@ -125,11 +125,11 @@ export default function NewPositionPage() {
       token1.decimals
     );
     const validTick = nearestValidTick(tick, feeTier || 3000);
-    let adjustedPrice = tickToPrice(
+    let adjustedPrice = Number(tickToPrice(
       validTick,
       token0.decimals,
       token1.decimals
-    ).toString();
+    ));
     if (
       (token0.address === token0Address && currentTab === "opz") ||
       (token0.address !== token0Address && currentTab === "zpo")
@@ -139,14 +139,14 @@ export default function NewPositionPage() {
     if (isMinOrMax) {
       setTickLowerInput(validTick.toString());
       form.setValue("tickLower", validTick.toString());
-      setMinPriceInput(adjustedPrice);
-      form.setValue("minPrice", adjustedPrice);
+      setMinPriceInput(adjustedPrice.toString());
+      form.setValue("minPrice", adjustedPrice.toString());
     }
     else {
       setTickUpperInput(validTick.toString());
       form.setValue("tickUpper", validTick.toString());
-      setMaxPriceInput(adjustedPrice);
-      form.setValue("maxPrice", adjustedPrice);
+      setMaxPriceInput(adjustedPrice.toString());
+      form.setValue("maxPrice", adjustedPrice.toString());
     }
   }
 
@@ -185,16 +185,16 @@ export default function NewPositionPage() {
     try {
       setPageStatus("approving");
       
-      const { success: approveToken0Success } = await approveToken(token0Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token0Decimals || 18, values.amount0)
-      if (!approveToken0Success) {
-        setPageStatus("approve token failed")
-        return
-      }
-      const { success: approveToken1Success } = await approveToken(token1Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token1Decimals || 18, values.amount1)
-      if (!approveToken1Success) {
-        setPageStatus("approve token failed")
-        return
-      }
+      // const { success: approveToken0Success } = await approveToken(token0Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token0Decimals || 18, values.amount0)
+      // if (!approveToken0Success) {
+      //   setPageStatus("approve token failed")
+      //   return
+      // }
+      // const { success: approveToken1Success } = await approveToken(token1Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token1Decimals || 18, values.amount1)
+      // if (!approveToken1Success) {
+      //   setPageStatus("approve token failed")
+      //   return
+      // }
 
       const [realToken0, realToken1] = getReArrangedTokens();
       const realToken0Value =
@@ -332,7 +332,7 @@ export default function NewPositionPage() {
                   <FormItem>
                     <FormLabel>Fee Tier</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => setFeeTier(Number(value))}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -362,6 +362,7 @@ export default function NewPositionPage() {
                     <TabsList>
                       <TabsTrigger value="zpo">{`${token1Name} per ${token0Name}`}</TabsTrigger>
                       <TabsTrigger value="opz">{`${token0Name} per ${token1Name}`}</TabsTrigger>
+                      <TabsTrigger value="23">{feeTier}</TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>
