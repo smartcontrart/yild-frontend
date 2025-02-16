@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useAccount, useChainId } from "wagmi";
 import { getPositions } from "@/utils/requests";
-import { priceToTick, tickToPrice } from "@/utils/ticks";
+import { priceToTick, tickToPrice } from "@/utils/functions";
 import { usePositionsStore } from "@/store/usePositionsStore";
 
 export default function Home() {

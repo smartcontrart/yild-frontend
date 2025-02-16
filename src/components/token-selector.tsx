@@ -8,7 +8,7 @@ import { usePublicClient, useChainId } from "wagmi";
 import { Control } from "react-hook-form";
 
 import { TOKEN_LIST } from "@/utils/constants";
-import { getERC20TokenInfo } from "@/utils/functions";
+import { getERC20TokenInfo } from "@/utils/contract";
 import { ChainIdKey, SupportedChainId } from "@/utils/constants";
 
 interface TokenInfo {
