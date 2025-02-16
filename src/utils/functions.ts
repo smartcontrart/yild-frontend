@@ -103,7 +103,7 @@ export function priceToTick(price: number, decimalsToken0: number, decimalsToken
 export function getTickSpacing(fee: number): number {
   switch (fee) {
       case 100: // 0.01%
-          return 2;
+          return 1;
       case 500: // 0.05%
           return 10;
       case 3000: // 0.3%

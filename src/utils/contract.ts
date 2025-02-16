@@ -1,4 +1,4 @@
-import { writeContract, waitForTransactionReceipt, readContract } from "@wagmi/core";
+import { writeContract, waitForTransactionReceipt, readContract, simulateContract } from "@wagmi/core";
 import { config as wagmiConfig } from "@/components/providers";
 import { POSITION_MANAGER_CONTRACT_ADDRESS, ChainIdKey, SupportedChainId } from "./constants";
 import { PositionManagerABI } from "@/abi/PositionManager";
@@ -315,6 +315,13 @@ export const openPosition = async (
   };
 
   try {
+    // const simulation = await simulateContract(wagmiConfig, {
+    //   abi: PositionManagerABI,
+    //   address: getManagerContractAddressFromChainId(chainId),
+    //   functionName: "openPosition",
+    //   args: [params._params],
+    // });
+    // console.log(simulation)
     const hash = await writeContract(wagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
@@ -327,6 +334,7 @@ export const openPosition = async (
       result: hash
     }
   } catch (error: any) {
+    // console.log(error)
     if (error?.message?.includes("User rejected") || error?.code === 4001) {
       return {
         success: false,

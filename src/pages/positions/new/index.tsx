@@ -76,7 +76,7 @@ export default function NewPositionPage() {
       token1: "",
       token0Address: "",
       token1Address: "",
-      feeTier: "",
+      feeTier: "3000",
       minPrice: "",
       maxPrice: "",
       tickLower: "",
@@ -103,7 +103,7 @@ export default function NewPositionPage() {
   const [maxPriceInput, setMaxPriceInput] = useState("");
   const [tickLowerInput, setTickLowerInput] = useState("");
   const [tickUpperInput, setTickUpperInput] = useState("");
-  const [feeTier, setFeeTier] = useState<number | null>(3000);
+  const [feeTier, setFeeTier] = useState<number>(3000);
   const [currentTab, setCurrentTab] = useState<"zpo" | "opz">("zpo");
 
   const debouncedMinPrice = useDebounce(minPriceInput, 1000);
@@ -124,7 +124,7 @@ export default function NewPositionPage() {
       token0.decimals,
       token1.decimals
     );
-    const validTick = nearestValidTick(tick, feeTier || 3000);
+    const validTick = nearestValidTick(tick, feeTier);
     let adjustedPrice = Number(tickToPrice(
       validTick,
       token0.decimals,
@@ -158,6 +158,11 @@ export default function NewPositionPage() {
     setNearestValidPrice(debouncedMaxPrice, false);
   }, [debouncedMaxPrice]);
 
+  useEffect(() => {
+    setNearestValidPrice(minPriceInput, true);
+    setNearestValidPrice(maxPriceInput, false);
+  }, [feeTier])
+
   const getReArrangedTokens = () => reArrangeTokensByContractAddress([
     {
       address: token0Address as `0x${string}`,
@@ -185,16 +190,16 @@ export default function NewPositionPage() {
     try {
       setPageStatus("approving");
       
-      // const { success: approveToken0Success } = await approveToken(token0Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token0Decimals || 18, values.amount0)
-      // if (!approveToken0Success) {
-      //   setPageStatus("approve token failed")
-      //   return
-      // }
-      // const { success: approveToken1Success } = await approveToken(token1Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token1Decimals || 18, values.amount1)
-      // if (!approveToken1Success) {
-      //   setPageStatus("approve token failed")
-      //   return
-      // }
+      const { success: approveToken0Success } = await approveToken(token0Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token0Decimals || 18, values.amount0)
+      if (!approveToken0Success) {
+        setPageStatus("approve token failed")
+        return
+      }
+      const { success: approveToken1Success } = await approveToken(token1Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token1Decimals || 18, values.amount1)
+      if (!approveToken1Success) {
+        setPageStatus("approve token failed")
+        return
+      }
 
       const [realToken0, realToken1] = getReArrangedTokens();
       const realToken0Value =
@@ -206,9 +211,9 @@ export default function NewPositionPage() {
       const { success: openPositionSuccess, result } = await openPosition(publicClient, chainId, {
         token0Address: realToken0.address,
         token1Address: realToken1.address,
-        feeTier: values.feeTier,
-        tickUpper: values.tickUpper,
-        tickLower: values.tickLower,
+        feeTier: feeTier,
+        tickUpper: realToken0.address === token0Address ? values.tickUpper : values.tickLower,
+        tickLower: realToken0.address === token0Address ? values.tickLower : values.tickUpper,
         token0Value: realToken0Value,
         token1Value: realToken1Value,
         token0Decimals: realToken0.decimals,
@@ -332,7 +337,10 @@ export default function NewPositionPage() {
                   <FormItem>
                     <FormLabel>Fee Tier</FormLabel>
                     <Select
-                      onValueChange={(value) => setFeeTier(Number(value))}
+                      onValueChange={(value) => {
+                        setFeeTier(Number(value))
+                        form.setValue("feeTier", value)
+                      }}
                       defaultValue={field.value}
                     >
                       <FormControl>
