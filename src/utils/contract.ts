@@ -1,6 +1,6 @@
 import { writeContract, waitForTransactionReceipt, readContract, simulateContract } from "@wagmi/core";
 import { config as wagmiConfig } from "@/components/providers";
-import { POSITION_MANAGER_CONTRACT_ADDRESS, ChainIdKey, SupportedChainId } from "./constants";
+import { POSITION_MANAGER_CONTRACT_ADDRESS, ChainIdKey, SupportedChainId, UNISWAP_V3_FACTORY_CONTRACT_ADDRESS } from "./constants";
 import { PositionManagerABI } from "@/abi/PositionManager";
 import { erc20Abi, parseUnits, formatUnits } from "viem";
 import { fetchParaswapRoute, getPositions, fetchTokenPrice } from "./requests";
@@ -467,3 +467,36 @@ export const closePosition = async (tokenId: number, chainId: number) => {
   }
 }
 
+export const getPoolAddress = async (token0Address: string, token1Address: string, feeTier: number, chainId: number) => {
+  const chainIdKey: ChainIdKey = `ChainId_${chainId as SupportedChainId}`;
+  try {
+    const poolAddress = await readContract(wagmiConfig, {
+      address: UNISWAP_V3_FACTORY_CONTRACT_ADDRESS[chainIdKey] as `0x${string}`,
+      abi: [
+        {
+          "inputs": [
+            { "internalType": "address", "name": "tokenA", "type": "address" },
+            { "internalType": "address", "name": "tokenB", "type": "address" },
+            { "internalType": "uint24", "name": "fee", "type": "uint24" }
+          ],
+          "name": "getPool",
+          "outputs": [{ "internalType": "address", "name": "pool", "type": "address" }],
+          "stateMutability": "view",
+          "type": "function"
+        }
+      ],
+      functionName: "getPool",
+      args: [token0Address as `0x${string}`, token1Address as `0x${string}`, feeTier],
+    });
+    return poolAddress === "0x0000000000000000000000000000000000000000" ? null : poolAddress;    
+  } catch (error) {
+    console.log(error)
+  }
+  return null
+}
+
+export const getAvailablePools = async (token0Address: string, token1Address: string, chainId: number) => {
+  const availableFeeTiers = [100, 500, 3000, 10000]
+  const results = await Promise.all(availableFeeTiers.map((feeTier) => getPoolAddress(token0Address, token1Address, feeTier, chainId)));
+  return results
+}

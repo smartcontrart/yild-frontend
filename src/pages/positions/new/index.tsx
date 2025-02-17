@@ -47,7 +47,7 @@ import {
   getRequiredToken0FromToken1Amount,
   getRequiredToken1FromToken0Amount,
 } from "../../../utils/functions";
-import { approveToken, openPosition, getManagerContractAddressFromChainId } from "@/utils/contract";
+import { approveToken, openPosition, getManagerContractAddressFromChainId, getAvailablePools } from "@/utils/contract";
 import { fetchTokenPriceWithLoading } from "@/utils/requests"
 
 const formSchema = z.object({
@@ -162,6 +162,17 @@ export default function NewPositionPage() {
     setNearestValidPrice(minPriceInput, true);
     setNearestValidPrice(maxPriceInput, false);
   }, [feeTier])
+
+  useEffect(() => {
+
+    if (token0Address && token1Address) {
+      const getPoolAddressFunc = async () => {
+        const [orderedToken0, orderedToken1] = getReArrangedTokens()
+        const [pool100, pool500, pool3000, pool10000] = await getAvailablePools(orderedToken0.address, orderedToken1.address, chainId)
+      }
+      getPoolAddressFunc()
+    }
+  }, [token0Address, token1Address, chainId])
 
   const getReArrangedTokens = () => reArrangeTokensByContractAddress([
     {

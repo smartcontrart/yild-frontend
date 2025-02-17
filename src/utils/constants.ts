@@ -28,6 +28,12 @@ export const TOKEN_LIST = [
   },
 ];
 
+export const UNISWAP_V3_FACTORY_CONTRACT_ADDRESS: Record<ChainIdKey, `0x${string}`> = {
+  "ChainId_1": "0x1F98431c8aD98523631AE4a59f267346ea31F984" as `0x${string}`,
+  "ChainId_8453": "0x33128a8fC17869897dcE68Ed026d694621f6FDfD" as `0x${string}`,
+  "ChainId_42161": "0x1F98431c8aD98523631AE4a59f267346ea31F984" as `0x${string}`
+}
+
 // export const SLIPPAGE = 5; // 5%
 // export const BPS = 5; // 5%
 export const BACKEND_API_URL =
