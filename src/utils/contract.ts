@@ -405,6 +405,7 @@ export const closePosition = async (tokenId: number, chainId: number) => {
   if (!swapInfo)
     return
   const { token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } = swapInfo
+  // console.log ({ token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals })
 
   const totalAmount0ToSwap = principal0 + feesEarned0 - protocolFee0
   const totalAmount1ToSwap = principal1 + feesEarned1 - protocolFee1
@@ -431,7 +432,15 @@ export const closePosition = async (tokenId: number, chainId: number) => {
     _minBuyAmount1
   ]
 
+  // console.log(params)
   try {
+    // const simulation = await simulateContract(wagmiConfig, {
+    //   abi: PositionManagerABI,
+    //   address: getManagerContractAddressFromChainId(chainId),
+    //   functionName: "closePosition",
+    //   args: params,
+    // })
+    // console.log(simulation)
     const hash = await writeContract(wagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),

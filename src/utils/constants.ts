@@ -31,5 +31,5 @@ export const TOKEN_LIST = [
 // export const SLIPPAGE = 5; // 5%
 // export const BPS = 5; // 5%
 export const BACKEND_API_URL =
-  "http://ec2-3-132-245-13.us-east-2.compute.amazonaws.com:3000";
+  "https://yild.finance";
 export const PARASWAP_API_URL = "https://api.paraswap.io/swap?version=6.2"
