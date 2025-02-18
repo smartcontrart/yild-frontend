@@ -467,7 +467,7 @@ export const closePosition = async (tokenId: number, chainId: number) => {
   }
 }
 
-export const getPoolAddress = async (token0Address: string, token1Address: string, feeTier: number, chainId: number) => {
+export const getPoolAddressAndTVL = async (token0Address: string, token1Address: string, feeTier: number, chainId: number) => {
   const chainIdKey: ChainIdKey = `ChainId_${chainId as SupportedChainId}`;
   try {
     const poolAddress = await readContract(wagmiConfig, {
@@ -488,7 +488,16 @@ export const getPoolAddress = async (token0Address: string, token1Address: strin
       functionName: "getPool",
       args: [token0Address as `0x${string}`, token1Address as `0x${string}`, feeTier],
     });
-    return poolAddress === "0x0000000000000000000000000000000000000000" ? null : poolAddress;    
+    if (poolAddress && poolAddress !== "0x0000000000000000000000000000000000000000") {
+      const tokens = [token0Address, token1Address]
+      const balances = await Promise.all(tokens.map((tokenAddress) => getERC20TokenBalance(tokenAddress, poolAddress)))
+      return poolAddress === "0x0000000000000000000000000000000000000000" ? null : {
+        poolAddress,
+        feeTier,
+        balance0: balances[0],
+        balance1: balances[1]
+      };
+    }
   } catch (error) {
     console.log(error)
   }
@@ -497,6 +506,16 @@ export const getPoolAddress = async (token0Address: string, token1Address: strin
 
 export const getAvailablePools = async (token0Address: string, token1Address: string, chainId: number) => {
   const availableFeeTiers = [100, 500, 3000, 10000]
-  const results = await Promise.all(availableFeeTiers.map((feeTier) => getPoolAddress(token0Address, token1Address, feeTier, chainId)));
+  const results = await Promise.all(availableFeeTiers.map((feeTier) => getPoolAddressAndTVL(token0Address, token1Address, feeTier, chainId)));
   return results
+}
+
+export const getERC20TokenBalance = async (tokenAddress: string, holderAddress: string) => {
+  const balance = await readContract(wagmiConfig, {
+    abi: erc20Abi, 
+    address: tokenAddress as `0x${string}`, 
+    functionName: "balanceOf",
+    args: [holderAddress as `0x${string}`]
+  })
+  return balance
 }

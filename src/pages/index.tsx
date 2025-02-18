@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAccount, useChainId } from "wagmi";
 import { getPositions } from "@/utils/requests";
-import { priceToTick, tickToPrice } from "@/utils/functions";
+import { tickToPrice } from "@/utils/functions";
 import { usePositionsStore } from "@/store/usePositionsStore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { YildLoading } from "@/components/yild-loading";
@@ -75,36 +75,37 @@ export default function Home() {
             <Skeleton className="h-[125px] rounded-xl" />
             <Skeleton className="h-[125px] rounded-xl" />
           </div> :
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {
-              positions.length > 0 && positions.map((e:any, i) =>
-                <Card className="p-6" key={i}>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold">{e.symbol}</h3>
-                        <p className="text-sm text-muted-foreground">${tickToPrice(e.tickLower, e.decimals0, e.decimals1).toFixed(2)} ~ ${tickToPrice(e.tickUpper, e.decimals0, e.decimals1).toFixed(2)}</p>
+          <>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {
+                positions.length > 0 && positions.map((e:any, i) =>
+                  <Card className="p-6" key={i}>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold">{e.symbol}</h3>
+                          <p className="text-sm text-muted-foreground">${tickToPrice(e.tickLower, e.decimals0, e.decimals1).toFixed(2)} ~ ${tickToPrice(e.tickUpper, e.decimals0, e.decimals1).toFixed(2)}</p>
+                        </div>
+                        <Link href={`/positions/${e.tokenId}`}>
+                          <Button variant="outline" size="sm">
+                            Manage
+                          </Button>
+                        </Link>
                       </div>
-                      <Link href={`/positions/${e.tokenId}`}>
-                        <Button variant="outline" size="sm">
-                          Manage
-                        </Button>
-                      </Link>
                     </div>
-                    {/* <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">TVL</span>
-                        <span className="font-medium">$10,000</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Unclaimed Fees</span>
-                        <span className="font-medium">$50</span>
-                      </div>
-                    </div> */}
-                  </div>
-                </Card>)
-            }
-          </div>
+                  </Card>)
+                }
+            </div>
+            <div>
+              {
+                positions.length === 0 && (
+                  <>
+                  You do not have any open positions at the moment.
+                  </>
+                )
+              }
+            </div>
+          </>
       }
     </div>
   );

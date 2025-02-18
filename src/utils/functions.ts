@@ -139,6 +139,7 @@ export const reArrangeTokensByContractAddress = (tokens: any[]) => {
 
 export const visualizeFeeTier = (feeTier: number) => {
   switch(feeTier) {
+    case 100: return "0.01 %";
     case 500: return "0.05 %";
     case 1000: return "0.1 %";
     case 3000: return "0.3 %";
@@ -147,3 +148,17 @@ export const visualizeFeeTier = (feeTier: number) => {
   }
   return "0.00%"
 }
+
+export const formatNumber = (num: number): string => {
+  if (num < 1_000) return num.toString(); // Below 1K, return as is
+  const units = ["K", "M", "B", "T"]; // Thousand, Million, Billion, Trillion
+  let unitIndex = -1;
+  let formattedNum = num;
+
+  while (formattedNum >= 1000 && unitIndex < units.length - 1) {
+    formattedNum /= 1000;
+    unitIndex++;
+  }
+
+  return `${formattedNum.toFixed(2)} ${units[unitIndex]}`;
+};

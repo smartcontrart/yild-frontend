@@ -37,13 +37,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function PositionPage() {
   const { isConnected, address } = useAccount();
   const chainId = useChainId();
-  // const { positions } = usePositionsStore();
   const router = useRouter();
-  const tokenId = Number(router.query.id);
-  // const position = positions.find((p) => p.tokenId === Number(positionId)) || {};
 
-  // const { tokenId, tickLower, tickUpper, decimals0, decimals1, token0Address, token1Address, symbol0, symbol1 } = position
-
+  const [tokenId, setTokenId] = useState(0)
   const [pageStatus, setPageStatus] = useState("loaded");
   const [feesEarned0, setFeesEarned0] = useState("")
   const [feesEarned1, setFeesEarned1] = useState("")
@@ -74,54 +70,71 @@ export default function PositionPage() {
 
 
   const refreshPositionInfo = async () => {
-    console.log(`refreshing position info`)
-    console.log(tokenId, chainId)
-    if (!tokenId || !chainId)
-      return
-    
-    setSwapInfoLoading(true)
-    const swapInfo = await getSwapInfo(tokenId, chainId)
-    if (swapInfo) {
-      setFeesEarned0(swapInfo?.feesEarned0)
-      setFeesEarned1(swapInfo?.feesEarned1)
-      setUnclaimedFees0(swapInfo?.feesEarned0 - swapInfo?.protocolFee0)
-      setUnclaimedFees1(swapInfo?.feesEarned1 - swapInfo?.protocolFee1)
+    console.log(`refreshPositionInfo: ${router.isReady}, ${tokenId}, ${chainId}`)
+    if (router.isReady && tokenId) {
+      if (!tokenId || !chainId)
+        return
+      
+      setSwapInfoLoading(true)
+      const swapInfo = await getSwapInfo(tokenId, chainId)
+      if (swapInfo) {
+        setFeesEarned0(swapInfo?.feesEarned0)
+        setFeesEarned1(swapInfo?.feesEarned1)
+        setUnclaimedFees0(swapInfo?.feesEarned0 - swapInfo?.protocolFee0)
+        setUnclaimedFees1(swapInfo?.feesEarned1 - swapInfo?.protocolFee1)
+      }
+      setSwapInfoLoading(false)
+  
+      setPriceInfoLoading(true)
+      if (token0Address && token1Address) {
+        const price0 = await fetchTokenPrice(token0Address, chainId)
+        console.log(price0)
+        setToken0CurrentPrice(price0)
+        const price1 = await fetchTokenPrice(token1Address, chainId)
+        console.log(price1)
+        setToken1CurrentPrice(price1)
+      }
+      setPriceInfoLoading(false)
     }
-    setSwapInfoLoading(false)
-
-    setPriceInfoLoading(true)
-    if (token0Address && token1Address) {
-      const price0 = await fetchTokenPrice(token0Address, chainId)
-      console.log(price0)
-      setToken0CurrentPrice(price0)
-      const price1 = await fetchTokenPrice(token1Address, chainId)
-      console.log(price1)
-      setToken1CurrentPrice(price1)
-    }
-    setPriceInfoLoading(false)
   }
 
   useEffect(() => {
-    setPositionDetailLoading(true)
-    const fetchPositionDetail = async () => {
-      const positionDetail = await getPositionDetail(address as `0x${string}`, chainId, tokenId)
-      setToken0Address(positionDetail?.token0Address)
-      setToken1Address(positionDetail?.token1Address)
-      setDecimals0(positionDetail?.decimals0)
-      setDecimals1(positionDetail?.decimals1)
-      setToken0Symbol(positionDetail?.symbol0)
-      setToken1Symbol(positionDetail?.symbol1)
-      setTickLower(positionDetail?.tickLower)
-      setTickUpper(positionDetail?.tickUpper)
-
-      if (positionDetail?.poolAddress) {
-        const feeTierFromPool = await getPoolInfo(positionDetail?.poolAddress, chainId)
-        setFeeTier(feeTierFromPool)
+    console.log(`fetchPositionDetail: ${router.isReady}`)
+    if (router.isReady) {
+      setPositionDetailLoading(true)
+      const fetchPositionDetail = async () => {
+        console.log(`fetching position detail`)
+        const positionDetail = await getPositionDetail(address as `0x${string}`, chainId, tokenId)
+        setToken0Address(positionDetail?.token0Address)
+        setToken1Address(positionDetail?.token1Address)
+        setDecimals0(positionDetail?.decimals0)
+        setDecimals1(positionDetail?.decimals1)
+        setToken0Symbol(positionDetail?.symbol0)
+        setToken1Symbol(positionDetail?.symbol1)
+        setTickLower(positionDetail?.tickLower)
+        setTickUpper(positionDetail?.tickUpper)
+  
+        if (positionDetail?.poolAddress) {
+          const feeTierFromPool = await getPoolInfo(positionDetail?.poolAddress, chainId)
+          setFeeTier(feeTierFromPool)
+        }
+        setPositionDetailLoading(false)
       }
-      setPositionDetailLoading(false)
+      tokenId && address && fetchPositionDetail()
     }
-    tokenId && address && fetchPositionDetail()
-  }, [tokenId, address])
+  }, [tokenId, address, router.isReady, router.query.id])
+
+  useEffect(() => {
+    if (router.isReady && address && chainId) {
+      setTokenId(Number(router.query.id))
+      console.log(`setting interval with ${chainId}`)
+      console.log(`${router.isReady}, ${Number(router.query.id)}, ${chainId}, ${address}`)
+      console.log(`${router.isReady}, ${tokenId}, ${chainId}, ${address}`)
+      // refreshPositionInfo()
+      const interval = setInterval(() => refreshPositionInfo(), 3000);
+      return () => clearInterval(interval); // Cleanup on unmount
+    }
+  }, [address, chainId, router.isReady])
 
   useEffect(() => {
     if (tickLower && decimals0 && decimals1)
@@ -129,12 +142,6 @@ export default function PositionPage() {
     if (tickUpper && decimals0 && decimals1)
       setPriceUpper(Number(Number(tickToPrice(tickUpper, decimals0, decimals1)).toFixed(2)))
   }, [tickLower, tickUpper, decimals0, decimals1])
-
-  useEffect(() => {
-    refreshPositionInfo()
-    const interval = setInterval(() => refreshPositionInfo(), 10000);
-    return () => clearInterval(interval); // Cleanup on unmount
-  }, []);
 
   // useEffect(() => {
   //   const getTokensMetadata = async () => {

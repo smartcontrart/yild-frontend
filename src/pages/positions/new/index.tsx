@@ -49,6 +49,7 @@ import {
 } from "../../../utils/functions";
 import { approveToken, openPosition, getManagerContractAddressFromChainId, getAvailablePools } from "@/utils/contract";
 import { fetchTokenPriceWithLoading } from "@/utils/requests"
+import { FeeTier } from "@/components/fee-tier";
 
 const formSchema = z.object({
   token0: z.string().min(1, "Token is required"),
@@ -104,6 +105,7 @@ export default function NewPositionPage() {
   const [tickLowerInput, setTickLowerInput] = useState("");
   const [tickUpperInput, setTickUpperInput] = useState("");
   const [feeTier, setFeeTier] = useState<number>(3000);
+  const [availableFeeTiers, setAvailableFeeTiers] = useState<any[]>([])
   const [currentTab, setCurrentTab] = useState<"zpo" | "opz">("zpo");
 
   const debouncedMinPrice = useDebounce(minPriceInput, 1000);
@@ -169,6 +171,12 @@ export default function NewPositionPage() {
       const getPoolAddressFunc = async () => {
         const [orderedToken0, orderedToken1] = getReArrangedTokens()
         const [pool100, pool500, pool3000, pool10000] = await getAvailablePools(orderedToken0.address, orderedToken1.address, chainId)
+        let temp = []
+        if (pool100) temp.push(pool100)
+        if (pool500) temp.push(pool500)
+        if (pool3000) temp.push(pool3000)
+        if (pool10000) temp.push(pool10000)
+        setAvailableFeeTiers(temp)
       }
       getPoolAddressFunc()
     }
@@ -287,7 +295,7 @@ export default function NewPositionPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold">Create New Position {chainId}</h2>
+        <h2 className="text-xl font-bold">Open Position</h2>
       </div>
 
       <Card className="p-6">
@@ -341,7 +349,7 @@ export default function NewPositionPage() {
                 )}
               </div>
 
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="feeTier"
                 render={({ field }) => (
@@ -368,8 +376,26 @@ export default function NewPositionPage() {
                     </Select>
                     <FormMessage />
                   </FormItem>
-                )}
+                )} 
               />
+              */}
+
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {
+                  availableFeeTiers.map((elem) => (
+                    <FeeTier 
+                      address={elem.poolAddress} 
+                      feeTier={elem.feeTier} 
+                      pair={`${token0Name}/${token1Name}`}
+                      balance0={Number(elem.balance0) / (10 ** (token0Decimals || 18))} 
+                      balance1={Number(elem.balance1) / (10 ** (token1Decimals || 18))} 
+                      price0={Number(token0Price || 0)}
+                      price1={Number(token1Price || 0)}
+                      onClickPool={() => console.log("asdf")} 
+                    />
+                  ))
+                }
+              </div>
 
               <div className={`${!token0Name || !token1Name ? "hidden" : ""}`}>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -381,7 +407,6 @@ export default function NewPositionPage() {
                     <TabsList>
                       <TabsTrigger value="zpo">{`${token1Name} per ${token0Name}`}</TabsTrigger>
                       <TabsTrigger value="opz">{`${token0Name} per ${token1Name}`}</TabsTrigger>
-                      <TabsTrigger value="23">{feeTier}</TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>
