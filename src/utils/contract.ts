@@ -511,11 +511,13 @@ export const getAvailablePools = async (token0Address: string, token1Address: st
 }
 
 export const getERC20TokenBalance = async (tokenAddress: string, holderAddress: string) => {
-  const balance = await readContract(wagmiConfig, {
-    abi: erc20Abi, 
-    address: tokenAddress as `0x${string}`, 
-    functionName: "balanceOf",
-    args: [holderAddress as `0x${string}`]
-  })
-  return balance
+  if (tokenAddress && holderAddress) {
+    const balance = await readContract(wagmiConfig, {
+      abi: erc20Abi, 
+      address: tokenAddress as `0x${string}`, 
+      functionName: "balanceOf",
+      args: [holderAddress as `0x${string}`]
+    })
+    return balance
+  }
 }

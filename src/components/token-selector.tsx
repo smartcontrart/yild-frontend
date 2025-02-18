@@ -23,16 +23,17 @@ interface TokenSelectorProps {
   name: string;
   label: string;
   addressFieldName: string;
+  chainId: number,
   onTokenInfoChange?: (info: TokenInfo) => void;
 }
 
-export function TokenSelector({ control, name, label, addressFieldName, onTokenInfoChange }: TokenSelectorProps) {
+export function TokenSelector({ control, name, label, addressFieldName, chainId, onTokenInfoChange }: TokenSelectorProps) {
   const publicClient = usePublicClient();
-  const chainId = useChainId();
   const [customToken, setCustomToken] = useState<{ name: string; symbol: string; decimals: number } | null>(null);
   const [customTokenAddress, setCustomTokenAddress] = useState<string | null>(null);
+  const [tokenBalance, setTokenBalance] = useState(0);
 
-  const fetchTokenInfo = async (address: string) => {
+  const fetchTokenInfo = async (tokenAddress: string) => {
     try {
       if (!publicClient) {
         console.error("Public client not initialized");
@@ -44,7 +45,7 @@ export function TokenSelector({ control, name, label, addressFieldName, onTokenI
         return null;
       }
 
-      const { name, symbol, decimals } = await getERC20TokenInfo(address, chainId)
+      const { name, symbol, decimals } = await getERC20TokenInfo(tokenAddress, chainId)
       return { name, symbol, decimals }
     } catch (error) {
       console.error("Error fetching token info:", error);

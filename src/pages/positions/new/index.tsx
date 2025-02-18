@@ -47,9 +47,13 @@ import {
   getRequiredToken0FromToken1Amount,
   getRequiredToken1FromToken0Amount,
 } from "../../../utils/functions";
-import { approveToken, openPosition, getManagerContractAddressFromChainId, getAvailablePools } from "@/utils/contract";
+import { approveToken, openPosition, getManagerContractAddressFromChainId, getAvailablePools, getERC20TokenBalance } from "@/utils/contract";
 import { fetchTokenPriceWithLoading } from "@/utils/requests"
 import { FeeTier } from "@/components/fee-tier";
+import { CREATE_POSITION_PAGE_STATE } from "@/utils/page-states";
+import { INVALID_FEE_TIER, VALID_FEE_TIERS } from "@/utils/constants";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatUnits, parseEther, parseUnits } from "viem";
 
 const formSchema = z.object({
   token0: z.string().min(1, "Token is required"),
@@ -66,7 +70,7 @@ const formSchema = z.object({
 });
 
 export default function NewPositionPage() {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const chainId = useChainId();
   const publicClient = usePublicClient();
   const router = useRouter();
@@ -87,7 +91,7 @@ export default function NewPositionPage() {
     },
   });
 
-  const [pageStatus, setPageStatus] = useState<string | null>("loaded");
+  const [pageStatus, setPageStatus] = useState<string | null>(CREATE_POSITION_PAGE_STATE.PAGE_LOADING);
   const [token0Price, setToken0Price] = useState<string | null>(null);
   const [token1Price, setToken1Price] = useState<string | null>(null);
   const [token0Amount, setToken0Amount] = useState<string | null>(null);
@@ -96,6 +100,10 @@ export default function NewPositionPage() {
   const [token1Address, setToken1Address] = useState<string | null>(null);
   const [token0Decimals, setToken0Decimals] = useState<number | null>(null);
   const [token1Decimals, setToken1Decimals] = useState<number | null>(null);
+  const [token0Balance, setToken0Balance] = useState("");
+  const [token1Balance, setToken1Balance] = useState("");
+  const [isLoadingToken0Balance, setIsLoadingToken0Balance] = useState(false);
+  const [isLoadingToken1Balance, setIsLoadingToken1Balance] = useState(false);
   const [token0Name, setToken0Name] = useState<string | null>(null);
   const [token1Name, setToken1Name] = useState<string | null>(null);
   const [isLoadingToken0Price, setIsLoadingToken0Price] = useState(false);
@@ -104,7 +112,7 @@ export default function NewPositionPage() {
   const [maxPriceInput, setMaxPriceInput] = useState("");
   const [tickLowerInput, setTickLowerInput] = useState("");
   const [tickUpperInput, setTickUpperInput] = useState("");
-  const [feeTier, setFeeTier] = useState<number>(3000);
+  const [feeTier, setFeeTier] = useState<number>(INVALID_FEE_TIER);
   const [availableFeeTiers, setAvailableFeeTiers] = useState<any[]>([])
   const [currentTab, setCurrentTab] = useState<"zpo" | "opz">("zpo");
 
@@ -166,8 +174,34 @@ export default function NewPositionPage() {
   }, [feeTier])
 
   useEffect(() => {
+    if (token0Address && token0Decimals) {
+      const getTokenBalance = async () => {
+        setIsLoadingToken0Balance(true)
+        const balance = await getERC20TokenBalance(token0Address, address || "")
+        if (balance)
+          setToken0Balance(Number(formatUnits(balance, token0Decimals)).toFixed(4))
+        setIsLoadingToken0Balance(false)
+      }
+      getTokenBalance()
+    }
+  }, [token0Address])
 
+  useEffect(() => {
+    if (token1Address && token1Decimals) {
+      const getTokenBalance = async () => {
+        setIsLoadingToken1Balance(true)
+        const balance = await getERC20TokenBalance(token1Address, address || "")
+        if (balance)
+          setToken1Balance(Number(formatUnits(balance, token1Decimals)).toFixed(4))
+        setIsLoadingToken1Balance(false)
+      }
+      getTokenBalance()
+    }
+  }, [token1Address])
+
+  useEffect(() => {
     if (token0Address && token1Address) {
+      setFeeTier(INVALID_FEE_TIER)
       const getPoolAddressFunc = async () => {
         const [orderedToken0, orderedToken1] = getReArrangedTokens()
         const [pool100, pool500, pool3000, pool10000] = await getAvailablePools(orderedToken0.address, orderedToken1.address, chainId)
@@ -301,84 +335,81 @@ export default function NewPositionPage() {
       <Card className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-1">
-                <TokenSelector
-                  control={form.control}
-                  name="token0"
-                  addressFieldName="token0Address"
-                  label="Select Token"
-                  onTokenInfoChange={(info) => {
-                    setToken0Name(info.symbol);
-                    setToken0Decimals(info.decimals);
-                    setToken0Address(info.address);
-                  }}
-                />
-                {(isLoadingToken0Price || token0Price) && (
-                  <div className="flex items-center mt-2">
-                    {isLoadingToken0Price ? (
-                      <span className="text-sm text-muted-foreground">
-                        Loading price...
-                      </span>
-                    ) : (
-                      <span className="text-sm">≈ ${token0Price} USD</span>
-                    )}
-                  </div>
-                )}
-                <TokenSelector
-                  control={form.control}
-                  name="token1"
-                  addressFieldName="token1Address"
-                  label="Select Token"
-                  onTokenInfoChange={(info) => {
-                    setToken1Name(info.symbol);
-                    setToken1Decimals(info.decimals);
-                    setToken1Address(info.address);
-                  }}
-                />
-                {(isLoadingToken1Price || token1Price) && (
-                  <div className="flex items-center mt-2">
-                    {isLoadingToken1Price ? (
-                      <span className="text-sm text-muted-foreground">
-                        Loading price...
-                      </span>
-                    ) : (
-                      <span className="text-sm">≈ ${token1Price} USD</span>
-                    )}
-                  </div>
-                )}
+            <div className="space-y-8">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <TokenSelector
+                    control={form.control}
+                    name="token0"
+                    addressFieldName="token0Address"
+                    label="Select Token"
+                    chainId={chainId}
+                    onTokenInfoChange={(info) => {
+                      setToken0Name(info.symbol);
+                      setToken0Decimals(info.decimals);
+                      setToken0Address(info.address);
+                    }}
+                  />
+                  {(isLoadingToken0Price || token0Price) && (
+                    <div className="flex items-center mt-2">
+                      {isLoadingToken0Price ? (
+                        <span className="text-sm text-muted-foreground">
+                          <Skeleton className="w-[100px] h-[20px] rounded" />
+                        </span>
+                      ) : (
+                        <span className="text-sm ml-2">Current Price: ${token0Price} USD</span>
+                      )}
+                    </div>
+                  )}
+                  {(token0Balance !== "" || isLoadingToken0Balance) && (
+                    <div className="flex items-center mt-2">
+                      {isLoadingToken0Balance ? (
+                        <span className="text-sm text-muted-foreground">
+                          <Skeleton className="w-[100px] h-[20px] rounded" />
+                        </span>
+                      ) : (
+                        <span className="text-sm ml-2">Current Balance: {token0Balance} {token0Name}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <TokenSelector
+                    control={form.control}
+                    name="token1"
+                    addressFieldName="token1Address"
+                    label="Select Token"
+                    chainId={chainId}
+                    onTokenInfoChange={(info) => {
+                      setToken1Name(info.symbol);
+                      setToken1Decimals(info.decimals);
+                      setToken1Address(info.address);
+                    }}
+                  />
+                  {(isLoadingToken1Price || token1Price) && (
+                    <div className="flex items-center mt-2">
+                      {isLoadingToken1Price ? (
+                        <span className="text-sm text-muted-foreground">
+                          <Skeleton className="w-[100px] h-[20px] rounded" />
+                        </span>
+                      ) : (
+                        <span className="text-sm ml-2">Current Price: ${token1Price} USD</span>
+                      )}
+                    </div>
+                  )}
+                  {(token1Balance !== "" || isLoadingToken1Balance) && (
+                    <div className="flex items-center mt-2">
+                      {isLoadingToken1Balance ? (
+                        <span className="text-sm text-muted-foreground">
+                          <Skeleton className="w-[100px] h-[20px] rounded" />
+                        </span>
+                      ) : (
+                        <span className="text-sm ml-2">Current Balance: {token1Balance} {token1Name}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-
-              {/* <FormField
-                control={form.control}
-                name="feeTier"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fee Tier</FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                        setFeeTier(Number(value))
-                        form.setValue("feeTier", value)
-                      }}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select fee tier" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="100">0.01%</SelectItem>
-                        <SelectItem value="500">0.05%</SelectItem>
-                        <SelectItem value="3000">0.3%</SelectItem>
-                        <SelectItem value="10000">1%</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} 
-              />
-              */}
 
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {
@@ -393,13 +424,18 @@ export default function NewPositionPage() {
                       price0={Number(token0Price || 0)}
                       price1={Number(token1Price || 0)}
                       chainId={chainId}
-                      onClickPool={() => console.log("asdf")} 
+                      selected={feeTier === elem.feeTier}
+                      onClickPool={() => setFeeTier(elem.feeTier)} 
                     />
                   ))
                 }
+                {
+                  availableFeeTiers.length === 0 ? 
+                  <>No pools available for this pair. Please choose other tokens.</> : <></>
+                }
               </div>
 
-              <div className={`${!token0Name || !token1Name ? "hidden" : ""}`}>
+              <div className={`${!token0Name || !token1Name || VALID_FEE_TIERS.indexOf(feeTier) < 0 || availableFeeTiers.length === 0 ? "hidden" : "space-y-4"}`}>
                 <div className="grid gap-4 md:grid-cols-2">
                   <Tabs
                     value={currentTab}
@@ -412,6 +448,17 @@ export default function NewPositionPage() {
                     </TabsList>
                   </Tabs>
                 </div>
+
+                {
+                  currentTab === "zpo" ? 
+                    <div>
+                      Current Price for {token1Name} per {token0Name}: {Number(token0Price) / Number(token1Price)}
+                    </div>
+                    : 
+                    <div>
+                      Current Price for {token0Name} per {token1Name}: {Number(token1Price) / Number(token0Price)}
+                    </div>
+                }
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <FormField

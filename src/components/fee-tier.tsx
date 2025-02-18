@@ -3,6 +3,7 @@ import { formatNumber, visualizeFeeTier } from "@/utils/functions";
 import { gql, useQuery } from "@apollo/client";
 import { getClientFromChainId } from "@/lib/apolloClient";
 import { useMemo } from "react";
+import { Skeleton } from "./ui/skeleton";
 
 interface FeeTierProps {
   pair: string;
@@ -13,6 +14,7 @@ interface FeeTierProps {
   price0: number;
   price1: number;
   chainId: number;
+  selected: boolean;
   onClickPool?: () => void;
 }
 
@@ -36,7 +38,7 @@ function getMonthlyVolume(data: any, price0: any, price1: any) {
   return formatNumber(token0Volume * price0 + token1Volume * price1)
 }
 
-export function FeeTier({ pair, address, feeTier, balance0, balance1, price0, price1, chainId, onClickPool }: FeeTierProps) {
+export function FeeTier({ pair, address, feeTier, balance0, balance1, price0, price1, chainId, selected, onClickPool }: FeeTierProps) {
 
   const timestamp = useMemo(() => getOneMonthAgoTimestamp(), []);
   const GET_DATA = useMemo(() => gql`
@@ -58,14 +60,14 @@ export function FeeTier({ pair, address, feeTier, balance0, balance1, price0, pr
 
   const { loading, error, data } = useQuery(GET_DATA, { client: getClientFromChainId(chainId) });
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <Skeleton className="h-[125px] rounded-xl"  />;
   if (error) return <p>Error: {error.message}</p>;
 
   return (
-    <Card className="p-6" key={`feeTier_${feeTier}`}>
+    <Card className={`p-6 cursor-pointer ${selected ? "bg-sky-50" : ""}`} key={`feeTier_${feeTier}`} onClick={() => onClickPool && onClickPool()}>
       <div className="space-y-4">
         <div className="flex justify-between items-start">
-          <div className="space-y-4">
+          <div className="space-y-2 ">
             <div>
               {pair} ( {visualizeFeeTier(feeTier)} )
             </div>
@@ -73,7 +75,7 @@ export function FeeTier({ pair, address, feeTier, balance0, balance1, price0, pr
               TVL: $ {formatNumber(balance0 * price0 + balance1 * price1)}
             </div>
             <div>
-              1 Month Volume: $ {getMonthlyVolume(data?.poolDayDatas || [], price0, price1)}
+              30D Volume: $ {getMonthlyVolume(data?.poolDayDatas || [], price0, price1)}
             </div>
           </div>
         </div>

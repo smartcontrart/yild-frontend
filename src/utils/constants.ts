@@ -34,6 +34,9 @@ export const UNISWAP_V3_FACTORY_CONTRACT_ADDRESS: Record<ChainIdKey, `0x${string
   "ChainId_42161": "0x1F98431c8aD98523631AE4a59f267346ea31F984" as `0x${string}`
 }
 
+export const VALID_FEE_TIERS = [100, 500, 3000, 10000]
+export const INVALID_FEE_TIER = 140
+
 export const SUBGRAPH_API_KEY = "2818c13f6a7e9707378c0b8a3517bcb7"
 
 // export const SLIPPAGE = 5; // 5%
