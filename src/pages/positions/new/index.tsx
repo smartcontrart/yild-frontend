@@ -384,6 +384,7 @@ export default function NewPositionPage() {
                 {
                   availableFeeTiers.map((elem) => (
                     <FeeTier 
+                      key={`FeeTier_${elem.feeTier}`}
                       address={elem.poolAddress} 
                       feeTier={elem.feeTier} 
                       pair={`${token0Name}/${token1Name}`}
@@ -391,6 +392,7 @@ export default function NewPositionPage() {
                       balance1={Number(elem.balance1) / (10 ** (token1Decimals || 18))} 
                       price0={Number(token0Price || 0)}
                       price1={Number(token1Price || 0)}
+                      chainId={chainId}
                       onClickPool={() => console.log("asdf")} 
                     />
                   ))
