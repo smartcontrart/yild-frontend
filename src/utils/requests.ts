@@ -75,15 +75,20 @@ export const fetchParaswapRoute = async (
 }
 
 export const fetchTokenPrice = async (tokenAddress: string, chainId: number) => {
-  const chainName = chainId === 1 ? "ethereum" : chainId === 8453 ? "base" : chainId === 42161 ? "arbitrum" : "not-supported"
-  const response = await fetch(
-    `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`
-  );
-  const data = await response.json();
-
-  if (data.pairs && data.pairs.length > 0) {
-    const priceInfo = data.pairs.filter((pair: any) => pair.chainId === chainName || pair.dexId === "uniswap")
-    return priceInfo[0].priceUsd;
+  try {
+    const chainName = chainId === 1 ? "ethereum" : chainId === 8453 ? "base" : chainId === 42161 ? "arbitrum" : "not-supported"
+    const response = await fetch(
+      `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`
+    );
+    const data = await response.json();
+  
+    if (data.pairs && data.pairs.length > 0) {
+      const priceInfo = data.pairs.filter((pair: any) => pair.chainId === chainName || pair.dexId === "uniswap")
+      return priceInfo[0].priceUsd;
+    }    
+  } catch (error) {
+    console.error("Error fetching token1 price:", error);
+    return null
   }
 }
 

@@ -39,10 +39,9 @@ export default function PositionPage() {
   const chainId = useChainId();
   const router = useRouter();
 
-  const [tokenId, setTokenId] = useState(0)
   const [pageStatus, setPageStatus] = useState("loaded");
-  const [feesEarned0, setFeesEarned0] = useState("")
-  const [feesEarned1, setFeesEarned1] = useState("")
+  const [feesEarned0, setFeesEarned0] = useState(0)
+  const [feesEarned1, setFeesEarned1] = useState(0)
   const [priceLower, setPriceLower] = useState(0)
   const [priceUpper, setPriceUpper] = useState(0)
   const [tickLower, setTickLower] = useState<number>(-600000)
@@ -54,6 +53,8 @@ export default function PositionPage() {
   const [feeTier, setFeeTier] = useState(0)
   const [token0CurrentPrice, setToken0CurrentPrice] = useState(0)
   const [token1CurrentPrice, setToken1CurrentPrice] = useState(0)
+  const [principal0, setPrincipal0] = useState(0)
+  const [principal1, setPrincipal1] = useState(0)
   const [unclaimedFees0, setUnclaimedFees0] = useState(0)
   const [unclaimedFees1, setUnclaimedFees1] = useState(0)
   const [token0Symbol, setToken0Symbol] = useState("")
@@ -66,27 +67,27 @@ export default function PositionPage() {
   const debouncedIncreaseToken0Amount = useDebounce(increaseToken0Amount, 1000)
 
 
-
-
-
   const refreshPositionInfo = async () => {
-    console.log(`refreshPositionInfo: ${router.isReady}, ${tokenId}, ${chainId}`)
-    if (router.isReady && tokenId) {
-      if (!tokenId || !chainId)
+    if (router.isReady) {
+      if (!chainId || !router.query.id)
         return
       
       setSwapInfoLoading(true)
-      const swapInfo = await getSwapInfo(tokenId, chainId)
+      const swapInfo = await getSwapInfo(Number(router.query.id), chainId)
       if (swapInfo) {
-        setFeesEarned0(swapInfo?.feesEarned0)
-        setFeesEarned1(swapInfo?.feesEarned1)
-        setUnclaimedFees0(swapInfo?.feesEarned0 - swapInfo?.protocolFee0)
-        setUnclaimedFees1(swapInfo?.feesEarned1 - swapInfo?.protocolFee1)
+        console.log(swapInfo)
+        setPrincipal0(Number(formatUnits(swapInfo?.principal0, decimals0)))
+        setPrincipal1(Number(formatUnits(swapInfo?.principal1, decimals1)))
+        setFeesEarned0(Number(formatUnits(swapInfo?.feesEarned0, decimals0)))
+        setFeesEarned1(Number(formatUnits(swapInfo?.feesEarned1, decimals1)))
+        setUnclaimedFees0(Number(formatUnits(BigInt(swapInfo?.feesEarned0 - swapInfo?.protocolFee0), decimals0)))
+        setUnclaimedFees1(Number(formatUnits(BigInt(swapInfo?.feesEarned1 - swapInfo?.protocolFee1), decimals1)))
       }
       setSwapInfoLoading(false)
   
       setPriceInfoLoading(true)
       if (token0Address && token1Address) {
+        console.log(`fetching tokens price`)
         const price0 = await fetchTokenPrice(token0Address, chainId)
         console.log(price0)
         setToken0CurrentPrice(price0)
@@ -99,12 +100,11 @@ export default function PositionPage() {
   }
 
   useEffect(() => {
-    console.log(`fetchPositionDetail: ${router.isReady}`)
     if (router.isReady) {
       setPositionDetailLoading(true)
       const fetchPositionDetail = async () => {
         console.log(`fetching position detail`)
-        const positionDetail = await getPositionDetail(address as `0x${string}`, chainId, tokenId)
+        const positionDetail = await getPositionDetail(address as `0x${string}`, chainId, Number(router.query.id))
         setToken0Address(positionDetail?.token0Address)
         setToken1Address(positionDetail?.token1Address)
         setDecimals0(positionDetail?.decimals0)
@@ -120,21 +120,20 @@ export default function PositionPage() {
         }
         setPositionDetailLoading(false)
       }
-      tokenId && address && fetchPositionDetail()
+      address && fetchPositionDetail()
     }
-  }, [tokenId, address, router.isReady, router.query.id])
+  }, [address, router.isReady, router.query.id])
 
   useEffect(() => {
-    if (router.isReady && address && chainId) {
-      setTokenId(Number(router.query.id))
+    if (router.isReady && address && chainId && token0Address && token1Address) {
       console.log(`setting interval with ${chainId}`)
       console.log(`${router.isReady}, ${Number(router.query.id)}, ${chainId}, ${address}`)
-      console.log(`${router.isReady}, ${tokenId}, ${chainId}, ${address}`)
+      console.log(`${router.isReady}, ${1}, ${chainId}, ${address}`)
       // refreshPositionInfo()
-      const interval = setInterval(() => refreshPositionInfo(), 3000);
+      const interval = setInterval(() => refreshPositionInfo(), 30000);
       return () => clearInterval(interval); // Cleanup on unmount
     }
-  }, [address, chainId, router.isReady])
+  }, [address, chainId, router.isReady, router.query.id, token0Address, token1Address])
 
   useEffect(() => {
     if (tickLower && decimals0 && decimals1)
@@ -186,15 +185,6 @@ export default function PositionPage() {
     );
   }
 
-  const getUnCollectedFees = async () => {
-    const swapInfo = await getSwapInfo(tokenId, chainId)
-    console.log(swapInfo)
-    if (!swapInfo)
-      return null
-    setFeesEarned0(formatUnits((swapInfo.feesEarned0).toString(), decimals0).toString())
-    setFeesEarned1(formatUnits((swapInfo.feesEarned1).toString(), decimals1).toString())
-  };
-
   const increasePosition = async () => {
     try {
       setPageStatus("approving");
@@ -212,7 +202,7 @@ export default function PositionPage() {
 
       setPageStatus("adding");
       const { success: addLiquiditySuccess, result } = await increaseLiquidity(chainId, {
-        tokenId,
+        tokenId: Number(router.query.id),
         amount0: increaseToken0Amount,
         amount1: increaseToken1Amount,
         decimals0,
@@ -233,7 +223,7 @@ export default function PositionPage() {
   const decreasePosition = async () => {
     const amountInBPS = 500 // 18%
     try {
-      await decreaseLiquidity(tokenId, chainId, amountInBPS);
+      await decreaseLiquidity(Number(router.query.id), chainId, amountInBPS);
     } catch (error) {
       console.log(error)
     }
@@ -241,7 +231,7 @@ export default function PositionPage() {
 
   const confirmClosePosition = async () => {
     try {
-      await closePosition(tokenId, chainId);
+      await closePosition(Number(router.query.id), chainId);
     } catch (error) {
       console.log(error)
     }
@@ -249,7 +239,7 @@ export default function PositionPage() {
 
   const confirmCollectFees = async () => {
     try {
-      await collectFees(tokenId, chainId, address || "")
+      await collectFees(Number(router.query.id), chainId, address || "")
     } catch (error) {
       console.log(error)
     }
@@ -257,7 +247,7 @@ export default function PositionPage() {
 
   const compoundPosition = async () => {
     try {
-      await compoundFees(tokenId, chainId)
+      await compoundFees(Number(router.query.id), chainId)
     } catch (error) {
       console.log(error)
     }
@@ -266,7 +256,7 @@ export default function PositionPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">Position #{tokenId}</h2>
+        <h2 className="text-xl font-bold">Position #{Number(router.query.id)}</h2>
       </div>
 
       <Card className="p-6">
@@ -293,7 +283,7 @@ export default function PositionPage() {
                 }
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Price Range {priceInfoLoading ? "true": "false"}</span>
+                <span className="text-muted-foreground">Price Range</span>
                 {
                   priceInfoLoading ? 
                     <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
@@ -303,8 +293,18 @@ export default function PositionPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Current Price</span>
-                <span>{token0Symbol}: {token0CurrentPrice} USD</span>
-                <span>{token1Symbol}: {token1CurrentPrice} USD</span>
+                {
+                  priceInfoLoading ? 
+                    <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
+                    :
+                    <span>{token0Symbol}: {token0CurrentPrice} USD</span>
+                }
+                {
+                  priceInfoLoading ? 
+                    <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
+                    :
+                    <span>{token1Symbol}: {token1CurrentPrice} USD</span>
+                }
               </div>
             </div>
           </div>
@@ -313,20 +313,46 @@ export default function PositionPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">TVL</span>
-                <span>wtf is TVL ?</span>
+                {
+                  swapInfoLoading || priceInfoLoading ? 
+                    <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
+                    :
+                    <span>$ {Number(principal0 * token0CurrentPrice + principal1 * token1CurrentPrice).toFixed(2)}</span>
+                }
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Token 0</span>
-                <span>{token0Symbol}</span>
+                {
+                  swapInfoLoading ? 
+                    <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
+                    :
+                    <span>{Number(principal0).toFixed(3)} {token0Symbol}</span>
+                }
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Token 1</span>
-                <span>{token1Symbol}</span>
+                {
+                  swapInfoLoading ? 
+                    <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
+                    :
+                    <span>{Number(principal1).toFixed(3)} {token1Symbol}</span>
+                }
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Unclaimed Fees</span>
-                <span>{token0Symbol}: {unclaimedFees0 || "asdf"}</span>
-                <span>{token1Symbol}: {unclaimedFees1 || "asdf"}</span>
+                {
+                  swapInfoLoading ? 
+                    <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
+                    :
+                    <>
+                      <div>
+                        <span>{token0Symbol}: {Number(unclaimedFees0).toFixed(6)}</span>
+                      </div>
+                      <div>
+                        <span>{token1Symbol}: {Number(unclaimedFees1).toFixed(6)}</span>
+                      </div>
+                    </>
+                }
               </div>
             </div>
           </div>
@@ -428,7 +454,7 @@ export default function PositionPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="w-full" onClick={getUnCollectedFees}>
+                <Button className="w-full">
                 <Coins className="mr-2 h-4 w-4" />
                   Collect Fees
                 </Button>
