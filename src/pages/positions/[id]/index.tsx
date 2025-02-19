@@ -288,22 +288,25 @@ export default function PositionPage() {
                   priceInfoLoading ? 
                     <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
                     :
-                    <span>$ {priceLower} ~ $ {priceUpper}</span>
+                    <span>{priceLower} ~ {priceUpper}</span>
                 }
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Current Price</span>
+                <span className="text-muted-foreground">{token0Symbol} Price</span>
                 {
                   priceInfoLoading ? 
                     <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
                     :
-                    <span>{token0Symbol}: {token0CurrentPrice} USD</span>
+                    <span>{token0CurrentPrice} USD</span>
                 }
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{token1Symbol} Price</span>
                 {
                   priceInfoLoading ? 
                     <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
                     :
-                    <span>{token1Symbol}: {token1CurrentPrice} USD</span>
+                    <span>{token1CurrentPrice} USD</span>
                 }
               </div>
             </div>
@@ -321,7 +324,7 @@ export default function PositionPage() {
                 }
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Token 0</span>
+                <span className="text-muted-foreground">{token0Symbol}</span>
                 {
                   swapInfoLoading ? 
                     <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
@@ -330,7 +333,7 @@ export default function PositionPage() {
                 }
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Token 1</span>
+                <span className="text-muted-foreground">{token1Symbol}</span>
                 {
                   swapInfoLoading ? 
                     <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
@@ -344,14 +347,16 @@ export default function PositionPage() {
                   swapInfoLoading ? 
                     <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
                     :
-                    <>
-                      <div>
-                        <span>{token0Symbol}: {Number(unclaimedFees0).toFixed(6)}</span>
-                      </div>
-                      <div>
-                        <span>{token1Symbol}: {Number(unclaimedFees1).toFixed(6)}</span>
-                      </div>
-                    </>
+                    <span>{Number(unclaimedFees0).toFixed(5)} {token0Symbol}</span>
+                }
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground"></span>
+                {
+                  swapInfoLoading ? 
+                    <span><Skeleton className="w-[180px] h-[24px] rounded-l"/></span>
+                    :
+                    <span>{Number(unclaimedFees1).toFixed(5)} {token1Symbol}</span>
                 }
               </div>
             </div>
