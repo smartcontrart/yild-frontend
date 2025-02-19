@@ -102,16 +102,16 @@ export function priceToTick(price: number, decimalsToken0: number, decimalsToken
 */
 export function getTickSpacing(fee: number): number {
   switch (fee) {
-      case 100: // 0.01%
-          return 1;
-      case 500: // 0.05%
-          return 10;
-      case 3000: // 0.3%
-          return 60;
-      case 10000: // 1%
-          return 200;
-      default:
-          throw new Error('Unsupported fee tier');
+    case 100: // 0.01%
+      return 1;
+    case 500: // 0.05%
+      return 10;
+    case 3000: // 0.3%
+      return 60;
+    case 10000: // 1%
+      return 200;
+    default:
+      return 10000;
   }
 }
 

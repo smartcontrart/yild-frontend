@@ -1,13 +1,6 @@
 "use client";
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   useAccount,
   useChainId,
   usePublicClient,
@@ -15,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +35,7 @@ import { TokenSelector } from "@/components/token-selector";
 import { useState, useEffect } from "react";
 import { priceToTick, tickToPrice, nearestValidTick, reArrangeTokensByContractAddress } from "@/utils/functions";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import {
   getRequiredToken0FromToken1Amount,
@@ -71,6 +65,7 @@ const formSchema = z.object({
 
 export default function NewPositionPage() {
   const { isConnected, address } = useAccount();
+  const { toast } = useToast();
   const chainId = useChainId();
   const publicClient = usePublicClient();
   const router = useRouter();
@@ -216,6 +211,28 @@ export default function NewPositionPage() {
     }
   }, [token0Address, token1Address, chainId])
 
+  useEffect(() => {
+    if (pageStatus === CREATE_POSITION_PAGE_STATE.POSITION_OPENED)
+      toast({
+        variant: "default",
+        title: "Info",
+        description: "Successfully opened a new position.",
+      })
+    if (pageStatus === CREATE_POSITION_PAGE_STATE.OPEN_POSITION_FAILED)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Open position failed",
+      })
+    if (pageStatus === CREATE_POSITION_PAGE_STATE.TOKEN_APPROVE_FAILED)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Token approval failed",
+      })
+  
+  }, [pageStatus])
+
   const getReArrangedTokens = () => reArrangeTokensByContractAddress([
     {
       address: token0Address as `0x${string}`,
@@ -240,17 +257,18 @@ export default function NewPositionPage() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    
     try {
-      setPageStatus("approving");
+      setPageStatus(CREATE_POSITION_PAGE_STATE.APPROVING_TOKENS);
       
       const { success: approveToken0Success } = await approveToken(token0Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token0Decimals || 18, values.amount0)
       if (!approveToken0Success) {
-        setPageStatus("approve token failed")
+        setPageStatus(CREATE_POSITION_PAGE_STATE.TOKEN_APPROVE_FAILED)
         return
       }
       const { success: approveToken1Success } = await approveToken(token1Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token1Decimals || 18, values.amount1)
       if (!approveToken1Success) {
-        setPageStatus("approve token failed")
+        setPageStatus(CREATE_POSITION_PAGE_STATE.TOKEN_APPROVE_FAILED)
         return
       }
 
@@ -260,7 +278,7 @@ export default function NewPositionPage() {
       const realToken1Value =
         realToken1.address === token1Address ? values.amount1 : values.amount0;
 
-      setPageStatus("opening");
+      setPageStatus(CREATE_POSITION_PAGE_STATE.OPENING_POSITION);
       const { success: openPositionSuccess, result } = await openPosition(publicClient, chainId, {
         token0Address: realToken0.address,
         token1Address: realToken1.address,
@@ -273,13 +291,13 @@ export default function NewPositionPage() {
         token1Decimals: realToken1.decimals
       })
       if (!openPositionSuccess) {
-        setPageStatus("open position failed")
+        setPageStatus(CREATE_POSITION_PAGE_STATE.OPEN_POSITION_FAILED)
         return
       }
-      setPageStatus("open position success")
+      setPageStatus(CREATE_POSITION_PAGE_STATE.POSITION_OPENED)
     } catch(err) {
       console.log(err)
-      setPageStatus("error while open position")
+      setPageStatus(CREATE_POSITION_PAGE_STATE.OPEN_POSITION_FAILED)
       return
     }
   }
@@ -361,17 +379,6 @@ export default function NewPositionPage() {
                       )}
                     </div>
                   )}
-                  {(token0Balance !== "" || isLoadingToken0Balance) && (
-                    <div className="flex items-center mt-2">
-                      {isLoadingToken0Balance ? (
-                        <span className="text-sm text-muted-foreground">
-                          <Skeleton className="w-[100px] h-[20px] rounded" />
-                        </span>
-                      ) : (
-                        <span className="text-sm ml-2">Current Balance: {token0Balance} {token0Name}</span>
-                      )}
-                    </div>
-                  )}
                 </div>
                 <div>
                   <TokenSelector
@@ -394,17 +401,6 @@ export default function NewPositionPage() {
                         </span>
                       ) : (
                         <span className="text-sm ml-2">Current Price: ${token1Price} USD</span>
-                      )}
-                    </div>
-                  )}
-                  {(token1Balance !== "" || isLoadingToken1Balance) && (
-                    <div className="flex items-center mt-2">
-                      {isLoadingToken1Balance ? (
-                        <span className="text-sm text-muted-foreground">
-                          <Skeleton className="w-[100px] h-[20px] rounded" />
-                        </span>
-                      ) : (
-                        <span className="text-sm ml-2">Current Balance: {token1Balance} {token1Name}</span>
                       )}
                     </div>
                   )}
@@ -592,6 +588,28 @@ export default function NewPositionPage() {
                       </FormItem>
                     )}
                   />
+                  {(token0Balance !== "" || isLoadingToken0Balance) && (
+                    <div className="flex items-center mt-2">
+                      {isLoadingToken0Balance ? (
+                        <span className="text-sm text-muted-foreground">
+                          <Skeleton className="w-[100px] h-[20px] rounded" />
+                        </span>
+                      ) : (
+                        <span className="text-sm ml-2">Current Balance: {token0Balance} {token0Name}</span>
+                      )}
+                    </div>
+                  )}
+                  {(token1Balance !== "" || isLoadingToken1Balance) && (
+                    <div className="flex items-center mt-2">
+                      {isLoadingToken1Balance ? (
+                        <span className="text-sm text-muted-foreground">
+                          <Skeleton className="w-[100px] h-[20px] rounded" />
+                        </span>
+                      ) : (
+                        <span className="text-sm ml-2">Current Balance: {token1Balance} {token1Name}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -614,30 +632,32 @@ export default function NewPositionPage() {
 
       <AlertDialog
         open={
-          pageStatus === "approving" ||
-          pageStatus === "opening" ||
-          pageStatus === "opened"
+          pageStatus === CREATE_POSITION_PAGE_STATE.APPROVING_TOKENS ||
+          pageStatus === CREATE_POSITION_PAGE_STATE.OPENING_POSITION ||
+          pageStatus === CREATE_POSITION_PAGE_STATE.POSITION_OPENED
         }
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Status</AlertDialogTitle>
             <AlertDialogDescription>
-              {pageStatus === "approving"
+              {pageStatus === CREATE_POSITION_PAGE_STATE.APPROVING_TOKENS
                 ? "Approving your tokens to deposit into liquidity pools..."
-                : pageStatus === "opening"
+                : pageStatus === CREATE_POSITION_PAGE_STATE.OPENING_POSITION
                 ? "Opening your position..."
-                : "Position opened successfully!"}
+                : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {pageStatus === "opened" && (
+          {pageStatus === CREATE_POSITION_PAGE_STATE.POSITION_OPENED && (
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setPageStatus("loaded")}>
+              <AlertDialogCancel onClick={() => {
+                setFeeTier(INVALID_FEE_TIER)
+                setPageStatus(CREATE_POSITION_PAGE_STATE.PAGE_LOADED)
+              }}>
                 Open another position
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={(e) => {
-                  e.preventDefault();
                   router.push("/");
                 }}
               >
