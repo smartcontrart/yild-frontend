@@ -15,6 +15,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowDownUp,
@@ -26,13 +36,14 @@ import {
 } from "lucide-react";
 import { useAccount, useChainId } from "wagmi";
 import { useState, useEffect } from "react";
-import { approveToken, closePosition, increaseLiquidity, decreaseLiquidity, getManagerContractAddressFromChainId, getSwapInfo, collectFees, compoundFees, getPositionDetail, getPoolInfo } from "@/utils/contract";
+import { approveToken, closePosition, increaseLiquidity, decreaseLiquidity, getManagerContractAddressFromChainId, getPositionInfo, collectFees, compoundFees, getPositionDetail, getPoolInfo } from "@/utils/contract";
 import { fetchTokenPrice } from "@/utils/requests";
 import { useDebounce } from "@/hooks/useDebounce";
 import { tickToPrice } from "@/utils/functions";
 import { getRequiredToken1FromToken0Amount, visualizeFeeTier } from "@/utils/functions";
 import { parseUnits, formatUnits } from "viem";
 import { Skeleton } from "@/components/ui/skeleton";
+import { POSITION_DETAIL_PAGE_STATE } from "@/utils/page-states";
 
 export default function PositionPage() {
   const { isConnected, address } = useAccount();
@@ -73,9 +84,8 @@ export default function PositionPage() {
         return
       
       setSwapInfoLoading(true)
-      const swapInfo = await getSwapInfo(Number(router.query.id), chainId)
+      const swapInfo = await getPositionInfo(Number(router.query.id), chainId)
       if (swapInfo) {
-        console.log(swapInfo)
         setPrincipal0(Number(formatUnits(swapInfo?.principal0, decimals0)))
         setPrincipal1(Number(formatUnits(swapInfo?.principal1, decimals1)))
         setFeesEarned0(Number(formatUnits(swapInfo?.feesEarned0, decimals0)))
@@ -87,12 +97,9 @@ export default function PositionPage() {
   
       setPriceInfoLoading(true)
       if (token0Address && token1Address) {
-        console.log(`fetching tokens price`)
         const price0 = await fetchTokenPrice(token0Address, chainId)
-        console.log(price0)
         setToken0CurrentPrice(price0)
         const price1 = await fetchTokenPrice(token1Address, chainId)
-        console.log(price1)
         setToken1CurrentPrice(price1)
       }
       setPriceInfoLoading(false)
@@ -103,7 +110,6 @@ export default function PositionPage() {
     if (router.isReady) {
       setPositionDetailLoading(true)
       const fetchPositionDetail = async () => {
-        console.log(`fetching position detail`)
         const positionDetail = await getPositionDetail(address as `0x${string}`, chainId, Number(router.query.id))
         setToken0Address(positionDetail?.token0Address)
         setToken1Address(positionDetail?.token1Address)
@@ -126,10 +132,6 @@ export default function PositionPage() {
 
   useEffect(() => {
     if (router.isReady && address && chainId && token0Address && token1Address) {
-      console.log(`setting interval with ${chainId}`)
-      console.log(`${router.isReady}, ${Number(router.query.id)}, ${chainId}, ${address}`)
-      console.log(`${router.isReady}, ${1}, ${chainId}, ${address}`)
-      // refreshPositionInfo()
       const interval = setInterval(() => refreshPositionInfo(), 30000);
       return () => clearInterval(interval); // Cleanup on unmount
     }
@@ -498,6 +500,45 @@ export default function PositionPage() {
           </div>
         </TabsContent>
       </Tabs>
+      <AlertDialog
+        open={
+          pageStatus === POSITION_DETAIL_PAGE_STATE.CLOSING_POSITION ||
+          pageStatus === POSITION_DETAIL_PAGE_STATE.COLLECTING_FEES ||
+          pageStatus === POSITION_DETAIL_PAGE_STATE.COMPOUNDING_POSITION ||
+          pageStatus === POSITION_DETAIL_PAGE_STATE.DECREASING_LIQUIDITY ||
+          pageStatus === POSITION_DETAIL_PAGE_STATE.INCREASING_LIQUIDITY
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Status</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pageStatus === POSITION_DETAIL_PAGE_STATE.CLOSING_POSITION
+                ? "Closing your position, proceed with your wallet."
+                : pageStatus === POSITION_DETAIL_PAGE_STATE.COLLECTING_FEES
+                ? "Collecting fees earned, proceed with your wallet."
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {pageStatus === POSITION_DETAIL_PAGE_STATE.CLOSING_POSITION && (
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {
+                // setFeeTier(INVALID_FEE_TIER)
+                setPageStatus(POSITION_DETAIL_PAGE_STATE.PAGE_LOADED)
+              }}>
+                Open another position
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  router.push("/");
+                }}
+              >
+                Check open positions
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

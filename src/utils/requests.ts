@@ -1,5 +1,5 @@
 import { BACKEND_API_URL, PARASWAP_API_URL } from "./constants"
-import { getERC20TokenInfo, getSwapInfo } from "./contract"
+import { getERC20TokenInfo, getPositionInfo } from "./contract"
 
 export const getPositions = async (address: string, chainId: number) => {
   let temp: any = []
@@ -9,7 +9,9 @@ export const getPositions = async (address: string, chainId: number) => {
     for (let i = 0; i < data.length; i++) {
       try {
         const { chainId, id, tokenId, lowerTick, upperTick, status, ownerAddress, poolAddress, createdAt, updatedAt } = data[i]
-        const swapInfo = await getSwapInfo(tokenId, chainId)
+        console.log(tokenId)
+        const swapInfo = await getPositionInfo(tokenId, chainId)
+        console.log(swapInfo)
         if (!swapInfo)
           return []
         const { token0Address, token0Decimals, token1Address, token1Decimals} = swapInfo

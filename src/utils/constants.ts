@@ -3,8 +3,14 @@ export type ChainIdKey = `ChainId_${SupportedChainId}`;
 
 export const POSITION_MANAGER_CONTRACT_ADDRESS: Record<ChainIdKey, `0x${string}`> = {
   "ChainId_8453": "0xa4c2f5AF3074240b36307e2099d4e862dDE1B6cb" as `0x${string}`,
-  "ChainId_1": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48" as `0x${string}`,
-  "ChainId_42161": "0xaf88d065e77c8cc2239327c5edb3a432268e5831" as `0x${string}`,
+  "ChainId_1": "0x0000000000000000000000000000000000000000" as `0x${string}`,
+  "ChainId_42161": "0x0000000000000000000000000000000000000000" as `0x${string}`,
+};
+
+export const LIQUIDITY_MATH_CONTRACT_ADDRESS: Record<ChainIdKey, `0x${string}`> = {
+  "ChainId_8453": "0x2A8C26e2Df1491014533D07D9670eA4d601b6bfd" as `0x${string}`,
+  "ChainId_1": "0x0000000000000000000000000000000000000000" as `0x${string}`,
+  "ChainId_42161": "0x0000000000000000000000000000000000000000" as `0x${string}`,
 };
 
 export const TOKEN_LIST = [

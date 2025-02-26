@@ -289,7 +289,7 @@ export default function NewPositionPage() {
         token1Value: realToken1Value,
         token0Decimals: realToken0.decimals,
         token1Decimals: realToken1.decimals
-      })
+      }, address)
       if (!openPositionSuccess) {
         setPageStatus(CREATE_POSITION_PAGE_STATE.OPEN_POSITION_FAILED)
         return

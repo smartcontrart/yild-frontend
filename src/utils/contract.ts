@@ -109,11 +109,28 @@ export const collectFees = async (
   }
 }
 
+const multiplyBigIntWithFloat = (big: bigint, num: number): bigint => {
+  if (num === 0) return BigInt(0); // If multiplying by zero, return zero
+
+  // Convert float to a string to determine decimal places
+  const numStr = num.toExponential(); // Scientific notation (e.g., "2.34234e-8" or "3.456e+8")
+  const [coefficientStr, exponentStr] = numStr.split("e");
+  
+  const coefficient = parseFloat(coefficientStr);
+  const exponent = parseInt(exponentStr, 10);
+
+  // Scale factor based on exponent (avoid using BigInt exponentiation)
+  const scaleFactor = Math.pow(10, Math.max(0, -exponent + 20)); // Ensures precision
+  const scaledNum = BigInt(Math.round(coefficient * scaleFactor)); // Convert to BigInt
+
+  return (big * scaledNum) / BigInt(scaleFactor); // Multiply and adjust back
+}
+
 export const compoundFees = async (
   tokenId: number,
   chainId: number,
 ) => {
-  const swapInfo = await getSwapInfo(tokenId, chainId)
+  const swapInfo = await getPositionInfo(tokenId, chainId)
   if (!swapInfo)
     return null
 
@@ -122,20 +139,34 @@ export const compoundFees = async (
   const currentLiquidityToken0 = parseFloat(formatUnits(principal0, token0Decimals))
   const currentLiquidityToken1 = parseFloat(formatUnits(principal1, token1Decimals))
   const currentRatio = currentLiquidityToken0 / currentLiquidityToken1
-  const availableAmount0 = parseFloat(formatUnits(feesEarned0, token0Decimals)) - parseFloat(formatUnits(protocolFee0, token0Decimals))
-  const availableAmount1 = parseFloat(formatUnits(feesEarned1, token1Decimals)) - parseFloat(formatUnits(protocolFee1, token1Decimals))
+  // const availableAmount0 = parseFloat(formatUnits(feesEarned0, token0Decimals)) - parseFloat(formatUnits(protocolFee0, token0Decimals))
+  // const availableAmount1 = parseFloat(formatUnits(feesEarned1, token1Decimals)) - parseFloat(formatUnits(protocolFee1, token1Decimals))
+  const availableAmount0 = feesEarned0 - protocolFee0
+  const availableAmount1 = feesEarned1 - protocolFee1
 
-  const expectedAmount0 = currentRatio * availableAmount1
+  // console.log(currentLiquidityToken0, currentLiquidityToken1)
+  // console.log(currentRatio)
+  console.log(principal0, principal1)
+  console.log(availableAmount0, availableAmount1)
+
+  const expectedAmount0 = principal0 * availableAmount1 / principal1
+  console.log(expectedAmount0,availableAmount0)
+  // const expected
 
   let _pSwapData0 = "0x", _pSwapData1 = "0x", _token0MaxSlippage = 500, _token1MaxSlippage = 500
   const price0 = await fetchTokenPrice(token0Address, chainId)
   const price1 = await fetchTokenPrice(token1Address, chainId)
 
   if (expectedAmount0 < availableAmount0) {     // swap token0 to token1
+    // const swapAmount0 = BigInt((
+    //   (availableAmount0 * currentLiquidityToken1) - (availableAmount1 * currentLiquidityToken0)
+    // ) / (
+    //   (currentLiquidityToken0 * price0 / price1) + currentLiquidityToken1
+    // ))
     const swapAmount0 = BigInt((
-      (availableAmount0 * currentLiquidityToken1) - (availableAmount1 * currentLiquidityToken0)
+      (availableAmount0 * principal1) - (availableAmount1 * principal0)
     ) / (
-      (currentLiquidityToken0 * price0 / price1) + currentLiquidityToken1
+      (multiplyBigIntWithFloat(principal0, price0 / price1)) + principal1
     ))
 
     const { success: paraswapAPISuccess, data: paraswapData } = await fetchParaswapRoute(token0Address, token0Decimals, token1Address, token1Decimals, swapAmount0, chainId, 500, getManagerContractAddressFromChainId(chainId))
@@ -193,7 +224,7 @@ export const increaseLiquidity = async (
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "increaseLiquidity",
-      args: [parseInt(tokenId), parseUnits(amount0, decimals0), parseUnits(amount1, decimals1)],
+      args: [parseInt(tokenId), parseUnits(amount0, decimals0), parseUnits(amount1, decimals1), 95, 95],
     });
     const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
     return {
@@ -220,7 +251,7 @@ export const decreaseLiquidity = async (
   chainId: number,
   amountInBPS: number
 ) => {
-  const swapInfo = await getSwapInfo(tokenId, chainId)
+  const swapInfo = await getPositionInfo(tokenId, chainId)
   if (!swapInfo)
     return null
 
@@ -273,7 +304,8 @@ export const decreaseLiquidity = async (
 export const openPosition = async (
   publicClient: any, 
   chainId: number,
-  data: any
+  data: any,
+  ownerAddress: any
 ) => {
   if (!publicClient) {
     return {
@@ -319,14 +351,14 @@ export const openPosition = async (
     //   abi: PositionManagerABI,
     //   address: getManagerContractAddressFromChainId(chainId),
     //   functionName: "openPosition",
-    //   args: [params._params],
+    //   args: [params._params, ownerAddress],
     // });
     // console.log(simulation)
     const hash = await writeContract(wagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "openPosition",
-      args: [params._params],
+      args: [params._params, ownerAddress],
     });
     const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
     return {
@@ -334,7 +366,7 @@ export const openPosition = async (
       result: hash
     }
   } catch (error: any) {
-    // console.log(error)
+    console.log(error)
     if (error?.message?.includes("User rejected") || error?.code === 4001) {
       return {
         success: false,
@@ -348,15 +380,16 @@ export const openPosition = async (
   }
 }
 
-export const getSwapInfo = async (tokenId: number, chainId: number) => {
+export const getPositionInfo = async (tokenId: number, chainId: number) => {
   const res: any = await readContract(wagmiConfig, {
     abi: PositionManagerABI, 
     address: getManagerContractAddressFromChainId(chainId), 
-    functionName: "getSwapInfo",
+    functionName: "getPositionInfo",
     args: [tokenId]
   })
+  console.log(res)
   if (res.length !== 12) {
-    console.log("Invalid data format from getSwapInfo");
+    console.log("Invalid data format from getPositionInfo");
     return null;
   }
   const [token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals] = res
@@ -374,7 +407,7 @@ export const getPositionDetail = async (address: string, chainId: number, tokenI
   
   const { dbId, decimals0, decimals1, symbol0, symbol1, tickLower, tickUpper, token0Address, token1Address, createdAt, updatedAt, poolAddress } = filtered[0]
 
-  const swapInfo = await getSwapInfo(tokenId, chainId)
+  const swapInfo = await getPositionInfo(tokenId, chainId)
 
   if (!swapInfo)
     return null
@@ -401,7 +434,7 @@ export const getPoolInfo = async (poolAddress: string, chainId: number) => {
 }
 
 export const closePosition = async (tokenId: number, chainId: number) => {
-  const swapInfo = await getSwapInfo(tokenId, chainId)
+  const swapInfo = await getPositionInfo(tokenId, chainId)
   if (!swapInfo)
     return
   const { token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } = swapInfo
@@ -428,8 +461,10 @@ export const closePosition = async (tokenId: number, chainId: number) => {
     tokenId, 
     _pSwapData0,
     _pSwapData1,
-    _minBuyAmount0, 
-    _minBuyAmount1
+    500,
+    500
+    // _minBuyAmount0, 
+    // _minBuyAmount1
   ]
 
   // console.log(params)

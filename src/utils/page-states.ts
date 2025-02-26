@@ -9,12 +9,17 @@ export const CREATE_POSITION_PAGE_STATE = {
   OPEN_POSITION_FAILED: "open-position-failed"
 }
 
-export const CREATE_POSITION_LOADING = {
-  TOKEN0_LOADING: false,
-  TOKEN1_LOADING: false,
-  FETCHING_TOKEN0_PRICE: false,
-  FETCHING_TOKEN1_PRICE: false,
-  FETCHING_TOKEN0_BALANCE: false,
-  FETCHING_TOKEN1_BALANCE: false,
-  AVAILABLE_FEE_TIERS_LOADING: false
+export const POSITION_DETAIL_PAGE_STATE = {
+  PAGE_LOADING: "page-loading",
+  PAGE_LOADED: "page-loaded",
+  CLOSING_POSITION: "closing-position",
+  POSITION_CLOSED: "position-closed",
+  INCREASING_LIQUIDITY: "increasing-liquidity",
+  LIQUIDITY_INCREASED: "liquidity-increased",
+  DECREASING_LIQUIDITY: "decreasing-liquidity",
+  LIQUIDITY_DECREASED: "liquidity-decreased",
+  COLLECTING_FEES: "collecting-fees",
+  FEES_COLLECTED: "fees-collected",
+  COMPOUNDING_POSITION: "compounding-position",
+  POSITION_COMPOUNDED: "position-compounded"
 }
