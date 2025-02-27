@@ -4,7 +4,7 @@ import { POSITION_MANAGER_CONTRACT_ADDRESS, ChainIdKey, SupportedChainId, UNISWA
 import { PositionManagerABI } from "@/abi/PositionManager";
 import { erc20Abi, parseUnits, formatUnits } from "viem";
 import { fetchParaswapRoute, getPositions, fetchTokenPrice } from "./requests";
-
+import { ERROR_CODES } from "./page-states";
 
 export const getManagerContractAddressFromChainId = (chainId: number) => {
   const chainIdKey: ChainIdKey = `ChainId_${chainId as SupportedChainId}`;
@@ -64,17 +64,16 @@ export const approveToken = async (address: string, spender: string, decimals: n
     }
   } catch (error: any) {
     if (error?.message?.includes("User rejected") || error?.code === 4001) {
-      console.log("User rejected token0 approval");
       return {
         success: false,
-        result: "User rejected token approval"
+        result: ERROR_CODES.USER_REJECTED
       };
     }
-    return {
-      success: false,
-      result: "Unknown error"
-    };
   }
+  return {
+    success: false,
+    result: ERROR_CODES.UNKNOWN_ERROR
+  };
 }
 
 export const collectFees = async (
@@ -95,18 +94,17 @@ export const collectFees = async (
       result: hash
     }
   } catch (error: any) {
-    console.log(error)
     if (error?.message?.includes("User rejected") || error?.code === 4001) {
       return {
         success: false,
-        result: "User rejected open position"
+        result: ERROR_CODES.USER_REJECTED
       };
     }
-    return {
-      success: false,
-      result: "Unknown error"
-    };
   }
+  return {
+    success: false,
+    result: ERROR_CODES.UNKNOWN_ERROR
+  };
 }
 
 const multiplyBigIntWithFloat = (big: bigint, num: number): bigint => {
@@ -132,37 +130,23 @@ export const compoundFees = async (
 ) => {
   const swapInfo = await getPositionInfo(tokenId, chainId)
   if (!swapInfo)
-    return null
+    return {
+      success: false,
+      result: ERROR_CODES.UNKNOWN_ERROR
+    }
 
   const { principal0, principal1, token0Address, token0Decimals, token1Address, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1 } = swapInfo
 
-  const currentLiquidityToken0 = parseFloat(formatUnits(principal0, token0Decimals))
-  const currentLiquidityToken1 = parseFloat(formatUnits(principal1, token1Decimals))
-  const currentRatio = currentLiquidityToken0 / currentLiquidityToken1
-  // const availableAmount0 = parseFloat(formatUnits(feesEarned0, token0Decimals)) - parseFloat(formatUnits(protocolFee0, token0Decimals))
-  // const availableAmount1 = parseFloat(formatUnits(feesEarned1, token1Decimals)) - parseFloat(formatUnits(protocolFee1, token1Decimals))
   const availableAmount0 = feesEarned0 - protocolFee0
   const availableAmount1 = feesEarned1 - protocolFee1
 
-  // console.log(currentLiquidityToken0, currentLiquidityToken1)
-  // console.log(currentRatio)
-  console.log(principal0, principal1)
-  console.log(availableAmount0, availableAmount1)
-
   const expectedAmount0 = principal0 * availableAmount1 / principal1
-  console.log(expectedAmount0,availableAmount0)
-  // const expected
 
   let _pSwapData0 = "0x", _pSwapData1 = "0x", _token0MaxSlippage = 500, _token1MaxSlippage = 500
   const price0 = await fetchTokenPrice(token0Address, chainId)
   const price1 = await fetchTokenPrice(token1Address, chainId)
 
-  if (expectedAmount0 < availableAmount0) {     // swap token0 to token1
-    // const swapAmount0 = BigInt((
-    //   (availableAmount0 * currentLiquidityToken1) - (availableAmount1 * currentLiquidityToken0)
-    // ) / (
-    //   (currentLiquidityToken0 * price0 / price1) + currentLiquidityToken1
-    // ))
+  if (expectedAmount0 < availableAmount0) {
     const swapAmount0 = BigInt((
       (availableAmount0 * principal1) - (availableAmount1 * principal0)
     ) / (
@@ -174,11 +158,11 @@ export const compoundFees = async (
     if (paraswapAPISuccess)
       _pSwapData0 = paraswapData
   }
-  else if (expectedAmount0 > availableAmount0) {  // swap token1 to token0
+  else if (expectedAmount0 > availableAmount0) {
     const swapAmount1 = BigInt((
-      (availableAmount1 * currentLiquidityToken0) - (availableAmount0 * currentLiquidityToken1)
+      (availableAmount1 * principal0) - (availableAmount0 * principal1)
     ) / (
-      currentLiquidityToken1 * price0 / price1 + currentLiquidityToken0
+      (multiplyBigIntWithFloat(principal1, price0 / price1)) + principal0
     ))
 
     const { success: paraswapAPISuccess, data: paraswapData } = await fetchParaswapRoute(token1Address, token1Decimals, token0Address, token0Decimals, swapAmount1, chainId, 500, getManagerContractAddressFromChainId(chainId))
@@ -200,18 +184,17 @@ export const compoundFees = async (
       result: hash
     }
   } catch (error: any) {
-    console.log(error)
     if (error?.message?.includes("User rejected") || error?.code === 4001) {
       return {
         success: false,
-        result: "User rejected open position"
+        result: ERROR_CODES.USER_REJECTED
       };
     }
-    return {
-      success: false,
-      result: "Unknown error"
-    };
   }
+  return {
+    success: false,
+    result: ERROR_CODES.UNKNOWN_ERROR
+  };
 }
 
 export const increaseLiquidity = async (
@@ -232,18 +215,17 @@ export const increaseLiquidity = async (
       result: hash
     }
   } catch (error: any) {
-    console.log(error)
     if (error?.message?.includes("User rejected") || error?.code === 4001) {
       return {
         success: false,
-        result: "User rejected open position"
+        result: ERROR_CODES.USER_REJECTED
       };
     }
-    return {
-      success: false,
-      result: "Unknown error"
-    };
   }
+  return {
+    success: false,
+    result: ERROR_CODES.UNKNOWN_ERROR
+  };
 }
 
 export const decreaseLiquidity = async (
@@ -252,8 +234,12 @@ export const decreaseLiquidity = async (
   amountInBPS: number
 ) => {
   const swapInfo = await getPositionInfo(tokenId, chainId)
+  console.log(swapInfo)
   if (!swapInfo)
-    return null
+    return {
+      success: false,
+      result: ERROR_CODES.UNKNOWN_ERROR
+    }
 
   const { principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals, token0Address, token0Decimals, token1Address, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1 } = swapInfo
 
@@ -278,7 +264,7 @@ export const decreaseLiquidity = async (
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "decreaseLiquidity",
-      args: [tokenId, amountInBPS, _pSwapData0, _pSwapData1],
+      args: [tokenId, amountInBPS, _pSwapData0, _pSwapData1, 9500, 9500],
     });
     const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
     return {
@@ -286,18 +272,17 @@ export const decreaseLiquidity = async (
       result: hash
     }
   } catch (error: any) {
-    console.log(error)
     if (error?.message?.includes("User rejected") || error?.code === 4001) {
       return {
         success: false,
-        result: "User rejected open position"
+        result: ERROR_CODES.USER_REJECTED
       };
     }
-    return {
-      success: false,
-      result: "Unknown error"
-    };
   }
+  return {
+    success: false,
+    result: ERROR_CODES.UNKNOWN_ERROR
+  };
 
 }
 
@@ -347,13 +332,6 @@ export const openPosition = async (
   };
 
   try {
-    // const simulation = await simulateContract(wagmiConfig, {
-    //   abi: PositionManagerABI,
-    //   address: getManagerContractAddressFromChainId(chainId),
-    //   functionName: "openPosition",
-    //   args: [params._params, ownerAddress],
-    // });
-    // console.log(simulation)
     const hash = await writeContract(wagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
@@ -366,18 +344,17 @@ export const openPosition = async (
       result: hash
     }
   } catch (error: any) {
-    console.log(error)
     if (error?.message?.includes("User rejected") || error?.code === 4001) {
       return {
         success: false,
-        result: "User rejected open position"
+        result: ERROR_CODES.USER_REJECTED
       };
     }
-    return {
-      success: false,
-      result: "Unknown error"
-    };
   }
+  return {
+    success: false,
+    result: ERROR_CODES.UNKNOWN_ERROR
+  };
 }
 
 export const getPositionInfo = async (tokenId: number, chainId: number) => {
@@ -387,7 +364,6 @@ export const getPositionInfo = async (tokenId: number, chainId: number) => {
     functionName: "getPositionInfo",
     args: [tokenId]
   })
-  console.log(res)
   if (res.length !== 12) {
     console.log("Invalid data format from getPositionInfo");
     return null;
@@ -436,7 +412,10 @@ export const getPoolInfo = async (poolAddress: string, chainId: number) => {
 export const closePosition = async (tokenId: number, chainId: number) => {
   const swapInfo = await getPositionInfo(tokenId, chainId)
   if (!swapInfo)
-    return
+    return {
+      success: false,
+      result: ERROR_CODES.UNKNOWN_ERROR
+  }
   const { token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } = swapInfo
   // console.log ({ token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals })
 
@@ -463,19 +442,9 @@ export const closePosition = async (tokenId: number, chainId: number) => {
     _pSwapData1,
     500,
     500
-    // _minBuyAmount0, 
-    // _minBuyAmount1
   ]
 
-  // console.log(params)
   try {
-    // const simulation = await simulateContract(wagmiConfig, {
-    //   abi: PositionManagerABI,
-    //   address: getManagerContractAddressFromChainId(chainId),
-    //   functionName: "closePosition",
-    //   args: params,
-    // })
-    // console.log(simulation)
     const hash = await writeContract(wagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
@@ -488,18 +457,17 @@ export const closePosition = async (tokenId: number, chainId: number) => {
       result: hash
     }
   } catch (error: any) {
-    console.log(error)
     if (error?.message?.includes("User rejected") || error?.code === 4001) {
       return {
         success: false,
-        result: "User rejected open position"
+        result: ERROR_CODES.USER_REJECTED
       };
     }
-    return {
-      success: false,
-      result: "Unknown error"
-    };
   }
+  return {
+    success: false,
+    result: ERROR_CODES.UNKNOWN_ERROR
+  };
 }
 
 export const getPoolAddressAndTVL = async (token0Address: string, token1Address: string, feeTier: number, chainId: number) => {

@@ -37,20 +37,23 @@ import {
 import { useAccount, useChainId } from "wagmi";
 import { useState, useEffect } from "react";
 import { approveToken, closePosition, increaseLiquidity, decreaseLiquidity, getManagerContractAddressFromChainId, getPositionInfo, collectFees, compoundFees, getPositionDetail, getPoolInfo } from "@/utils/contract";
-import { fetchTokenPrice } from "@/utils/requests";
+import { fetchTokenPrice, sendClosePositionReport } from "@/utils/requests";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useToast } from "@/hooks/use-toast";
 import { tickToPrice } from "@/utils/functions";
 import { getRequiredToken1FromToken0Amount, visualizeFeeTier } from "@/utils/functions";
 import { parseUnits, formatUnits } from "viem";
 import { Skeleton } from "@/components/ui/skeleton";
-import { POSITION_DETAIL_PAGE_STATE } from "@/utils/page-states";
+import { ERROR_CODES, POSITION_DETAIL_PAGE_STATE } from "@/utils/page-states";
 
 export default function PositionPage() {
   const { isConnected, address } = useAccount();
   const chainId = useChainId();
   const router = useRouter();
 
-  const [pageStatus, setPageStatus] = useState("loaded");
+  const { toast } = useToast();
+
+  const [pageStatus, setPageStatus] = useState(POSITION_DETAIL_PAGE_STATE.PAGE_LOADED);
   const [feesEarned0, setFeesEarned0] = useState(0)
   const [feesEarned1, setFeesEarned1] = useState(0)
   const [priceLower, setPriceLower] = useState(0)
@@ -72,11 +75,80 @@ export default function PositionPage() {
   const [token1Symbol, setToken1Symbol] = useState("")
   const [increaseToken0Amount, setIncreaseToken0Amount] = useState("");
   const [increaseToken1Amount, setIncreaseToken1Amount] = useState("");
+  const [decreaseRatio, setDecreaseRatio] = useState("0");
   const [positionDetailLoading, setPositionDetailLoading] = useState(true);
   const [swapInfoLoading, setSwapInfoLoading] = useState(true);
   const [priceInfoLoading, setPriceInfoLoading] = useState(true);
   const debouncedIncreaseToken0Amount = useDebounce(increaseToken0Amount, 1000)
 
+  useEffect(() => {
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.POSITION_CLOSED)
+      toast({
+        variant: "default",
+        title: "Info",
+        description: "Successfully closed the position.",
+      })
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.FEES_COLLECTED)
+      toast({
+        variant: "default",
+        title: "Info",
+        description: "Successfully collected fees.",
+      })
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.LIQUIDITY_DECREASED)
+      toast({
+        variant: "default",
+        title: "Info",
+        description: "Successfully decreased liquidity.",
+      })
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.LIQUIDITY_INCREASED)
+      toast({
+        variant: "default",
+        title: "Info",
+        description: "Successfully increased liquidity in the position.",
+      })
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.POSITION_COMPOUNDED)
+      toast({
+        variant: "default",
+        title: "Info",
+        description: "Successfully compounded fees back into the position.",
+      })
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.COMPOUND_POSITION_FAILED)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to compound fees back into the position.",
+      })
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.USER_REJECTED)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "User rejected the transaction.",
+      })
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.CLOSE_POSITION_FAILED)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to close the position.",
+      })
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.COLLECT_FEES_FAILED)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to collect fees.",
+      })
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.INCREASE_LIQUIDITY_FAILED)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to increase liquidity in the position.",
+      })
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.DECREASE_LIQUIDITY_FAILED)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to decrease liquidity in the position.",
+      })
+  }, [pageStatus])
 
   const refreshPositionInfo = async () => {
     if (router.isReady) {
@@ -189,20 +261,20 @@ export default function PositionPage() {
 
   const increasePosition = async () => {
     try {
-      setPageStatus("approving");
-      
+      setPageStatus(POSITION_DETAIL_PAGE_STATE.APPROVING_TOKENS);
+
       const { success: approveToken0Success } = await approveToken(token0Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), decimals0, increaseToken0Amount)
       if (!approveToken0Success) {
-        setPageStatus("approve token failed")
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.TOKEN_APPROVE_FAILED)
         return
       }
       const { success: approveToken1Success } = await approveToken(token1Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), decimals1, increaseToken1Amount)
       if (!approveToken1Success) {
-        setPageStatus("approve token failed")
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.TOKEN_APPROVE_FAILED)
         return
       }
 
-      setPageStatus("adding");
+      setPageStatus(POSITION_DETAIL_PAGE_STATE.INCREASING_LIQUIDITY);
       const { success: addLiquiditySuccess, result } = await increaseLiquidity(chainId, {
         tokenId: Number(router.query.id),
         amount0: increaseToken0Amount,
@@ -210,48 +282,96 @@ export default function PositionPage() {
         decimals0,
         decimals1
       })
-      if (!addLiquiditySuccess) {
-        setPageStatus("add liquidity failed")
-        return
+      if (addLiquiditySuccess) {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.LIQUIDITY_INCREASED)
       }
-      setPageStatus("add liquidity success")
+      else if (result === ERROR_CODES.USER_REJECTED) {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.USER_REJECTED)
+      }
+      else {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.INCREASE_LIQUIDITY_FAILED)
+      }
     } catch(err) {
       console.log(err)
-      setPageStatus("error while add liquidity")
+      setPageStatus(POSITION_DETAIL_PAGE_STATE.INCREASE_LIQUIDITY_FAILED)
       return
     }
   };
 
   const decreasePosition = async () => {
-    const amountInBPS = 500 // 18%
+    const amountInBPS = parseInt((parseFloat(decreaseRatio) * 100).toFixed(0))
     try {
-      await decreaseLiquidity(Number(router.query.id), chainId, amountInBPS);
+      setPageStatus(POSITION_DETAIL_PAGE_STATE.DECREASING_LIQUIDITY);
+      const { success, result } = await decreaseLiquidity(Number(router.query.id), chainId, amountInBPS);
+      if (success) {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.LIQUIDITY_DECREASED)
+      }
+      else if (result === ERROR_CODES.USER_REJECTED) {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.USER_REJECTED)
+      }
+      else {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.DECREASE_LIQUIDITY_FAILED)
+      }
     } catch (error) {
       console.log(error)
+      setPageStatus(POSITION_DETAIL_PAGE_STATE.DECREASE_LIQUIDITY_FAILED)
     }
   };
 
   const confirmClosePosition = async () => {
     try {
-      await closePosition(Number(router.query.id), chainId);
+      setPageStatus(POSITION_DETAIL_PAGE_STATE.CLOSING_POSITION);
+      const { success, result } = await closePosition(Number(router.query.id), chainId);
+      if (success) {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.POSITION_CLOSED)
+        await sendClosePositionReport(address as `0x${string}`, chainId, Number(router.query.id))
+      }
+      else if (result === ERROR_CODES.USER_REJECTED) {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.USER_REJECTED)
+      }
+      else {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.CLOSE_POSITION_FAILED)
+      }
     } catch (error) {
       console.log(error)
+      setPageStatus(POSITION_DETAIL_PAGE_STATE.CLOSE_POSITION_FAILED)
     }
   };
 
   const confirmCollectFees = async () => {
     try {
-      await collectFees(Number(router.query.id), chainId, address || "")
+      setPageStatus(POSITION_DETAIL_PAGE_STATE.COLLECTING_FEES);
+      const { success, result } = await collectFees(Number(router.query.id), chainId, address || "")
+      if (success) {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.FEES_COLLECTED)
+      }
+      else if (result === ERROR_CODES.USER_REJECTED) {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.USER_REJECTED)
+      }
+      else {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.COLLECT_FEES_FAILED)
+      }
     } catch (error) {
       console.log(error)
+      setPageStatus(POSITION_DETAIL_PAGE_STATE.COLLECT_FEES_FAILED)
     }
   }
 
   const compoundPosition = async () => {
     try {
-      await compoundFees(Number(router.query.id), chainId)
+      const { success, result } = await compoundFees(Number(router.query.id), chainId)
+      if (success) {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.POSITION_COMPOUNDED)
+      }
+      else if (result === ERROR_CODES.USER_REJECTED) {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.USER_REJECTED)
+      }
+      else {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.COMPOUND_POSITION_FAILED)
+      }
     } catch (error) {
       console.log(error)
+      setPageStatus(POSITION_DETAIL_PAGE_STATE.COMPOUND_POSITION_FAILED)
     }
   };
 
@@ -422,14 +542,43 @@ export default function PositionPage() {
               </DialogContent>
             </Dialog>
 
-            <Button
-              className="w-full"
-              variant="secondary"
-              onClick={decreasePosition}
-            >
-              <MinusCircle className="mr-2 h-4 w-4" />
-              Decrease Position
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button>
+                  <MinusCircle className="mr-2 h-4 w-4" />
+                  Decrease Position
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Decrease Position</DialogTitle>
+                  <DialogDescription>
+                    Please input decrease amounts in terms of %.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="name" className="text-right">
+                      Decrease %
+                    </Label>
+                    <Input
+                      type="number"
+                      className="col-span-3"
+                      onChange={(e) =>
+                        setDecreaseRatio(e.target.value)
+                      }
+                      value={decreaseRatio}
+                    />
+                  </div>
+                  <div>
+                    You are going to decrease {decreaseRatio}% of your position.
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button disabled={!decreaseRatio || !parseFloat(decreaseRatio) ||parseFloat(decreaseRatio) < 0.1 || parseFloat(decreaseRatio) > 99} onClick={decreasePosition}>Decrease</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             <Dialog>
               <DialogTrigger asChild>
@@ -502,6 +651,7 @@ export default function PositionPage() {
       </Tabs>
       <AlertDialog
         open={
+          pageStatus === POSITION_DETAIL_PAGE_STATE.APPROVING_TOKENS ||
           pageStatus === POSITION_DETAIL_PAGE_STATE.CLOSING_POSITION ||
           pageStatus === POSITION_DETAIL_PAGE_STATE.COLLECTING_FEES ||
           pageStatus === POSITION_DETAIL_PAGE_STATE.COMPOUNDING_POSITION ||
@@ -513,30 +663,21 @@ export default function PositionPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Status</AlertDialogTitle>
             <AlertDialogDescription>
-              {pageStatus === POSITION_DETAIL_PAGE_STATE.CLOSING_POSITION
+              {pageStatus === POSITION_DETAIL_PAGE_STATE.APPROVING_TOKENS
+                ? "Approving tokens, proceed with your wallet."
+                : pageStatus === POSITION_DETAIL_PAGE_STATE.CLOSING_POSITION
                 ? "Closing your position, proceed with your wallet."
                 : pageStatus === POSITION_DETAIL_PAGE_STATE.COLLECTING_FEES
                 ? "Collecting fees earned, proceed with your wallet."
+                : pageStatus === POSITION_DETAIL_PAGE_STATE.COMPOUNDING_POSITION
+                ? "Compounding your position, proceed with your wallet."
+                : pageStatus === POSITION_DETAIL_PAGE_STATE.DECREASING_LIQUIDITY
+                ? "Decreasing liquidity, proceed with your wallet."
+                : pageStatus === POSITION_DETAIL_PAGE_STATE.INCREASING_LIQUIDITY
+                ? "Increasing liquidity, proceed with your wallet."
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {pageStatus === POSITION_DETAIL_PAGE_STATE.CLOSING_POSITION && (
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => {
-                // setFeeTier(INVALID_FEE_TIER)
-                setPageStatus(POSITION_DETAIL_PAGE_STATE.PAGE_LOADED)
-              }}>
-                Open another position
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={(e) => {
-                  router.push("/");
-                }}
-              >
-                Check open positions
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          )}
         </AlertDialogContent>
       </AlertDialog>
     </div>

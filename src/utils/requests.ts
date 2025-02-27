@@ -9,9 +9,7 @@ export const getPositions = async (address: string, chainId: number) => {
     for (let i = 0; i < data.length; i++) {
       try {
         const { chainId, id, tokenId, lowerTick, upperTick, status, ownerAddress, poolAddress, createdAt, updatedAt } = data[i]
-        console.log(tokenId)
         const swapInfo = await getPositionInfo(tokenId, chainId)
-        console.log(swapInfo)
         if (!swapInfo)
           return []
         const { token0Address, token0Decimals, token1Address, token1Decimals} = swapInfo
@@ -105,5 +103,22 @@ export const fetchTokenPriceWithLoading = async (tokenAddress: string, setPrice:
     console.error("Error fetching token1 price:", error);
   } finally {
     setIsLoading(false);
+  }
+}
+
+export const sendClosePositionReport = async (userAddress: string, chainId: number, positionId: number) => {
+  try {
+    const response = await fetch(`${BACKEND_API_URL}/api/chain/${chainId}/positions/${positionId}/close`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userAddress }),
+    });
+    const data = await response.json();
+    return data
+  } catch (error) {
+    console.error('Error sending close position report:', error);
+    return null
   }
 }

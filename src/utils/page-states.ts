@@ -10,16 +10,29 @@ export const CREATE_POSITION_PAGE_STATE = {
 }
 
 export const POSITION_DETAIL_PAGE_STATE = {
+  APPROVING_TOKENS: "approving-tokens",
+  TOKEN_APPROVE_FAILED: "approve-failed",
   PAGE_LOADING: "page-loading",
   PAGE_LOADED: "page-loaded",
   CLOSING_POSITION: "closing-position",
   POSITION_CLOSED: "position-closed",
+  CLOSE_POSITION_FAILED: "close-position-failed",
   INCREASING_LIQUIDITY: "increasing-liquidity",
+  INCREASE_LIQUIDITY_FAILED: "increase-liquidity-failed",
   LIQUIDITY_INCREASED: "liquidity-increased",
   DECREASING_LIQUIDITY: "decreasing-liquidity",
+  DECREASE_LIQUIDITY_FAILED: "decrease-liquidity-failed",
   LIQUIDITY_DECREASED: "liquidity-decreased",
   COLLECTING_FEES: "collecting-fees",
+  COLLECT_FEES_FAILED: "collect-fees-failed",
   FEES_COLLECTED: "fees-collected",
   COMPOUNDING_POSITION: "compounding-position",
-  POSITION_COMPOUNDED: "position-compounded"
+  COMPOUND_POSITION_FAILED: "compound-position-failed",
+  POSITION_COMPOUNDED: "position-compounded",
+  USER_REJECTED: "user-rejected"
+}
+
+export const ERROR_CODES = {
+  USER_REJECTED: "User rejected open position",
+  UNKNOWN_ERROR: "Unknown error"
 }
