@@ -261,12 +261,12 @@ export default function NewPositionPage() {
     try {
       setPageStatus(CREATE_POSITION_PAGE_STATE.APPROVING_TOKENS);
       
-      const { success: approveToken0Success } = await approveToken(token0Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token0Decimals || 18, values.amount0)
+      const { success: approveToken0Success } = await approveToken(address as `0x${string}`, token0Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token0Decimals || 18, values.amount0)
       if (!approveToken0Success) {
         setPageStatus(CREATE_POSITION_PAGE_STATE.TOKEN_APPROVE_FAILED)
         return
       }
-      const { success: approveToken1Success } = await approveToken(token1Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token1Decimals || 18, values.amount1)
+      const { success: approveToken1Success } = await approveToken(address as `0x${string}`, token1Address as `0x${string}`, getManagerContractAddressFromChainId(chainId), token1Decimals || 18, values.amount1)
       if (!approveToken1Success) {
         setPageStatus(CREATE_POSITION_PAGE_STATE.TOKEN_APPROVE_FAILED)
         return
