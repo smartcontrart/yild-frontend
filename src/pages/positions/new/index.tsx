@@ -407,6 +407,11 @@ export default function NewPositionPage() {
                 </div>
               </div>
 
+              {
+                availableFeeTiers.length > 0 ? 
+                <div>Select one of the pools below to provide liquidity</div> : <></>
+              }
+
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {
                   availableFeeTiers.map((elem) => (
