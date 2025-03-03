@@ -52,11 +52,8 @@ export function getRequiredToken0FromToken1Amount(
   const sqrtPriceLower = Math.sqrt(priceLower);
   const sqrtPriceUpper = Math.sqrt(priceUpper);
 
-  console.log(sqrtPrice, sqrtPriceLower, sqrtPriceUpper, token1Amount)
-
   // Calculate liquidity using token1 amount
   const liquidity = Number(token1Amount) / (1 / sqrtPrice - 1 / sqrtPriceLower);
-  console.log(liquidity)
 
   // Calculate required token0 amount using the liquidity
   let token0Raw = 0;
@@ -100,7 +97,7 @@ export function priceToTick(price: number, decimalsToken0: number, decimalsToken
 * @param fee The fee tier (500 = 0.05%, 3000 = 0.3%, 10000 = 1%)
 * @returns The tick spacing for that fee tier
 */
-export function getTickSpacing(fee: number): number {
+export function getTickSpacing(fee: number | null): number {
   switch (fee) {
     case 100: // 0.01%
       return 1;
@@ -121,7 +118,7 @@ export function getTickSpacing(fee: number): number {
 * @param fee The fee tier
 * @returns The nearest valid tick for that fee tier
 */
-export function nearestValidTick(tick: number, fee: number): number {
+export function nearestValidTick(tick: number, fee: number | null): number {
   const tickSpacing = getTickSpacing(fee);
   return Math.round(tick / tickSpacing) * tickSpacing;
 }

@@ -107,7 +107,7 @@ export default function NewPositionPage() {
   const [maxPriceInput, setMaxPriceInput] = useState("");
   const [tickLowerInput, setTickLowerInput] = useState("");
   const [tickUpperInput, setTickUpperInput] = useState("");
-  const [feeTier, setFeeTier] = useState<number>(INVALID_FEE_TIER);
+  const [feeTier, setFeeTier] = useState<number | null>(INVALID_FEE_TIER);
   const [availableFeeTiers, setAvailableFeeTiers] = useState<any[]>([])
   const [currentTab, setCurrentTab] = useState<"zpo" | "opz">("zpo");
 
@@ -430,7 +430,7 @@ export default function NewPositionPage() {
                 }
               </div>
 
-              <div className={`${!token0Name || !token1Name || VALID_FEE_TIERS.indexOf(feeTier) < 0 || availableFeeTiers.length === 0 ? "hidden" : "space-y-4"}`}>
+              <div className={`${!token0Name || !token1Name || !feeTier || VALID_FEE_TIERS.indexOf(feeTier) < 0 || availableFeeTiers.length === 0 ? "hidden" : "space-y-4"}`}>
                 <div className="grid gap-4 md:grid-cols-2">
                   <Tabs
                     value={currentTab}

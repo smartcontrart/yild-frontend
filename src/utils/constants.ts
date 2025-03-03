@@ -41,12 +41,11 @@ export const UNISWAP_V3_FACTORY_CONTRACT_ADDRESS: Record<ChainIdKey, `0x${string
 }
 
 export const VALID_FEE_TIERS = [100, 500, 3000, 10000]
-export const INVALID_FEE_TIER = 140
+export const INVALID_FEE_TIER = null
 
-export const SUBGRAPH_API_KEY = "2818c13f6a7e9707378c0b8a3517bcb7"
+export const SUBGRAPH_API_KEY = process.env.SUBGRAPH_API_KEY
 
 // export const SLIPPAGE = 5; // 5%
 // export const BPS = 5; // 5%
-export const BACKEND_API_URL =
-  "https://api.yild.finance";
+export const BACKEND_API_URL = "https://api.yild.finance";
 export const PARASWAP_API_URL = "https://api.paraswap.io/swap?version=6.2"
