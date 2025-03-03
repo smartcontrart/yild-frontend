@@ -357,12 +357,8 @@ export default function NewPositionPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <TokenSelector
-                    control={form.control}
-                    name="token0"
-                    addressFieldName="token0Address"
-                    label="Select Token"
                     chainId={chainId}
-                    onTokenInfoChange={(info) => {
+                    onSelectionChange={(info: any) => {
                       setToken0Name(info.symbol);
                       setToken0Decimals(info.decimals);
                       setToken0Address(info.address);
@@ -382,12 +378,8 @@ export default function NewPositionPage() {
                 </div>
                 <div>
                   <TokenSelector
-                    control={form.control}
-                    name="token1"
-                    addressFieldName="token1Address"
-                    label="Select Token"
                     chainId={chainId}
-                    onTokenInfoChange={(info) => {
+                    onSelectionChange={(info: any) => {
                       setToken1Name(info.symbol);
                       setToken1Decimals(info.decimals);
                       setToken1Address(info.address);

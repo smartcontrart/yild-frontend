@@ -1,3 +1,5 @@
+import { ethers } from "ethers";
+
 /**
  * Calculates the required amount of token1 given an amount of token0 and the price range
  * @param currentPrice Current price of token0 in terms of token1
@@ -176,3 +178,5 @@ export const multiplyBigIntWithFloat = (big: bigint, num: number): bigint => {
 
   return (big * scaledNum) / BigInt(scaleFactor); // Multiply and adjust back
 }
+
+export const toChecksumAddress = (address: string): string => ethers.getAddress(address)
