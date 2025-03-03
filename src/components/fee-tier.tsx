@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { formatNumber, visualizeFeeTier } from "@/utils/functions";
 import { gql, useQuery } from "@apollo/client";
-import { getClientFromChainId } from "@/lib/apolloClient";
+import { getClientFromChainId } from "@/utils/apolloClient";
 import { useMemo } from "react";
 import { Skeleton } from "./ui/skeleton";
 

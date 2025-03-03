@@ -34,33 +34,34 @@ import {
 import { TokenSelector } from "@/components/token-selector";
 import { useState, useEffect } from "react";
 import { priceToTick, tickToPrice, nearestValidTick, reArrangeTokensByContractAddress } from "@/utils/functions";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import {
   getRequiredToken0FromToken1Amount,
   getRequiredToken1FromToken0Amount,
 } from "../../../utils/functions";
-import { approveToken, openPosition, getManagerContractAddressFromChainId, getAvailablePools, getERC20TokenBalance } from "@/utils/contract";
+import { openPosition, getManagerContractAddressFromChainId, getAvailablePools } from "@/utils/position-manage";
+import { approveToken, getERC20TokenBalance } from "@/utils/erc20";
 import { fetchTokenPriceWithLoading } from "@/utils/requests"
 import { FeeTier } from "@/components/fee-tier";
-import { CREATE_POSITION_PAGE_STATE } from "@/utils/page-states";
+import { CREATE_POSITION_PAGE_STATE } from "@/utils/types";
 import { INVALID_FEE_TIER, VALID_FEE_TIERS } from "@/utils/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatUnits, parseEther, parseUnits } from "viem";
 
 const formSchema = z.object({
-  token0: z.string().min(1, "Token is required"),
-  token1: z.string().min(1, "Token is required"),
+  token0: z.string().min(0, "Token is required"),
+  token1: z.string().min(0, "Token is required"),
   token0Address: z.string().optional(),
   token1Address: z.string().optional(),
-  feeTier: z.string().min(1, "Fee tier is required"),
-  minPrice: z.string().min(1, "Min price is required"),
-  maxPrice: z.string().min(1, "Max price is required"),
-  amount0: z.string().min(1, "Token amount is required"),
-  amount1: z.string().min(1, "Token amount is required"),
-  tickLower: z.string().min(1, "Tick lower is required"),
-  tickUpper: z.string().min(1, "Tick upper is required"),
+  feeTier: z.string().min(0, "Fee tier is required"),
+  minPrice: z.string().min(0, "Min price is required"),
+  maxPrice: z.string().min(0, "Max price is required"),
+  amount0: z.string().min(0, "Token amount is required"),
+  amount1: z.string().min(0, "Token amount is required"),
+  tickLower: z.string().min(0, "Tick lower is required"),
+  tickUpper: z.string().min(0, "Tick upper is required"),
 });
 
 export default function NewPositionPage() {

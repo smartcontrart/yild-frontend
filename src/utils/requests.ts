@@ -1,5 +1,6 @@
 import { BACKEND_API_URL, PARASWAP_API_URL } from "./constants"
-import { getERC20TokenInfo, getPositionInfo } from "./contract"
+import { getPositionInfo } from "./position-manage"
+import { getERC20TokenInfo } from "./erc20"
 
 export const getPositions = async (address: string, chainId: number) => {
   let temp: any = []

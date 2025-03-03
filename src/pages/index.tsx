@@ -15,7 +15,8 @@ import { YildLoading } from "@/components/yild-loading";
 export default function Home() {
   const { isConnected, address } = useAccount();
   const chainId = useChainId();
-  const { positions, setPositions, loading, setLoading } = usePositionsStore();
+  const [positions, setPositions] = useState([])
+  const [loading, setLoading] = useState(false)
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {

@@ -159,3 +159,20 @@ export const formatNumber = (num: number): string => {
 
   return `${formattedNum.toFixed(2)} ${units[unitIndex]}`;
 };
+
+export const multiplyBigIntWithFloat = (big: bigint, num: number): bigint => {
+  if (num === 0) return BigInt(0); // If multiplying by zero, return zero
+
+  // Convert float to a string to determine decimal places
+  const numStr = num.toExponential(); // Scientific notation (e.g., "2.34234e-8" or "3.456e+8")
+  const [coefficientStr, exponentStr] = numStr.split("e");
+  
+  const coefficient = parseFloat(coefficientStr);
+  const exponent = parseInt(exponentStr, 10);
+
+  // Scale factor based on exponent (avoid using BigInt exponentiation)
+  const scaleFactor = Math.pow(10, Math.max(0, -exponent + 20)); // Ensures precision
+  const scaledNum = BigInt(Math.round(coefficient * scaleFactor)); // Convert to BigInt
+
+  return (big * scaledNum) / BigInt(scaleFactor); // Multiply and adjust back
+}
