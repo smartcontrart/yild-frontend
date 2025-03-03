@@ -43,7 +43,7 @@ export const UNISWAP_V3_FACTORY_CONTRACT_ADDRESS: Record<ChainIdKey, `0x${string
 export const VALID_FEE_TIERS = [100, 500, 3000, 10000]
 export const INVALID_FEE_TIER = null
 
-export const SUBGRAPH_API_KEY = process.env.SUBGRAPH_API_KEY
+export const SUBGRAPH_API_KEY = process.env.NEXT_PUBLIC_SUBGRAPH_API_KEY
 
 // export const SLIPPAGE = 5; // 5%
 // export const BPS = 5; // 5%
