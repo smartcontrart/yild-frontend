@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import { useAccount, useChainId } from "wagmi";
 import { getPositions } from "@/utils/requests";
 import { tickToPrice } from "@/utils/functions";
-import { usePositionsStore } from "@/store/usePositionsStore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { YildLoading } from "@/components/yild-loading";
 
