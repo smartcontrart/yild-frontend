@@ -257,7 +257,6 @@ export default function NewPositionPage() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    
     try {
       setPageStatus(CREATE_POSITION_PAGE_STATE.APPROVING_TOKENS);
       
@@ -624,7 +623,11 @@ export default function NewPositionPage() {
               >
                 Cancel
               </Button>
-              <Button type="submit">Create Position</Button>
+              <Button 
+                disabled={!token0Address || !token1Address || !feeTier || !tickLowerInput || !tickUpperInput || !parseFloat(token0Amount || "0") || !parseFloat(token1Amount || "0") || parseFloat(token0Amount || "0") > parseFloat(token0Balance) || parseFloat(token1Amount || "0") > parseFloat(token1Balance)}
+                type="submit">
+                Create Position
+              </Button>
             </div>
           </form>
         </Form>
