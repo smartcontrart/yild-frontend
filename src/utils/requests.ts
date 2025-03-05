@@ -14,8 +14,12 @@ export const getPositions = async (address: string, chainId: number) => {
         if (!swapInfo)
           return []
         const { token0Address, token0Decimals, token1Address, token1Decimals} = swapInfo
-        const { name: token0Name, symbol: token0Symbol } = await getERC20TokenInfo(token0Address, chainId)
-        const { name: token1Name, symbol: token1Symbol } = await getERC20TokenInfo(token1Address, chainId)
+        const token0Info = await getERC20TokenInfo(token0Address, chainId)
+        const token1Info = await getERC20TokenInfo(token1Address, chainId)
+        if (!token0Info || !token1Info)
+          continue;
+        const { name: token0Name, symbol: token0Symbol } = token0Info
+        const { name: token1Name, symbol: token1Symbol } = token1Info
        
         if (token0Symbol && token1Symbol) {
           temp = [
