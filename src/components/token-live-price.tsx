@@ -8,6 +8,9 @@ export default function TokenLivePrice({
   address: `0x${string}`,
   chainId: number
 }) {
+  if (!address)
+    return <></>
+    
   const { data, isLoading } = useTokenPrice(address, chainId)
 
   return (
