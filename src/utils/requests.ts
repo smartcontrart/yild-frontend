@@ -97,20 +97,6 @@ export const fetchTokenPrice = async (tokenAddress: string, chainId: number) => 
   }
 }
 
-export const fetchTokenPriceWithLoading = async (tokenAddress: string, setPrice: Function, setIsLoading: Function, chainId: number) => {
-  if (!tokenAddress)
-    return
-  setIsLoading(true);
-  try {
-    const price = await fetchTokenPrice(tokenAddress, chainId);
-    setPrice(price);
-  } catch (error) {
-    console.error("Error fetching token1 price:", error);
-  } finally {
-    setIsLoading(false);
-  }
-}
-
 export const sendClosePositionReport = async (userAddress: string, chainId: number, positionId: number) => {
   try {
     const response = await fetch(`${BACKEND_API_URL}/api/chain/${chainId}/positions/${positionId}/close`, {

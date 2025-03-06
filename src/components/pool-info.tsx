@@ -4,18 +4,18 @@ import { gql, useQuery } from "@apollo/client";
 import { getClientFromChainId } from "@/utils/apolloClient";
 import { useMemo } from "react";
 import { Skeleton } from "./ui/skeleton";
+import { ERC20TokenInfo } from "@/utils/constants";
+import { useTokenPrice } from "@/hooks/use-token-price";
 
-interface FeeTierProps {
-  pair: string;
-  address: string;
+interface PoolInfoProps {
+  tokens: ERC20TokenInfo[],
+  address: `0x${string}`;
   feeTier: number;
-  balance0: number;
-  balance1: number;
-  price0: number;
-  price1: number;
+  token0BalanceInPool: number,
+  token1BalanceInPool: number,
   chainId: number;
   selected: boolean;
-  onClickPool?: () => void;
+  onClickPool?: (feeTier: number) => void;
 }
 
 function getOneMonthAgoTimestamp() {
@@ -38,7 +38,7 @@ function getMonthlyVolume(data: any, price0: any, price1: any) {
   return formatNumber(token0Volume * price0 + token1Volume * price1)
 }
 
-export function FeeTier({ pair, address, feeTier, balance0, balance1, price0, price1, chainId, selected, onClickPool }: FeeTierProps) {
+export function PoolInfo({ tokens, address, feeTier, token0BalanceInPool, token1BalanceInPool, chainId, selected, onClickPool }: PoolInfoProps) {
 
   const timestamp = useMemo(() => getOneMonthAgoTimestamp(), []);
   const GET_DATA = useMemo(() => gql`
@@ -56,26 +56,29 @@ export function FeeTier({ pair, address, feeTier, balance0, balance1, price0, pr
         volumeToken1
       }
     }
-  `, [address, timestamp]); // Only change when `address` changes
+  `, [address, timestamp]);
 
   const { loading, error, data } = useQuery(GET_DATA, { client: getClientFromChainId(chainId) });
+  const { data: token0Price } = useTokenPrice(tokens[0].address, chainId)
+  const { data: token1Price } = useTokenPrice(tokens[1].address, chainId)
+  
 
   if (loading) return <Skeleton className="h-[125px] rounded-xl"  />;
   if (error) return <p>Error: {error.message}</p>;
 
   return (
-    <Card className={`p-6 cursor-pointer ${selected ? "bg-sky-50" : ""}`} key={`feeTier_${feeTier}`} onClick={() => onClickPool && onClickPool()}>
+    <Card className={`p-6 cursor-pointer ${selected ? "bg-sky-50" : ""}`} key={`feeTier_${feeTier}`} onClick={() => onClickPool && onClickPool(feeTier)}>
       <div className="space-y-4">
         <div className="flex justify-between items-start">
           <div className="space-y-2 ">
             <div>
-              {pair} ( {visualizeFeeTier(feeTier)} )
+              {`${tokens[0].symbol} / ${tokens[1].symbol}`} ( {visualizeFeeTier(feeTier)} )
             </div>
             <div>
-              TVL: $ {formatNumber(balance0 * price0 + balance1 * price1)}
+              TVL: $ {formatNumber(Number(token0BalanceInPool) * Number(token0Price) + Number(token1BalanceInPool) * Number(token1Price))}
             </div>
             <div>
-              30D Volume: $ {getMonthlyVolume(data?.poolDayDatas || [], price0, price1)}
+              30D Volume: $ {getMonthlyVolume(data?.poolDayDatas || [], token0Price, token1Price)}
             </div>
           </div>
         </div>

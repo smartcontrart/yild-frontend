@@ -392,6 +392,8 @@ export const closePosition = async (tokenId: number, chainId: number) => {
 
 export const getPoolAddressAndTVL = async (token0Address: string, token1Address: string, feeTier: number, chainId: number) => {
   try {
+    if (!token0Address || !token1Address || !feeTier || !chainId)
+      return null
     const poolAddress = await readContract(wagmiConfig, {
       // address: UNISWAP_V3_FACTORY_CONTRACT_ADDRESS[chainIdKey] as `0x${string}`,
       address: getUniswapV3FactoryContractAddressFromChainId(chainId),

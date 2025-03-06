@@ -5,7 +5,7 @@ export default function TokenLivePrice({
   address,
   chainId
 }: {
-  address: `0x${string}`,
+  address: `0x${string}` | undefined,
   chainId: number
 }) {
   if (!address)

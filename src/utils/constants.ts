@@ -20,13 +20,13 @@ export const SUPPORTED_CHAINS = [
     defaultTokens: [
       {
         name: "Wrapped ETH",
-        symbol: "weth",
+        symbol: "WETH",
         address: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
         decimals: 18
       },
       {
         name: "Arbitrum Token",
-        symbol: "arb",
+        symbol: "ARB",
         address: "0x912CE59144191C1204E64559FE8253a0e49E6548",
         decimals: 18
       },
@@ -38,7 +38,7 @@ export const SUPPORTED_CHAINS = [
       },    
       {
         name: "USD Tether",
-        symbol: "usdt",
+        symbol: "USDT",
         address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
         decimals: 6
       }
@@ -54,15 +54,21 @@ export const SUPPORTED_CHAINS = [
     defaultTokens: [
       {
         name: "Wrapped ETH",
-        symbol: "weth",
+        symbol: "WETH",
         address: "0x4200000000000000000000000000000000000006",
         decimals: 18
       },
       {
         name: "USD Coin",
-        symbol: "usdc",
+        symbol: "USDC",
         address: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
         decimals: 6
+      },
+      {
+        name: "Virtual Protocol",
+        symbol: "VIRTUAL",
+        address: "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+        decimals: 18
       }
     ]
   }
@@ -102,6 +108,6 @@ export interface ERC20TokenInfo {
   name: string;
   symbol: string;
   decimals: number;
-  address: string;
+  address: `0x${string}`;
   image?: string;
 }

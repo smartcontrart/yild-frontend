@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import { ERC20TokenInfo } from "./constants";
 
 /**
  * Calculates the required amount of token1 given an amount of token0 and the price range
@@ -125,7 +126,7 @@ export function nearestValidTick(tick: number, fee: number | null): number {
   return Math.round(tick / tickSpacing) * tickSpacing;
 }
 
-export const reArrangeTokensByContractAddress = (tokens: any[]) => {
+export const reArrangeTokensByContractAddress = (tokens: ERC20TokenInfo[]) => {
   const token0Address = tokens[0].address;
   const token1Address = tokens[1].address;
   if (!token0Address || !token1Address || token0Address < token1Address)
