@@ -1,30 +1,25 @@
-import { useState } from "react";
-import { usePublicClient, useChainId } from "wagmi";
+import { useEffect, useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-import { TRENDING_TOKEN_LIST, ChainIdKey, SupportedChainId, getNetworkNameFromChainId } from "@/utils/constants";
-import { getERC20TokenInfo } from "@/utils/erc20";
 import ERC20Image from "./erc20-image";
 
-interface TokenInfo {
-  name: string;
-  symbol: string;
-  decimals: number;
-  address: string;
-}
+import { getDefaultTokensFromChainId, ERC20TokenInfo } from "@/utils/constants";
+import { getERC20TokenInfo } from "@/utils/erc20";
 
 interface TokenSelectorProps {
   chainId: number,
-  onSelectionChange: (info: TokenInfo) => void;
+  onSelectionChange: (info: ERC20TokenInfo) => void;
 }
 
 export function TokenSelector({ chainId, onSelectionChange }: TokenSelectorProps) {
   const [customTokenAddressInput, setCustomTokenAddressInput] = useState("")
-  const [customToken, setCustomToken] = useState<TokenInfo | null>(null);
+  const [customToken, setCustomToken] = useState<ERC20TokenInfo | null>(null);
 
+  useEffect(() => {
+    setCustomToken(null)
+  }, [chainId])
   const fetchTokenInfo = async (tokenAddress: string) => {
     if (!chainId) {
       console.error("Chain ID not available");
@@ -37,15 +32,10 @@ export function TokenSelector({ chainId, onSelectionChange }: TokenSelectorProps
   return (
     <>
       <Select onValueChange={(value) => {
-        console.log(value)
-        const tokens = TRENDING_TOKEN_LIST[getNetworkNameFromChainId(chainId)].filter((elem: any) => elem.ADDRESS === value)
-        if (tokens && tokens.length > 0)
-          onSelectionChange({
-            name: tokens[0].NAME,
-            symbol: tokens[0].NAME,
-            decimals: tokens[0].DECIMALS,
-            address: tokens[0].ADDRESS
-          });
+        const tokens = getDefaultTokensFromChainId(chainId)
+        const filtered = tokens.filter((elem: any) => elem.address === value)
+        if (filtered && filtered.length > 0)
+          onSelectionChange(filtered[0]);
         else if (customToken)
           onSelectionChange(customToken);
       }} defaultValue={""}>
@@ -60,8 +50,9 @@ export function TokenSelector({ chainId, onSelectionChange }: TokenSelectorProps
                 setCustomToken(null)
 
                 if (e.target.value.length === 42) {
-                  const tokens = TRENDING_TOKEN_LIST[getNetworkNameFromChainId(chainId)].filter((elem: any) => elem.ADDRESS === e.target.value)
-                  if (!tokens || tokens.length === 0) {
+                  const tokens = getDefaultTokensFromChainId(chainId)
+                  const filtered = tokens.filter((elem: any) => elem.address === e.target.value)
+                  if (!filtered || filtered.length === 0) {
                     setCustomTokenAddressInput(e.target.value)
                     fetchTokenInfo(e.target.value).then((info) => {
                       if (info) {
@@ -85,11 +76,11 @@ export function TokenSelector({ chainId, onSelectionChange }: TokenSelectorProps
 
           <Separator />
 
-          {TRENDING_TOKEN_LIST[getNetworkNameFromChainId(chainId)].map((elem: any) => (
-            <SelectItem key={elem.NAME} value={elem.ADDRESS}>
+          {getDefaultTokensFromChainId(chainId).map((elem: any) => (
+            <SelectItem key={elem.name} value={elem.address}>
               <div className="flex flex-row gap-4">
-                <ERC20Image tokenAddress={elem.ADDRESS} chainId={chainId} />
-                {elem.NAME}
+                <ERC20Image tokenAddress={elem.address} chainId={chainId} />
+                {elem.name}
               </div>
             </SelectItem>
           ))}

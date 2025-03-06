@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import { useAccount, useChainId } from "wagmi";
 import { useState, useEffect } from "react";
-import { closePosition, increaseLiquidity, decreaseLiquidity, getManagerContractAddressFromChainId, getPositionInfo, collectFees, compoundFees, getPositionDetail, getPoolInfo } from "@/utils/position-manage";
+import { closePosition, increaseLiquidity, decreaseLiquidity, getPositionInfo, collectFees, compoundFees, getPositionDetail, getPoolInfo } from "@/utils/position-manage";
 import { approveToken } from "@/utils/erc20";
 import { fetchTokenPrice, sendClosePositionReport } from "@/utils/requests";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -46,6 +46,7 @@ import { getRequiredToken1FromToken0Amount, visualizeFeeTier } from "@/utils/fun
 import { parseUnits, formatUnits } from "viem";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ERROR_CODES, POSITION_DETAIL_PAGE_STATE } from "@/utils/types";
+import { getManagerContractAddressFromChainId } from "@/utils/constants";
 
 export default function PositionPage() {
   const { isConnected, address } = useAccount();

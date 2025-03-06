@@ -41,14 +41,15 @@ import {
   getRequiredToken0FromToken1Amount,
   getRequiredToken1FromToken0Amount,
 } from "../../../utils/functions";
-import { openPosition, getManagerContractAddressFromChainId, getAvailablePools } from "@/utils/position-manage";
+import { openPosition, getAvailablePools } from "@/utils/position-manage";
 import { approveToken, getERC20TokenBalance } from "@/utils/erc20";
 import { fetchTokenPriceWithLoading } from "@/utils/requests"
 import { FeeTier } from "@/components/fee-tier";
 import { CREATE_POSITION_PAGE_STATE } from "@/utils/types";
-import { INVALID_FEE_TIER, VALID_FEE_TIERS } from "@/utils/constants";
+import { INVALID_FEE_TIER, VALID_FEE_TIERS, getManagerContractAddressFromChainId } from "@/utils/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatUnits, parseEther, parseUnits } from "viem";
+import TokenLivePrice from "@/components/token-live-price";
 
 const formSchema = z.object({
   token0: z.string().min(0, "Token is required"),
@@ -364,7 +365,11 @@ export default function NewPositionPage() {
                       setToken0Address(info.address);
                     }}
                   />
-                  {(isLoadingToken0Price || token0Price) && (
+                  <TokenLivePrice 
+                    address={token0Address as `0x${string}`}
+                    chainId={chainId}
+                  />
+                  {/* {(isLoadingToken0Price || token0Price) && (
                     <div className="flex items-center mt-2">
                       {isLoadingToken0Price ? (
                         <span className="text-sm text-muted-foreground">
@@ -374,7 +379,7 @@ export default function NewPositionPage() {
                         <span className="text-sm ml-2">Current Price: ${token0Price} USD</span>
                       )}
                     </div>
-                  )}
+                  )} */}
                 </div>
                 <div>
                   <TokenSelector

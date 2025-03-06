@@ -5,16 +5,12 @@ import { parseUnits } from "viem";
 
 import { PositionManagerABI } from "@/abi/PositionManager";
 
-import { POSITION_MANAGER_CONTRACT_ADDRESS, ChainIdKey, SupportedChainId, UNISWAP_V3_FACTORY_CONTRACT_ADDRESS } from "./constants";
+import { getUniswapV3FactoryContractAddressFromChainId, getManagerContractAddressFromChainId } from "./constants";
 import { ERROR_CODES } from "./types";
 import { getERC20TokenBalance } from './erc20'
 import { fetchParaswapRoute, getPositions, fetchTokenPrice } from "./requests";
 import { multiplyBigIntWithFloat } from "./functions";
 
-export const getManagerContractAddressFromChainId = (chainId: number) => {
-  const chainIdKey: ChainIdKey = `ChainId_${chainId as SupportedChainId}`;
-  return POSITION_MANAGER_CONTRACT_ADDRESS[chainIdKey] as `0x${string}`
-}
 
 export const collectFees = async (
   tokenId: number,
@@ -395,10 +391,10 @@ export const closePosition = async (tokenId: number, chainId: number) => {
 }
 
 export const getPoolAddressAndTVL = async (token0Address: string, token1Address: string, feeTier: number, chainId: number) => {
-  const chainIdKey: ChainIdKey = `ChainId_${chainId as SupportedChainId}`;
   try {
     const poolAddress = await readContract(wagmiConfig, {
-      address: UNISWAP_V3_FACTORY_CONTRACT_ADDRESS[chainIdKey] as `0x${string}`,
+      // address: UNISWAP_V3_FACTORY_CONTRACT_ADDRESS[chainIdKey] as `0x${string}`,
+      address: getUniswapV3FactoryContractAddressFromChainId(chainId),
       abi: [
         {
           "inputs": [
