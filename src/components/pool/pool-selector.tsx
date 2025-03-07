@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react"
-import { PoolInfo } from "./pool-info"
+
 import { ERC20TokenInfo, INVALID_FEE_TIER } from "@/utils/constants"
 import { reArrangeTokensByContractAddress } from "@/utils/functions"
 import { getAvailablePools } from "@/utils/position-manage"
+
+import { PoolInfo } from "@/components/pool/pool-info"
 
 export default function PoolSelector({
   tokens,
@@ -20,7 +22,6 @@ export default function PoolSelector({
     return <></>
 
   const [availableFeeTiers, setAvailableFeeTiers] = useState<any[]>([])
-  // const [selected, setSelected] = useState<number | null>(INVALID_FEE_TIER)
 
   useEffect(() => {
     onSelectPool(INVALID_FEE_TIER)

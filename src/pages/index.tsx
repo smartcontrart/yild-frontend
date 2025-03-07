@@ -9,7 +9,7 @@ import { useAccount, useChainId } from "wagmi";
 import { getPositions } from "@/utils/requests";
 import { tickToPrice } from "@/utils/functions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { YildLoading } from "@/components/yild-loading";
+import { YildLoading } from "@/components/global/yild-loading";
 
 export default function Home() {
   const { isConnected, address } = useAccount();

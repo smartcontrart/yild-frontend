@@ -1,11 +1,12 @@
 import { writeContract, waitForTransactionReceipt, readContract } from "@wagmi/core";
-import { config as wagmiConfig } from "@/components/providers";
+import { config as wagmiConfig } from "@/components/global/providers";
 import { erc20Abi, parseUnits } from "viem";
 import { ERROR_CODES } from "./types";
+import { ERC20TokenInfo } from "./constants";
 
-export const getERC20TokenInfo = async (address: string, chainId: number) => {
+export const getERC20TokenInfo = async (address: string, chainId: number): Promise<ERC20TokenInfo> => {
   try {
-    const contractAddress = address
+    const contractAddress = address as `0x${string}`
     const name = await readContract(wagmiConfig, {
       abi: erc20Abi, 
       address: contractAddress as `0x${string}`, 
@@ -21,11 +22,11 @@ export const getERC20TokenInfo = async (address: string, chainId: number) => {
       address: contractAddress as `0x${string}`, 
       functionName: "decimals",
     })
-    return { name, symbol, decimals, address }    
+    return { name, symbol, decimals, address: contractAddress }    
   } catch (error) {
     console.log(error)
   }
-  return null
+  return { name: "UNDEFINED", symbol: "UNDEFINED", decimals: 18, address: "0x00000000000000000000000000000000" } 
 };
 
 export const getCurrentAllowance = async (userAddress: string, tokenAddress: string, spender: string) => {

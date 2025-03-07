@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 
+import { getDefaultTokensFromChainId, ERC20TokenInfo } from "@/utils/constants";
+import { getERC20TokenInfo } from "@/utils/erc20";
+
+import ERC20Image from "@/components/common/erc20-image";
+
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import ERC20Image from "./erc20-image";
 
-import { getDefaultTokensFromChainId, ERC20TokenInfo } from "@/utils/constants";
-import { getERC20TokenInfo } from "@/utils/erc20";
 
 interface TokenSelectorProps {
   chainId: number,

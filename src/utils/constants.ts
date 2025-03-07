@@ -8,6 +8,7 @@ export const TOKEN_LIVE_PRICE_FETCH_INTERVAL = 15000
 export const BACKEND_API_URL = "https://api.yild.finance";
 export const PARASWAP_API_URL = "https://api.paraswap.io/swap?version=6.2"
 export const UNISWAP_GITHUB_CLOUD_URL = "https://raw.githubusercontent.com/Uniswap/assets/master/blockchains"
+export const FALLBACK_ERC20_IMAGE_URL = "/favicon.png"
 
 export const SUPPORTED_CHAINS = [
   {
@@ -21,25 +22,25 @@ export const SUPPORTED_CHAINS = [
       {
         name: "Wrapped ETH",
         symbol: "WETH",
-        address: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+        address: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1" as `0x${string}`,
         decimals: 18
       },
       {
         name: "Arbitrum Token",
         symbol: "ARB",
-        address: "0x912CE59144191C1204E64559FE8253a0e49E6548",
+        address: "0x912CE59144191C1204E64559FE8253a0e49E6548" as `0x${string}`,
         decimals: 18
       },
       {
         name: "USD Coin",
         symbol: "USDC",
-        address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+        address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831" as `0x${string}`,
         decimals: 6
       },    
       {
         name: "USD Tether",
         symbol: "USDT",
-        address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+        address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9" as `0x${string}`,
         decimals: 6
       }
     ]
@@ -55,19 +56,19 @@ export const SUPPORTED_CHAINS = [
       {
         name: "Wrapped ETH",
         symbol: "WETH",
-        address: "0x4200000000000000000000000000000000000006",
+        address: "0x4200000000000000000000000000000000000006" as `0x${string}`,
         decimals: 18
       },
       {
         name: "USD Coin",
         symbol: "USDC",
-        address: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        address: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" as `0x${string}`,
         decimals: 6
       },
       {
         name: "Virtual Protocol",
         symbol: "VIRTUAL",
-        address: "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+        address: "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b" as `0x${string}`,
         decimals: 18
       }
     ]

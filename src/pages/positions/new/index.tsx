@@ -26,7 +26,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { TokenSelector } from "@/components/token-selector";
+import { TokenSelector } from "@/components/token/token-selector";
 import { useState, useEffect } from "react";
 import { priceToTick, tickToPrice, nearestValidTick, reArrangeTokensByContractAddress } from "@/utils/functions";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -37,8 +37,9 @@ import { approveToken, getERC20TokenBalance } from "@/utils/erc20";
 import { CREATE_POSITION_PAGE_STATE } from "@/utils/types";
 import { ERC20TokenInfo, INVALID_FEE_TIER, VALID_FEE_TIERS, getManagerContractAddressFromChainId } from "@/utils/constants";
 import { Skeleton } from "@/components/ui/skeleton";
-import TokenLivePrice from "@/components/token-live-price";
-import PoolSelector from "@/components/pool-selector";
+import TokenLivePrice from "@/components/token/token-live-price";
+import PoolSelector from "@/components/pool/pool-selector";
+import { RangeAndAmountSetter } from "@/components/open-position/range-and-amount-setter";
 
 export default function NewPositionPage() {
   const { isConnected, address: userAddress } = useAccount();
@@ -56,6 +57,9 @@ export default function NewPositionPage() {
   const [tickUpper, setTickUpper] = useState(0)
   const [tickLower, setTickLower] = useState(0)
 
+  useEffect(() => {
+    setSelectedFeeTier(INVALID_FEE_TIER)
+  }, [selectedToken0, selectedToken1])
   const onOpenPosition = async () => {
     try {
       if (!userAddress || !selectedToken0 || !selectedToken1 || !selectedFeeTier || !tickUpper || !tickLower)
@@ -157,6 +161,16 @@ export default function NewPositionPage() {
               chainId={chainId}
               selectedFeeTier={selectedFeeTier}
               onSelectPool={(selectedFeeTier: any) => setSelectedFeeTier(selectedFeeTier)}
+            />
+            : <></>
+          }
+
+          {
+            selectedToken0 && selectedToken1 && selectedFeeTier ?
+            <RangeAndAmountSetter 
+              tokens={[selectedToken0, selectedToken1]}
+              chainId={chainId}
+              selectedFeeTier={selectedFeeTier}
             />
             : <></>
           }
@@ -364,8 +378,8 @@ export default function NewPositionPage() {
           {pageStatus === CREATE_POSITION_PAGE_STATE.POSITION_OPENED && (
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => {
-                // setFeeTier(INVALID_FEE_TIER)
-                // setPageStatus(CREATE_POSITION_PAGE_STATE.PAGE_LOADED)
+                setSelectedFeeTier(INVALID_FEE_TIER)
+                setPageStatus(CREATE_POSITION_PAGE_STATE.PAGE_LOADED)
               }}>
                 Open another position
               </AlertDialogCancel>

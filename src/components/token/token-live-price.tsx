@@ -1,4 +1,6 @@
-import { Skeleton } from "./ui/skeleton"
+"use client"
+import { Skeleton } from "@/components/ui/skeleton"
+
 import { useTokenPrice } from "@/hooks/use-token-price"
 
 export default function TokenLivePrice({
@@ -8,9 +10,10 @@ export default function TokenLivePrice({
   address: `0x${string}` | undefined,
   chainId: number
 }) {
+
   if (!address)
     return <></>
-    
+
   const { data, isLoading } = useTokenPrice(address, chainId)
 
   return (

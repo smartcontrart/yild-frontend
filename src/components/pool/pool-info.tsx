@@ -1,11 +1,15 @@
-import { Card } from "@/components/ui/card";
-import { formatNumber, visualizeFeeTier } from "@/utils/functions";
-import { gql, useQuery } from "@apollo/client";
-import { getClientFromChainId } from "@/utils/apolloClient";
 import { useMemo } from "react";
-import { Skeleton } from "./ui/skeleton";
+
+import { gql, useQuery } from "@apollo/client";
+
 import { ERC20TokenInfo } from "@/utils/constants";
+import { formatNumber, visualizeFeeTier } from "@/utils/functions";
+import { getClientFromChainId } from "@/utils/apolloClient";
+
 import { useTokenPrice } from "@/hooks/use-token-price";
+
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PoolInfoProps {
   tokens: ERC20TokenInfo[],

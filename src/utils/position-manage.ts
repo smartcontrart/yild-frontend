@@ -1,4 +1,4 @@
-import { config as wagmiConfig } from "@/components/providers";
+import { config as wagmiConfig } from "@/components/global/providers";
 
 import { writeContract, waitForTransactionReceipt, readContract } from "@wagmi/core";
 import { parseUnits } from "viem";

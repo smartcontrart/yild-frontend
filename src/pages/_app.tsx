@@ -1,7 +1,7 @@
 import '@/styles/globals.css';
 import '@rainbow-me/rainbowkit/styles.css';
 import type { AppProps } from 'next/app';
-import { Providers } from '@/components/providers';
+import { Providers } from '@/components/global/providers';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Inter } from 'next/font/google';
 import Link from 'next/link';
