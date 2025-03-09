@@ -4,6 +4,7 @@ export const INVALID_FEE_TIER = null
 // export const SLIPPAGE = 5; // 5%
 // export const BPS = 5; // 5%
 export const TOKEN_LIVE_PRICE_FETCH_INTERVAL = 15000
+export const USER_ERC_TOKEN_BALANCE_FETCH_INTERVAL = 15000
 
 export const BACKEND_API_URL = "https://api.yild.finance";
 export const PARASWAP_API_URL = "https://api.paraswap.io/swap?version=6.2"

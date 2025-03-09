@@ -11,6 +11,8 @@ export const PriceRangeSetter = ({
   direction,
   token0Price,
   token1Price,
+  tickLower,
+  tickUpper,
   onTickChange
 }: {
   tokens: ERC20TokenInfo[],
@@ -19,6 +21,8 @@ export const PriceRangeSetter = ({
   direction: string,
   token0Price: number,
   token1Price: number,
+  tickLower: number,
+  tickUpper: number,
   onTickChange: Function
 }) => {
 
@@ -55,61 +59,60 @@ export const PriceRangeSetter = ({
 
   const setNearestValidPrice = (debouncedValue: number, isMin: boolean) => {
     const { validTick, adjustedPrice } = getNearestValidPrice(debouncedValue)
+    if (validTick === 0 || validTick === Infinity || validTick === -Infinity)
+      return
 
     if (isMin) {
-      setTickLower(validTick);
-      setMinPriceInput(adjustedPrice);
+      setMinPriceInput(adjustedPrice.toString());
+      onTickChange({tickLower: validTick, tickUpper})
     }
     else {
-      setTickUpper(validTick);
-      setMaxPriceInput(adjustedPrice);
+      setMaxPriceInput(adjustedPrice.toString());
+      onTickChange({tickLower, tickUpper: validTick})
     }
   }
-
-  const [minPriceInput, setMinPriceInput] = useState(0)
-  const [maxPriceInput, setMaxPriceInput] = useState(0)
-  const [tickLower, setTickLower] = useState(0)
-  const [tickUpper, setTickUpper] = useState(0)
-
-  const debouncedMinPrice = useDebounce(minPriceInput, 3000)
-  const debouncedMaxPrice = useDebounce(maxPriceInput, 3000)
+  
+  const [minPriceInput, setMinPriceInput] = useState("")
+  const [maxPriceInput, setMaxPriceInput] = useState("")
+  
+  const debouncedMinPrice = useDebounce(minPriceInput, 2000)
+  const debouncedMaxPrice = useDebounce(maxPriceInput, 2000)
+  
+  useEffect(() => {
+    if (direction && token0Price && token1Price) {
+      const basePriceRatio = direction === "0p1" ? token0Price / token1Price : token1Price / token0Price
+      const { adjustedPrice: adjustedPriceMin, validTick: validTickLower } = getNearestValidPrice(basePriceRatio * 0.95)
+      const { adjustedPrice: adjustedPriceMax, validTick: validTickUpper } = getNearestValidPrice(basePriceRatio * 1.05)
+      setMinPriceInput(adjustedPriceMin.toString())
+      setMaxPriceInput(adjustedPriceMax.toString())
+      onTickChange({tickLower: validTickLower, tickUpper: validTickUpper})
+    }
+  }, [feeTier, direction])
 
   useEffect(() => {
-
-    const basePriceRatio = direction === "0p1" ? token0Price / token1Price : token1Price / token0Price
-    const { adjustedPrice: adjustedPriceMin, validTick: validTickLower } = getNearestValidPrice(basePriceRatio * 0.95)
-    setMinPriceInput(adjustedPriceMin)
-    setTickLower(validTickLower)
-    const { adjustedPrice: adjustedPriceMax, validTick: validTickUpper } = getNearestValidPrice(basePriceRatio * 1.05)
-    setMaxPriceInput(adjustedPriceMax)
-    setTickUpper(validTickUpper)
-    onTickChange({tickLower: validTickLower, tickUpper: validTickUpper})
-  }, [tokens, feeTier, direction, token0Price, token1Price])
-
-  useEffect(() => {
-    setNearestValidPrice(debouncedMinPrice, true);
+    setNearestValidPrice(Number(debouncedMinPrice), true);
   }, [debouncedMinPrice]);
 
   useEffect(() => {
-    setNearestValidPrice(debouncedMaxPrice, false);
+    setNearestValidPrice(Number(debouncedMaxPrice), false);
   }, [debouncedMaxPrice]);
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <div>
-        <label htmlFor="">Min {tickLower}</label>
+        <label htmlFor="">Min Price</label>
         <Input
           placeholder="0.0"
           value={minPriceInput}
-          onChange={(e) => setMinPriceInput(parseFloat(e.target.value) || 0)}
+          onChange={(e) => setMinPriceInput((e.target.value) || "0")}
         />
       </div>
       <div>
-        <label htmlFor="">Max {tickUpper}</label>
+        <label htmlFor="">Max Price</label>
         <Input
           placeholder="0.0"
           value={maxPriceInput}
-          onChange={(e) => setMaxPriceInput(parseFloat(e.target.value) || 0)}
+          onChange={(e) => setMaxPriceInput((e.target.value) || "0")}
         />
       </div>
     </div>

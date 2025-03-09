@@ -3,6 +3,7 @@ import { config as wagmiConfig } from "@/components/global/providers";
 import { erc20Abi, parseUnits } from "viem";
 import { ERROR_CODES } from "./types";
 import { ERC20TokenInfo } from "./constants";
+import { bigint } from "zod";
 
 export const getERC20TokenInfo = async (address: string, chainId: number): Promise<ERC20TokenInfo> => {
   try {
@@ -75,7 +76,7 @@ export const approveToken = async (userAddress: string, tokenAddress: string, sp
   }
 
   const currentAllowance = await getCurrentAllowance(userAddress, tokenAddress, spenderAddress);
-  if (currentAllowance >= parseUnits(value, decimals))
+  if (currentAllowance && currentAllowance > 0 && currentAllowance >= parseUnits(value.toString(), decimals))
     return {
       success: true,
       result: "Already approved"
@@ -87,7 +88,7 @@ export const approveToken = async (userAddress: string, tokenAddress: string, sp
     functionName: "approve",
     args: [
       spenderAddress as `0x${string}`,
-      parseUnits(value, decimals),
+      parseUnits(value.toString(), decimals),
     ],
   } as const;
 
@@ -120,7 +121,8 @@ export const getERC20TokenBalance = async (tokenAddress: string, holderAddress: 
       functionName: "balanceOf",
       args: [holderAddress as `0x${string}`]
     })
-    return balance
+    if (balance)
+      return balance
   }
-  return 0
+  return BigInt(0)
 }

@@ -154,7 +154,6 @@ export const decreaseLiquidity = async (
   amountInBPS: number
 ) => {
   const swapInfo = await getPositionInfo(tokenId, chainId)
-  console.log(swapInfo)
   if (!swapInfo)
     return {
       success: false,
@@ -242,8 +241,8 @@ export const openPosition = async (
       fee: parseInt(feeTier),
       tickUpper: parseInt(tickUpper),
       tickLower: parseInt(tickLower),
-      amount0Desired: parseUnits(token0Value, token0Decimals),
-      amount1Desired: parseUnits(token1Value, token1Decimals),
+      amount0Desired: parseUnits(token0Value.toString(), token0Decimals),
+      amount1Desired: parseUnits(token1Value.toString(), token1Decimals),
       amount0Min: 0,
       amount1Min: 0,
       recipient: getManagerContractAddressFromChainId(chainId),
@@ -337,7 +336,6 @@ export const closePosition = async (tokenId: number, chainId: number) => {
       result: ERROR_CODES.UNKNOWN_ERROR
   }
   const { token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } = swapInfo
-  // console.log ({ token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals })
 
   const totalAmount0ToSwap = principal0 + feesEarned0 - protocolFee0
   const totalAmount1ToSwap = principal1 + feesEarned1 - protocolFee1
