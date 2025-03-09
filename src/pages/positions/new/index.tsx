@@ -6,8 +6,6 @@ import {
 } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,25 +16,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { TokenSelector } from "@/components/token/token-selector";
 import { useState, useEffect } from "react";
-import { priceToTick, tickToPrice, nearestValidTick, reArrangeTokensByContractAddress } from "@/utils/functions";
-import { useDebounce } from "@/hooks/use-debounce";
+import { reArrangeTokensByContractAddress } from "@/utils/functions";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { openPosition, getAvailablePools } from "@/utils/position-manage";
+import { openPosition } from "@/utils/position-manage";
 import { approveToken } from "@/utils/erc20";
 import { CREATE_POSITION_PAGE_STATE } from "@/utils/types";
-import { ERC20TokenInfo, INVALID_FEE_TIER, VALID_FEE_TIERS, getManagerContractAddressFromChainId } from "@/utils/constants";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ERC20TokenInfo, INVALID_FEE_TIER, getManagerContractAddressFromChainId } from "@/utils/constants";
 import TokenLivePrice from "@/components/token/token-live-price";
 import PoolSelector from "@/components/pool/pool-selector";
 import { RangeAndAmountSetter } from "@/components/open-position/range-and-amount-setter";
@@ -60,6 +48,27 @@ export default function NewPositionPage() {
   useEffect(() => {
     setSelectedFeeTier(INVALID_FEE_TIER)
   }, [selectedToken0, selectedToken1])
+
+  useEffect(() => {
+    if (pageStatus === CREATE_POSITION_PAGE_STATE.POSITION_OPENED)
+      toast({
+        variant: "default",
+        title: "Info",
+        description: "Successfully opened a new position.",
+      })
+    if (pageStatus === CREATE_POSITION_PAGE_STATE.OPEN_POSITION_FAILED)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Open position failed",
+      })
+    if (pageStatus === CREATE_POSITION_PAGE_STATE.TOKEN_APPROVE_FAILED)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Token approval failed",
+      })
+  }, [pageStatus])
 
   const onOpenPosition = async () => {
     if (!selectedToken0 || !selectedToken1)
@@ -101,7 +110,6 @@ export default function NewPositionPage() {
       }
       setPageStatus(CREATE_POSITION_PAGE_STATE.POSITION_OPENED)
     } catch(err) {
-      // console.log(err)
       setPageStatus(CREATE_POSITION_PAGE_STATE.OPEN_POSITION_FAILED)
       return
     }
