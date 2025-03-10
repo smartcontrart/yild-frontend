@@ -8,7 +8,7 @@ import { PositionManagerABI } from "@/abi/PositionManager";
 import { getUniswapV3FactoryContractAddressFromChainId, getManagerContractAddressFromChainId } from "./constants";
 import { ERROR_CODES } from "./types";
 import { getERC20TokenBalance } from './erc20'
-import { fetchParaswapRoute, getPositions, fetchTokenPrice } from "./requests";
+import { fetchParaswapRoute, fetchTokenPrice } from "./requests";
 import { multiplyBigIntWithFloat } from "./functions";
 
 
@@ -47,14 +47,14 @@ export const compoundFees = async (
   tokenId: number,
   chainId: number,
 ) => {
-  const swapInfo = await getPositionInfo(tokenId, chainId)
-  if (!swapInfo)
+  const fundsInfo = await getPositionFundsInfo(tokenId, chainId)
+  if (!fundsInfo)
     return {
       success: false,
       result: ERROR_CODES.UNKNOWN_ERROR
     }
 
-  const { principal0, principal1, token0Address, token0Decimals, token1Address, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1 } = swapInfo
+  const { principal0, principal1, token0Address, token0Decimals, token1Address, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1 } = fundsInfo
 
   const availableAmount0 = feesEarned0 - protocolFee0
   const availableAmount1 = feesEarned1 - protocolFee1
@@ -153,14 +153,14 @@ export const decreaseLiquidity = async (
   chainId: number,
   amountInBPS: number
 ) => {
-  const swapInfo = await getPositionInfo(tokenId, chainId)
-  if (!swapInfo)
+  const fundsInfo = await getPositionFundsInfo(tokenId, chainId)
+  if (!fundsInfo)
     return {
       success: false,
       result: ERROR_CODES.UNKNOWN_ERROR
     }
 
-  const { principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals, token0Address, token0Decimals, token1Address, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1 } = swapInfo
+  const { principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals, token0Address, token0Decimals, token1Address, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1 } = fundsInfo
 
   let _pSwapData0 = "0x", _pSwapData1 = "0x"
   if (token0Address !== ownerAccountingUnit) {
@@ -276,7 +276,7 @@ export const openPosition = async (
   };
 }
 
-export const getPositionInfo = async (tokenId: number, chainId: number) => {
+export const getPositionFundsInfo = async (tokenId: number, chainId: number) => {
   const res: any = await readContract(wagmiConfig, {
     abi: PositionManagerABI, 
     address: getManagerContractAddressFromChainId(chainId), 
@@ -284,7 +284,7 @@ export const getPositionInfo = async (tokenId: number, chainId: number) => {
     args: [tokenId]
   })
   if (res.length !== 12) {
-    console.log("Invalid data format from getPositionInfo");
+    console.log("Invalid data format from getPositionFundsInfo");
     return null;
   }
   const [token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals] = res
@@ -293,49 +293,14 @@ export const getPositionInfo = async (tokenId: number, chainId: number) => {
   }
 }
 
-export const getPositionDetail = async (address: string, chainId: number, tokenId: number) => {
-  const positions = await getPositions(address, chainId)
-  const filtered = positions.filter((elem: any) => elem.tokenId === tokenId)
-
-  if (!filtered || filtered.length < 1)
-    return null
-  
-  const { dbId, decimals0, decimals1, symbol0, symbol1, tickLower, tickUpper, token0Address, token1Address, createdAt, updatedAt, poolAddress } = filtered[0]
-
-  const swapInfo = await getPositionInfo(tokenId, chainId)
-
-  if (!swapInfo)
-    return null
-
-  const { feesEarned0, feesEarned1, ownerAccountingUnit, ownerAccountingUnitDecimals, principal0, principal1, protocolFee0, protocolFee1 } = swapInfo
-  return {
-    dbId, tokenId, chainId, poolAddress, token0Address, token1Address, ownerAccountingUnit, decimals0, decimals1, ownerAccountingUnitDecimals, symbol0, symbol1, tickLower, tickUpper, createdAt, updatedAt, feesEarned0, feesEarned1, principal0, principal1, protocolFee0, protocolFee1
-  }
-}
-
-export const getPoolInfo = async (poolAddress: string, chainId: number) => {
-  try {
-    const res: any = await readContract(wagmiConfig, {
-      abi: [{"inputs":[],"name":"fee","outputs":[{"internalType":"uint24","name":"","type":"uint24"}],"stateMutability":"view","type":"function"}], 
-      address: poolAddress as `0x${string}`, 
-      functionName: "fee",
-      args: []
-    })
-    return res
-  } catch (error) {
-    console.log(error)
-    return null
-  }
-}
-
 export const closePosition = async (tokenId: number, chainId: number) => {
-  const swapInfo = await getPositionInfo(tokenId, chainId)
-  if (!swapInfo)
+  const fundsInfo = await getPositionFundsInfo(tokenId, chainId)
+  if (!fundsInfo)
     return {
       success: false,
       result: ERROR_CODES.UNKNOWN_ERROR
   }
-  const { token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } = swapInfo
+  const { token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } = fundsInfo
 
   const totalAmount0ToSwap = principal0 + feesEarned0 - protocolFee0
   const totalAmount1ToSwap = principal1 + feesEarned1 - protocolFee1
@@ -388,47 +353,13 @@ export const closePosition = async (tokenId: number, chainId: number) => {
   };
 }
 
-export const getPoolAddressAndTVL = async (token0Address: string, token1Address: string, feeTier: number, chainId: number) => {
-  try {
-    if (!token0Address || !token1Address || !feeTier || !chainId)
-      return null
-    const poolAddress = await readContract(wagmiConfig, {
-      // address: UNISWAP_V3_FACTORY_CONTRACT_ADDRESS[chainIdKey] as `0x${string}`,
-      address: getUniswapV3FactoryContractAddressFromChainId(chainId),
-      abi: [
-        {
-          "inputs": [
-            { "internalType": "address", "name": "tokenA", "type": "address" },
-            { "internalType": "address", "name": "tokenB", "type": "address" },
-            { "internalType": "uint24", "name": "fee", "type": "uint24" }
-          ],
-          "name": "getPool",
-          "outputs": [{ "internalType": "address", "name": "pool", "type": "address" }],
-          "stateMutability": "view",
-          "type": "function"
-        }
-      ],
-      functionName: "getPool",
-      args: [token0Address as `0x${string}`, token1Address as `0x${string}`, feeTier],
-    });
-    if (poolAddress && poolAddress !== "0x0000000000000000000000000000000000000000") {
-      const tokens = [token0Address, token1Address]
-      const balances = await Promise.all(tokens.map((tokenAddress) => getERC20TokenBalance(tokenAddress, poolAddress)))
-      return poolAddress === "0x0000000000000000000000000000000000000000" ? null : {
-        poolAddress,
-        feeTier,
-        balance0: balances[0],
-        balance1: balances[1]
-      };
-    }
-  } catch (error) {
-    console.log(error)
-  }
-  return null
-}
-
-export const getAvailablePools = async (token0Address: string, token1Address: string, chainId: number) => {
-  const availableFeeTiers = [100, 500, 3000, 10000]
-  const results = await Promise.all(availableFeeTiers.map((feeTier) => getPoolAddressAndTVL(token0Address, token1Address, feeTier, chainId)));
-  return results
+export const getAccountingUnitFromAddress = async (address: string, chainId: number) => {
+  const res: any = await readContract(wagmiConfig, {
+    abi: PositionManagerABI, 
+    address: getManagerContractAddressFromChainId(chainId), 
+    functionName: "accountingUnit",
+    args: [address]
+  })
+  console.log(res)
+  return res
 }

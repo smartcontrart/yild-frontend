@@ -7,6 +7,7 @@ import { Inter } from 'next/font/google';
 import Link from 'next/link';
 import Image from 'next/image';
 import Head from "next/head";
+import { Cog } from 'lucide-react';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,10 +24,18 @@ export default function App({ Component, pageProps }: AppProps) {
         <div className={`min-h-screen bg-background ${inter.className}`}>
           <header className="border-b">
             <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
-              <Link href="/" className="hover:cursor-pointer">
-                <Image src={"/yild.png"} alt='' width={100} height={100} className='p-2' />
-              </Link>
-              <ConnectButton label='Sign In' accountStatus='address' />
+              <div className='flex flex-row gap-2'>
+                <Link href="/" className="hover:cursor-pointer">
+                  <Image src={"/yild.png"} alt='' width={100} height={100} className='p-2' />
+                </Link>
+                <Link href="/settings" className="hover:cursor-pointer self-center shadow-[0px_6px_12px_rgba(0,0,0,0.1)] p-2 rounded-md">
+                  <Cog />
+                </Link>
+              </div>
+              <ConnectButton label='Sign In' accountStatus={{
+                smallScreen: "avatar",
+                largeScreen: "full",
+              }} />
             </nav>
           </header>
           <main className="container mx-auto px-4 py-8">
