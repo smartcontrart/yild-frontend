@@ -5,6 +5,8 @@ export const INVALID_FEE_TIER = null
 // export const BPS = 5; // 5%
 export const TOKEN_LIVE_PRICE_FETCH_INTERVAL = 15000
 export const USER_ERC_TOKEN_BALANCE_FETCH_INTERVAL = 15000
+export const POSITION_INFO_FETCH_INTERVAL = 60000
+export const POOL_DATA_FETCH_INTERVAL = 300000
 
 export const BACKEND_API_URL = "https://api.yild.finance";
 export const PARASWAP_API_URL = "https://api.paraswap.io/swap?version=6.2"
@@ -16,6 +18,7 @@ export const SUPPORTED_CHAINS = [
     chainId: 42161,
     name: "arbitrum",
     secondaryRPC: "https://rpc.ankr.com/arbitrum",
+    explorerURL: "https://arbiscan.io",
     positionManager: "0x0000000000000000000000000000000000000000" as `0x${string}`,
     liquidityMath: "0x0000000000000000000000000000000000000000" as `0x${string}`,
     uniswapFactory: "0x1F98431c8aD98523631AE4a59f267346ea31F984" as `0x${string}`,
@@ -50,6 +53,7 @@ export const SUPPORTED_CHAINS = [
     chainId: 8453,
     name: "base",
     secondaryRPC: "https://rpc.ankr.com/base",
+    explorerURL: "https://basescan.org",
     positionManager: "0x5E346b40AB351b20E61E2525315c77ca049eA4dc" as `0x${string}`,
     liquidityMath: "0xd19c09c46803dcb6c926c5102bda7d9833e9c56d" as `0x${string}`,
     uniswapFactory: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD" as `0x${string}`,
@@ -83,7 +87,12 @@ export const getNetworkNameFromChainId = (chainId: number) => {
 
 export const getSecondaryRPCFromChainId = (chainId: number) => {
   const filtered = SUPPORTED_CHAINS.filter((elem: any) => elem.chainId === chainId)
-  return filtered && filtered.length > 0 ? filtered[0]["name"] : "base"
+  return filtered && filtered.length > 0 ? filtered[0]["secondaryRPC"] : "https://rpc.ankr.com/base"
+}
+
+export const getExplorerURLFromChainId = (chainId: number) => {
+  const filtered = SUPPORTED_CHAINS.filter((elem: any) => elem.chainId === chainId)
+  return filtered && filtered.length > 0 ? filtered[0]["explorerURL"] : "https://basescan.org"
 }
 
 export const getUniswapV3FactoryContractAddressFromChainId = (chainId: number) => {

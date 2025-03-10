@@ -3,26 +3,27 @@ import { config as wagmiConfig } from "@/components/global/providers";
 import { erc20Abi, parseUnits } from "viem";
 import { ERROR_CODES } from "./types";
 import { ERC20TokenInfo } from "./constants";
-import { bigint } from "zod";
 
 export const getERC20TokenInfo = async (address: string, chainId: number): Promise<ERC20TokenInfo> => {
   try {
     const contractAddress = address as `0x${string}`
-    const name = await readContract(wagmiConfig, {
-      abi: erc20Abi, 
-      address: contractAddress as `0x${string}`, 
-      functionName: "name",
-    })
-    const symbol = await readContract(wagmiConfig, {
-      abi: erc20Abi, 
-      address: contractAddress as `0x${string}`, 
-      functionName: "symbol",
-    })
-    const decimals = await readContract(wagmiConfig, {
-      abi: erc20Abi, 
-      address: contractAddress as `0x${string}`, 
-      functionName: "decimals",
-    })
+    const [name, symbol, decimals] = await Promise.all([
+      readContract(wagmiConfig, {
+        abi: erc20Abi, 
+        address: contractAddress as `0x${string}`, 
+        functionName: "name",
+      }),
+      readContract(wagmiConfig, {
+        abi: erc20Abi, 
+        address: contractAddress as `0x${string}`, 
+        functionName: "symbol",
+      }),
+      readContract(wagmiConfig, {
+        abi: erc20Abi, 
+        address: contractAddress as `0x${string}`, 
+        functionName: "decimals",
+      })
+    ])
     return { name, symbol, decimals, address: contractAddress }    
   } catch (error) {
     console.log(error)

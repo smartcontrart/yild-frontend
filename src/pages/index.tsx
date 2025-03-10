@@ -83,8 +83,8 @@ export default function Home() {
                     <div className="space-y-4">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="font-semibold">{e.symbol}</h3>
-                          <p className="text-sm text-muted-foreground">${tickToPrice(e.tickLower, e.decimals0, e.decimals1).toFixed(2)} ~ ${tickToPrice(e.tickUpper, e.decimals0, e.decimals1).toFixed(2)}</p>
+                          {/* <h3 className="font-semibold">{e.symbol}</h3> */}
+                          {/* <p className="text-sm text-muted-foreground">${tickToPrice(e.tickLower, e.decimals0, e.decimals1).toFixed(2)} ~ ${tickToPrice(e.tickUpper, e.decimals0, e.decimals1).toFixed(2)}</p> */}
                         </div>
                         <Link href={`/positions/${e.tokenId}`}>
                           <Button variant="outline" size="sm">

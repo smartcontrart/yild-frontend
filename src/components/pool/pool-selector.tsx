@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 
 import { ERC20TokenInfo, INVALID_FEE_TIER } from "@/utils/constants"
 import { reArrangeTokensByContractAddress } from "@/utils/functions"
-import { getAvailablePools } from "@/utils/position-manage"
+import { getAvailablePools } from "@/utils/pools"
 
 import { PoolInfo } from "@/components/pool/pool-info"
 

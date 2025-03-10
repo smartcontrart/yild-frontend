@@ -1,5 +1,5 @@
 import { BACKEND_API_URL, PARASWAP_API_URL } from "./constants"
-import { getPositionInfo } from "./position-manage"
+import { getPositionFundsInfo } from "./position-manage"
 import { getERC20TokenInfo } from "./erc20"
 
 export const getPositions = async (address: string, chainId: number) => {
@@ -7,50 +7,40 @@ export const getPositions = async (address: string, chainId: number) => {
   try {
     const response = await fetch(`${BACKEND_API_URL}/api/chain/${chainId}/positions/${address}`)
     const { data } = await response.json()
-    for (let i = 0; i < data.length; i++) {
-      try {
-        const { chainId, id, tokenId, lowerTick, upperTick, status, ownerAddress, poolAddress, createdAt, updatedAt } = data[i]
-        const swapInfo = await getPositionInfo(tokenId, chainId)
-        if (!swapInfo)
-          return []
-        const { token0Address, token0Decimals, token1Address, token1Decimals} = swapInfo
-        const token0Info = await getERC20TokenInfo(token0Address, chainId)
-        const token1Info = await getERC20TokenInfo(token1Address, chainId)
-        if (!token0Info || !token1Info)
-          continue;
-        const { name: token0Name, symbol: token0Symbol } = token0Info
-        const { name: token1Name, symbol: token1Symbol } = token1Info
-       
-        if (token0Symbol && token1Symbol) {
-          temp = [
-            ...temp, 
-            { 
-              tokenId,
-              symbol: token0Symbol + "/" + token1Symbol, 
-              symbol0: token0Symbol, 
-              symbol1: token1Symbol,
-              token0Address,
-              token1Address,
-              poolAddress,
-              decimals0: token0Decimals, 
-              decimals1: token1Decimals,
-              tickLower: lowerTick, 
-              tickUpper: upperTick,
-              dbId: id,
-              chainId: chainId,
-              createdAt,
-              updatedAt
-            }
-          ]
-        }
-      } catch (error) {
-
-      }
-    }
+    return data
   } catch(err) {
     console.log('Get positions error: ', err)
   }
   return temp
+}
+
+export const getPositionStaticInfo = async (address: string, positionId: number, chainId: number) => {
+  if (!address || !positionId || !chainId)
+    return null
+
+  const positions = await getPositions(address, chainId)
+  const filtered = positions.filter((elem: any) => Number(elem.tokenId) === positionId)
+
+  if (!filtered || filtered.length < 1)
+    return null
+  
+  const { id: dbId, lowerTick: tickLower, upperTick: tickUpper, createdAt, updatedAt, poolAddress, ownerAddress } = filtered[0]
+
+  const fundsInfo = await getPositionFundsInfo(positionId, chainId)
+  if (!fundsInfo)
+    return null
+
+  const { token0Address, token1Address, ownerAccountingUnit } = fundsInfo
+
+  const [token0, token1, accountingUnit] = await Promise.all([
+    getERC20TokenInfo(token0Address, chainId),
+    getERC20TokenInfo(token1Address, chainId),
+    getERC20TokenInfo(ownerAccountingUnit, chainId)
+  ])
+
+  return {
+    dbId, positionId, tickLower, tickUpper, createdAt, updatedAt, poolAddress, token0, token1, accountingUnit
+  }
 }
 
 export const fetchParaswapRoute = async (
