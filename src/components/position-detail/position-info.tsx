@@ -1,5 +1,4 @@
 import { useAccount, useChainId } from "wagmi";
-import { Card } from "../ui/card"
 
 import { usePositionStaticInfo } from "@/hooks/use-position-static-info"
 import { Skeleton } from "../ui/skeleton";
@@ -24,16 +23,13 @@ export const PositionInfo = ({
 
   return (
     <>
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">Position #{positionId}</h2>
-      </div>
-
       <div className="grid gap-4 md:grid-cols-2">
         {
           isPositionFundsInfoLoading ?
           <Skeleton className="w-[120px] h-[24px] rounded-l"/>
           :
           <PositionCard 
+            positionId={positionId}
             data={{
               ...positionFundsInfo,
               tickLower: positionStaticInfo?.tickLower,

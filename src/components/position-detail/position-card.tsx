@@ -1,17 +1,17 @@
-import { usePoolData } from "@/hooks/use-pool-data"
 import { Card } from "../ui/card"
 import { Skeleton } from "../ui/skeleton"
-import { getExplorerURLFromChainId } from "@/utils/constants"
-import { tickToPrice, visualizeFeeTier } from "@/utils/functions"
+import { tickToPrice } from "@/utils/functions"
 import { useTokenPrice } from "@/hooks/use-token-price"
 import { useTokenMeta } from "@/hooks/use-token-meta"
 import { formatUnits } from "viem"
 
 export const PositionCard = ({
   data,
+  positionId,
   chainId
 }: {
   data: any,
+  positionId: number,
   chainId: number
 }) => {
   if (!data || !chainId)
@@ -29,43 +29,46 @@ export const PositionCard = ({
         <>Loading</>
         :
         <Card className="p-6">
+          <h3 className="font-semibold">
+            Position #{positionId}
+          </h3>
           <div className="flex flex-col gap-4">
             {
               (data.tickLower && data.tickUpper) ?
-              <div>
-                {tickToPrice(data.tickLower, token0.decimals, token1.decimals)} ~ {tickToPrice(data.tickUpper, token0.decimals, token1.decimals)}
+              <div className="flex flex-col gap-4">
+                <div>
+                  {token0?.symbol} / {token1?.symbol} Price Range
+                </div>
+                <div>
+                  {tickToPrice(data.tickLower, token0.decimals, token1.decimals).toFixed(4)} ~ {tickToPrice(data.tickUpper, token0.decimals, token1.decimals).toFixed(4)}
+                </div>
               </div>
               : <></>
             }
             <div>
-              {formatUnits(data.principal0, token0?.decimals)} {token0?.symbol}
+              Liquidity: {formatUnits(data.principal0, token0?.decimals)} {token0?.symbol}
             </div>
             <div>
-              {formatUnits(data.principal1, token1?.decimals)} {token1?.symbol}
+              Liquidity: {formatUnits(data.principal1, token1?.decimals)} {token1?.symbol}
             </div>
             <div>
-              {formatUnits(data.feesEarned0, token0?.decimals)} {token0?.symbol}
+              FeesEarned: {formatUnits(data.feesEarned0, token0?.decimals)} {token0?.symbol}
             </div>
             <div>
-              {formatUnits(data.feesEarned1, token1?.decimals)} {token1?.symbol}
+              FeesEarned: {formatUnits(data.feesEarned1, token1?.decimals)} {token1?.symbol}
             </div>
             <div>
-              {formatUnits(data.protocolFee0, token0?.decimals)} {token0?.symbol}
+              ProtocolFee: {formatUnits(data.protocolFee0, token0?.decimals)} {token0?.symbol}
             </div>
             <div>
-              {formatUnits(data.protocolFee1, token1?.decimals)} {token1?.symbol}
+              ProtocolFee: {formatUnits(data.protocolFee1, token1?.decimals)} {token1?.symbol}
             </div>
             <div>
-              TVL: {Number(formatUnits(data.principal0, token0?.decimals)) * Number(token0Price) + Number(formatUnits(data.principal1, token1?.decimals)) * Number(token1Price)} $$$
+              TVL: $ {Number(formatUnits(data.principal0, token0?.decimals)) * Number(token0Price) + Number(formatUnits(data.principal1, token1?.decimals)) * Number(token1Price)}
             </div>
             <div>
-              Unclaimed Fees: {Number(formatUnits((BigInt(data.feesEarned0) - BigInt(data.protocolFee0)), token0?.decimals)) * Number(token0Price) + Number(formatUnits(BigInt(data.feesEarned1) - BigInt(data.protocolFee1), token1?.decimals)) * Number(token1Price)}
+              Unclaimed Fees: $ {Number(formatUnits((BigInt(data.feesEarned0) - BigInt(data.protocolFee0)), token0?.decimals)) * Number(token0Price) + Number(formatUnits(BigInt(data.feesEarned1) - BigInt(data.protocolFee1), token1?.decimals)) * Number(token1Price)}
             </div>
-            {/* <div>
-              <a target="_blank" href={`${getExplorerURLFromChainId(chainId)}/address/${address}#multichain-portfolio`}>
-                TVL: {Number(poolData.token0Balance) * Number(poolData.token0Price) + Number(poolData.token1Balance) * Number(poolData.token1Price)}
-              </a>
-            </div> */}
           </div>
         </Card>
       }

@@ -83,7 +83,7 @@ export const IncreaseLiquidity = ({
         (!isConnected || isPositionStaticInfoLoading) ? 
         <>Loading...</>
         :
-        <Dialog open={dialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={() => setDialogOpen(!dialogOpen)} modal>
           <DialogTrigger asChild>
             <Button onClick={() => setDialogOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" />

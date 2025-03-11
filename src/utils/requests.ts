@@ -103,3 +103,38 @@ export const sendClosePositionReport = async (userAddress: string, chainId: numb
     return null
   }
 }
+
+export const getMaxSlippageForPosition = async (positionId: number, chainId: number): Promise<number> => {
+  try {
+    const response = await fetch(`${BACKEND_API_URL}/api/chain/${chainId}/positions/${positionId}/maxSlippage`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const data = await response.json();
+    if (data && data.success)
+      return data.data.maxSlippage
+  } catch (error) {
+    console.error('Error getMaxSlippageForPosition:', error);
+  }
+  return -1
+}
+
+export const updateMaxSlippageForPosition = async (positionId: number, chainId: number, maxSlippage: number): Promise<boolean> => {
+  try {
+    const response = await fetch(`${BACKEND_API_URL}/api/chain/${chainId}/positions/${positionId}/updateMaxSlippage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ maxSlippage }),
+    });
+    const data = await response.json();
+    if (data && (data.success || data.success === "true"))
+      return true
+  } catch (error) {
+    console.error('Error sending close position report:', error);
+  }
+  return false
+}

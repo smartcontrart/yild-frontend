@@ -1,8 +1,10 @@
+import Link from "next/link"
 import { usePoolData } from "@/hooks/use-pool-data"
 import { Card } from "../ui/card"
 import { Skeleton } from "../ui/skeleton"
 import { getExplorerURLFromChainId } from "@/utils/constants"
-import { visualizeFeeTier } from "@/utils/functions"
+import { formatNumber, visualizeFeeTier } from "@/utils/functions"
+import { Link2 } from "lucide-react"
 
 export const PoolCard = ({
   address,
@@ -28,21 +30,24 @@ export const PoolCard = ({
               {poolData.token0.symbol} / {poolData.token1.symbol} - {visualizeFeeTier(poolData.feeTier)} Pool
             </h3>
             <div>
-              {poolData.token0Balance} {poolData.token0.symbol}
+              {Number(poolData.token0Balance).toFixed(2)} {poolData.token0.symbol}
             </div>
             <div>
-              {poolData.token1Balance} {poolData.token1.symbol}
+              {Number(poolData.token1Balance).toFixed(2)} {poolData.token1.symbol}
             </div>
             <div>
-              {poolData.token0Price}
+              {poolData.token0.symbol} Price: $ {poolData.token0Price}
             </div>
             <div>
-              {poolData.token1Price}
+              {poolData.token1.symbol} Price: $ {poolData.token1Price}
             </div>
-            <div>
-              <a target="_blank" href={`${getExplorerURLFromChainId(chainId)}/address/${address}#multichain-portfolio`}>
-                TVL: {Number(poolData.token0Balance) * Number(poolData.token0Price) + Number(poolData.token1Balance) * Number(poolData.token1Price)}
-              </a>
+            <div className="flex flex-row gap-4">
+              <div>
+                TVL: $ {formatNumber(Number(poolData.token0Balance) * Number(poolData.token0Price) + Number(poolData.token1Balance) * Number(poolData.token1Price))}
+              </div>
+              <Link className="cursor-pointer" href={`${getExplorerURLFromChainId(chainId)}/address/${address}#multichain-portfolio`} target="_blank">
+                <Link2 />
+              </Link>
             </div>
           </div>
         </Card>

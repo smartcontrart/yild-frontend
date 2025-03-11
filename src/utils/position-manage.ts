@@ -76,6 +76,11 @@ export const compoundFees = async (
 
     if (paraswapAPISuccess)
       _pSwapData0 = paraswapData
+    else
+      return {
+        success: false,
+        result: ERROR_CODES.UNKNOWN_ERROR
+      }
   }
   else if (expectedAmount0 > availableAmount0) {
     const swapAmount1 = BigInt((
@@ -88,6 +93,11 @@ export const compoundFees = async (
 
     if (paraswapAPISuccess)
       _pSwapData1 = paraswapData
+    else
+      return {
+        success: false,
+        result: ERROR_CODES.UNKNOWN_ERROR
+      }
   }
   
   try {
@@ -323,8 +333,8 @@ export const closePosition = async (tokenId: number, chainId: number) => {
     tokenId, 
     _pSwapData0,
     _pSwapData1,
-    500,
-    500
+    9500,
+    9500
   ]
 
   try {
@@ -360,6 +370,32 @@ export const getAccountingUnitFromAddress = async (address: string, chainId: num
     functionName: "accountingUnit",
     args: [address]
   })
-  console.log(res)
   return res
+}
+
+export const setAccountingUnit = async (unitAddress: string, chainId: number) => {
+  try {
+    const hash = await writeContract(wagmiConfig, {
+      abi: PositionManagerABI,
+      address: getManagerContractAddressFromChainId(chainId),
+      functionName: "setAccountingUnit",
+      args: [unitAddress],
+    });
+    const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
+    return {
+      success: true,
+      result: hash
+    }
+  } catch (error: any) {
+    if (error?.message?.includes("User rejected") || error?.code === 4001) {
+      return {
+        success: false,
+        result: ERROR_CODES.USER_REJECTED
+      };
+    }
+  }
+  return {
+    success: false,
+    result: ERROR_CODES.UNKNOWN_ERROR
+  };
 }

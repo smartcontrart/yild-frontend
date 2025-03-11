@@ -7,26 +7,11 @@ export function getRequiredToken1AmountFromToken0Amount(
   priceUpper: number,
   token0Amount: number
 ): number {
-  // Convert prices to square root prices (prices are already adjusted for decimals)
   const sqrtPrice = Math.sqrt(currentPrice);
   const sqrtPriceLower = Math.sqrt(priceLower);
   const sqrtPriceUpper = Math.sqrt(priceUpper);
 
   return token0Amount * (sqrtPrice - sqrtPriceLower) * (sqrtPriceUpper * sqrtPrice) / (sqrtPriceUpper - sqrtPrice)
-
-  // // Calculate liquidity using token0 amount
-  // const liquidity = token0Amount * (sqrtPriceUpper * sqrtPrice) / (sqrtPriceUpper - sqrtPrice);
-
-  // // Calculate required token1 amount using the liquidity
-  // let token1Raw = "";
-
-  // // If current price is below upper bound, we need some token1
-  // if (currentPrice < priceUpper) {
-  //   token1Raw = (liquidity * (sqrtPrice - sqrtPriceLower)).toFixed(token1Decimals)
-  // }
-
-  // // Convert raw amount back to human readable form
-  // return token1Raw;
 }
 
 export function getRequiredToken0AmountFromToken1Amount(
@@ -35,7 +20,6 @@ export function getRequiredToken0AmountFromToken1Amount(
   priceUpper: number,
   token1Amount: number
 ): number {
-  // Convert prices to square root prices (prices are already adjusted for decimals)
   const sqrtPrice = Math.sqrt(currentPrice);
   const sqrtPriceLower = Math.sqrt(priceLower);
   const sqrtPriceUpper = Math.sqrt(priceUpper);

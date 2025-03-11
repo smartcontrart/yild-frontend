@@ -1,25 +1,48 @@
 import ERC20Image from "@/components/common/erc20-image";
 import { ERC20TokenInfo } from "@/utils/constants";
 import { getERC20TokenInfo } from "@/utils/erc20";
-import { getAccountingUnitFromAddress } from "@/utils/position-manage";
+import { getAccountingUnitFromAddress, setAccountingUnit } from "@/utils/position-manage";
 import { useEffect, useState } from "react";
 import { useAccount, useChainId } from "wagmi";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { MinusCircle } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { TokenSelector } from "@/components/token/token-selector";
 
 export default function Settings() {
   const { isConnected, address } = useAccount();
   const chainId = useChainId();
-  const [accountingUnit, setAccountingUnit] = useState<ERC20TokenInfo | null>(null)
+  const [currentAccountingUnit, setCurrentAccountingUnit] = useState<ERC20TokenInfo | null>(null)
+  const [newUnitAddress, setNewUnitAddress] = useState("")
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   useEffect(() => {
     if (address) {
       const fetchAccountingUnit = async () => {
         const accountingUnitAddress = await getAccountingUnitFromAddress(address, chainId)
         const unit = await getERC20TokenInfo(accountingUnitAddress, chainId)
-        setAccountingUnit(unit)
+        setCurrentAccountingUnit(unit)
       }
       fetchAccountingUnit()
     }
   }, [address])
+
+  const updateAccountingUnit = async () => {
+    if (address && newUnitAddress && chainId) {
+      await setAccountingUnit(newUnitAddress, chainId)
+      const newAccountingUnit = await getAccountingUnitFromAddress(address, chainId)
+      setCurrentAccountingUnit(newAccountingUnit)
+    }
+  }
 
   if (!isConnected) {
     return (
@@ -34,7 +57,7 @@ export default function Settings() {
     );
   }
 
-  if (!accountingUnit) {
+  if (!currentAccountingUnit) {
     return (
       <>Loading...</>
     )
@@ -48,13 +71,52 @@ export default function Settings() {
       <div className="flex flex-row gap-2">
         <ERC20Image 
           chainId={chainId}
-          tokenAddress={accountingUnit.address}
+          tokenAddress={currentAccountingUnit.address}
         />
-        <span>{accountingUnit?.symbol}</span>
+        <span>{currentAccountingUnit?.symbol}</span>
       </div>
-      <div>
-        Set other token as accounting unit.
-      </div>
+      <Dialog open={dialogOpen} onOpenChange={() => setDialogOpen(!dialogOpen)} modal>
+        <DialogTrigger asChild>
+          <Button onClick={() => setDialogOpen(true)}>
+            <MinusCircle className="mr-2 h-4 w-4" />
+            Update Accounting Unit
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Set Max Slippage</DialogTitle>
+            <DialogDescription>
+              Please input decrease amounts in terms of %.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-row gap-2">
+              <Label htmlFor="name" className="text-right">Current Accounting Unit: </Label>
+              <ERC20Image 
+                chainId={chainId}
+                tokenAddress={currentAccountingUnit.address}
+              />
+              <span>{currentAccountingUnit?.symbol}</span>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                New Accounting Unit
+              </Label>
+              <TokenSelector
+                chainId={chainId}
+                onSelectionChange={(info) => {
+                  if (info && info.address && info.address !== currentAccountingUnit.address) {
+                    setNewUnitAddress(info.address)
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={updateAccountingUnit}>Update</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

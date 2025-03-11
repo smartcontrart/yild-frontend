@@ -29,7 +29,8 @@ export const POSITION_DETAIL_PAGE_STATE = {
   COMPOUNDING_POSITION: "compounding-position",
   COMPOUND_POSITION_FAILED: "compound-position-failed",
   POSITION_COMPOUNDED: "position-compounded",
-  USER_REJECTED: "user-rejected"
+  USER_REJECTED: "user-rejected",
+  PARASWAP_ERROR: "paraswap-error"
 }
 
 export const ERROR_CODES = {
