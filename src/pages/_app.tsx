@@ -26,7 +26,7 @@ export default function App({ Component, pageProps }: AppProps) {
             <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
               <div className='flex flex-row gap-2'>
                 <Link href="/" className="hover:cursor-pointer">
-                  <Image src={"/yild.png"} alt='' width={100} height={100} className='p-2' />
+                  <Image src={"/yild.png"} alt='' width={100} height={100} className='p-2 mt-2' />
                 </Link>
                 <Link href="/settings" className="hover:cursor-pointer self-center shadow-[0px_6px_12px_rgba(0,0,0,0.1)] p-2 rounded-md">
                   <Cog />
