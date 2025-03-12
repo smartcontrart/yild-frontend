@@ -28,7 +28,8 @@ import { ERC20TokenInfo, INVALID_FEE_TIER, getManagerContractAddressFromChainId 
 import TokenLivePrice from "@/components/token/token-live-price";
 import PoolSelector from "@/components/pool/pool-selector";
 import { RangeAndAmountSetter } from "@/components/open-position/range-and-amount-setter";
-import ERC20Image from "@/components/common/erc20-image";
+import { HandCoins, Undo2 } from "lucide-react";
+import WaitingAnimation from "@/components/global/waiting-animation";
 
 export default function NewPositionPage() {
   const { isConnected, address: userAddress } = useAccount();
@@ -131,7 +132,8 @@ export default function NewPositionPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-row gap-2 items-center">
+        <HandCoins />
         <h2 className="text-xl font-bold">Open Position</h2>
       </div>
 
@@ -208,12 +210,12 @@ export default function NewPositionPage() {
               router.push("/");
             }}
           >
-            Cancel
+            <Undo2 /> Cancel
           </Button>
           <Button 
             disabled={!selectedToken0 || !selectedToken1 || !selectedFeeTier || !tickLower || !tickUpper}
             onClick={onOpenPosition}>
-            Create Position
+            <HandCoins /> Create Position
           </Button>
         </div>
       </Card>
@@ -236,6 +238,7 @@ export default function NewPositionPage() {
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <WaitingAnimation />
           {pageStatus === CREATE_POSITION_PAGE_STATE.POSITION_OPENED && (
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => {
