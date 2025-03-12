@@ -1,12 +1,12 @@
 import * as React from 'react';
-import {
-  RainbowKitProvider,
-  getDefaultConfig,
-} from '@rainbow-me/rainbowkit';
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { WagmiProvider } from 'wagmi';
-import { arbitrum, base } from 'wagmi/chains';
 import { Toaster } from "@/components/ui/toaster"
+import { CustomizedRainbowProvider } from './customized-rainbow-provider';
+import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { arbitrum, base } from 'wagmi/chains';
 
 const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID;
 
@@ -33,9 +33,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider modalSize='compact'>
-          {mounted && children}
-        </RainbowKitProvider>
+        <NextThemesProvider 
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <CustomizedRainbowProvider>
+            {mounted && children}
+          </CustomizedRainbowProvider>
+        </NextThemesProvider>
         <Toaster />
       </QueryClientProvider>
     </WagmiProvider>

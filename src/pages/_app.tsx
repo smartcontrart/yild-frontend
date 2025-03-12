@@ -8,6 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Head from "next/head";
 import { Cog } from 'lucide-react';
+import { ThemeSwitch } from '@/components/global/theme-switch';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -28,14 +29,17 @@ export default function App({ Component, pageProps }: AppProps) {
                 <Link href="/" className="hover:cursor-pointer">
                   <Image src={"/yild.png"} alt='' width={100} height={100} className='p-2 mt-2' />
                 </Link>
-                <Link href="/settings" className="hover:cursor-pointer self-center shadow-[0px_6px_12px_rgba(0,0,0,0.1)] p-2 rounded-md">
+                {/* <Link href="/settings" className="hover:cursor-pointer self-center shadow-[0px_6px_12px_rgba(0,0,0,0.1)] p-2 rounded-md">
                   <Cog />
-                </Link>
+                </Link> */}
               </div>
-              <ConnectButton label='Sign In' accountStatus={{
-                smallScreen: "avatar",
-                largeScreen: "full",
-              }} />
+              <div className='flex flex-row gap-2 items-center'>
+                <ThemeSwitch />
+                <ConnectButton label='Sign In' accountStatus={{
+                  smallScreen: "avatar",
+                  largeScreen: "full",
+                }} />
+              </div>
             </nav>
           </header>
           <main className="container mx-auto px-4 py-8">
