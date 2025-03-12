@@ -9,6 +9,7 @@ import Image from 'next/image';
 import Head from "next/head";
 import { Cog } from 'lucide-react';
 import { ThemeSwitch } from '@/components/global/theme-switch';
+import CustomWalletButton from '@/components/global/custom-wallet-button';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -44,10 +45,11 @@ export default function App({ Component, pageProps }: AppProps) {
               </div>
               <div className='flex flex-row gap-2 items-center'>
                 <ThemeSwitch />
-                <ConnectButton label='Sign In' accountStatus={{
+                <CustomWalletButton />
+                {/* <ConnectButton label='Sign In' accountStatus={{
                   smallScreen: "avatar",
                   largeScreen: "full",
-                }} />
+                }} /> */}
               </div>
             </nav>
           </header>

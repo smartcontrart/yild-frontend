@@ -56,7 +56,7 @@ export default function Home() {
           <h2 className="text-xl font-bold">Positions</h2>
         </div>
         <Link href="/positions/new">
-          <Button>
+          <Button variant="outline">
             <Coins className="mr-1 h-4 w-4" />
             Provide Liquidity
           </Button>
