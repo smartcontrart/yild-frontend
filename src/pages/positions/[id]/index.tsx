@@ -18,6 +18,7 @@ import { POSITION_DETAIL_PAGE_STATE } from "@/utils/types";
 import { PositionInfo } from "@/components/position-detail/position-info";
 import PositionControlPanel from "@/components/position-detail/position-control-panel";
 import { YildLoading } from "@/components/global/yild-loading";
+import WaitingAnimation from "@/components/global/waiting-animation";
 
 export default function PositionPage() {
   const { isConnected, address, isDisconnected } = useAccount();
@@ -157,7 +158,7 @@ export default function PositionPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Status</AlertDialogTitle>
+            <AlertDialogTitle>wt Heck</AlertDialogTitle>
             <AlertDialogDescription>
               {pageStatus === POSITION_DETAIL_PAGE_STATE.APPROVING_TOKENS
                 ? "Approving tokens, proceed with your wallet."
@@ -176,6 +177,7 @@ export default function PositionPage() {
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <WaitingAnimation />
         </AlertDialogContent>
       </AlertDialog>
     </div>

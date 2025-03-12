@@ -120,7 +120,7 @@ export default function NewPositionPage() {
   if (!isConnected) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <h2 className="text-2xl font-bold mb-4">
+        <h2 className="text-2xl font-bold mb-4 text-center">
           Connect your wallet to continue
         </h2>
         <p className="text-muted-foreground">
@@ -229,12 +229,12 @@ export default function NewPositionPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Status</AlertDialogTitle>
+            <AlertDialogTitle>wt Heck</AlertDialogTitle>
             <AlertDialogDescription>
               {pageStatus === CREATE_POSITION_PAGE_STATE.APPROVING_TOKENS
-                ? "Approving your tokens to deposit into liquidity pools..."
+                ? "Approving your tokens to deposit into liquidity pools, proceed with your wallet."
                 : pageStatus === CREATE_POSITION_PAGE_STATE.OPENING_POSITION
-                ? "Opening your position..."
+                ? "Opening your position, proceed with your wallet."
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
