@@ -22,12 +22,21 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta property="og:image" content="/y.png" />
       </Head>
       <Providers>
-        <div className={`min-h-screen bg-background ${inter.className}`}>
+        <div className={`min-h-screen bg-background font-kirsty`}>
           <header className="border-b">
             <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
               <div className='flex flex-row gap-2'>
-                <Link href="/" className="hover:cursor-pointer">
-                  <Image src={"/yild.png"} alt='' width={100} height={100} className='p-2 mt-2' />
+                <Link href="/" className="hover:cursor-pointer hidden md:block">
+                  <div className=' flex flex-row gap-2 text-center items-center'>
+                    <div style={{fontFamily: "giants", fontSize: "52px"}}>YILD</div>
+                    <div className='font-kirsty pt-[12px] text-[24px] mx-auto w-full'>FINANCE</div>
+                  </div>
+                </Link>
+                <Link href="/" className="hover:cursor-pointer block md:hidden">
+                  <div className='relative flex flex-col gap-0 text-center'>
+                    <div style={{fontFamily: "giants", fontSize: "32px", marginTop: "-16px"}}>YILD</div>
+                    <div className='absolute bottom-[-8px] font-kirsty text-[16px] mx-auto w-full'>FINANCE</div>
+                  </div>
                 </Link>
                 {/* <Link href="/settings" className="hover:cursor-pointer self-center shadow-[0px_6px_12px_rgba(0,0,0,0.1)] p-2 rounded-md">
                   <Cog />

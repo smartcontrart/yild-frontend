@@ -8,7 +8,13 @@ import { useTheme } from 'next-themes';
 export function CustomizedRainbowProvider({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme()
   return (
-    <RainbowKitProvider modalSize='compact' theme={theme === "light" ? lightTheme() : darkTheme() }>
+    <RainbowKitProvider modalSize='compact' theme={theme === "dark" ? darkTheme({
+      borderRadius: 'small',
+      fontStack: 'system'
+    }) : lightTheme({
+      borderRadius: 'small',
+      fontStack: 'system'
+    }) }>
       {children}
     </RainbowKitProvider>
   )
