@@ -10,7 +10,9 @@ export const POOL_DATA_FETCH_INTERVAL = 300000
 
 export const BACKEND_API_URL = "https://api.yild.finance";
 export const PARASWAP_API_URL = "https://api.paraswap.io/swap?version=6.2"
+export const COINGECKO_PUBLIC_API_URL = "https://api.coingecko.com/api/v3"
 export const UNISWAP_GITHUB_CLOUD_URL = "https://raw.githubusercontent.com/Uniswap/assets/master/blockchains"
+export const TRUSTWALLET_GITHUB_CLOUD_URL = "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains"
 export const FALLBACK_ERC20_IMAGE_URL = "/favicon.png"
 
 export const SUPPORTED_CHAINS = [
@@ -70,12 +72,12 @@ export const SUPPORTED_CHAINS = [
         address: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" as `0x${string}`,
         decimals: 6
       },
-      {
-        name: "Virtual Protocol",
-        symbol: "VIRTUAL",
-        address: "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b" as `0x${string}`,
-        decimals: 18
-      }
+      // {
+      //   name: "Virtual Protocol",
+      //   symbol: "VIRTUAL",
+      //   address: "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b" as `0x${string}`,
+      //   decimals: 18
+      // }
     ]
   }
 ]

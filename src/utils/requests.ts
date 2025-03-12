@@ -1,4 +1,4 @@
-import { BACKEND_API_URL, PARASWAP_API_URL } from "./constants"
+import { BACKEND_API_URL, COINGECKO_PUBLIC_API_URL, getNetworkNameFromChainId, PARASWAP_API_URL } from "./constants"
 import { getPositionFundsInfo } from "./position-manage"
 import { getERC20TokenInfo } from "./erc20"
 
@@ -137,4 +137,14 @@ export const updateMaxSlippageForPosition = async (positionId: number, chainId: 
     console.error('Error sending close position report:', error);
   }
   return false
+}
+
+export const getCoinGeckoImageURLFromTokenAddress = async (tokenAddress: string, chainId: number) => {
+  try {
+    const coinMeta = await fetch(`${COINGECKO_PUBLIC_API_URL}/coins/${getNetworkNameFromChainId(chainId)}/contract/${tokenAddress}`)
+    const { image } = await coinMeta.json()
+    return (image && image.large) ? image.large : null
+  } catch (error) {
+  }
+  return null
 }

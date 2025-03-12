@@ -11,6 +11,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'raw.githubusercontent.com',
         port: ''
+      },
+      {
+        protocol: 'https',
+        hostname: 'coin-images.coingecko.com',
+        port: ''
       }
     ]
   }

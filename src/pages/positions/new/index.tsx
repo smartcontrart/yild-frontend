@@ -28,6 +28,7 @@ import { ERC20TokenInfo, INVALID_FEE_TIER, getManagerContractAddressFromChainId 
 import TokenLivePrice from "@/components/token/token-live-price";
 import PoolSelector from "@/components/pool/pool-selector";
 import { RangeAndAmountSetter } from "@/components/open-position/range-and-amount-setter";
+import ERC20Image from "@/components/common/erc20-image";
 
 export default function NewPositionPage() {
   const { isConnected, address: userAddress } = useAccount();
