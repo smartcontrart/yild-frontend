@@ -4,6 +4,7 @@ import { tickToPrice } from "@/utils/functions"
 import { useTokenPrice } from "@/hooks/use-token-price"
 import { useTokenMeta } from "@/hooks/use-token-meta"
 import { formatUnits } from "viem"
+import { HandCoins } from "lucide-react"
 
 export const PositionCard = ({
   data,
@@ -15,7 +16,7 @@ export const PositionCard = ({
   chainId: number
 }) => {
   if (!data || !chainId)
-    return <Skeleton className="w-[120px] h-[80px] rounded-l" />
+    return <Skeleton className="h-[426px] rounded-xl" />
   
   const { data: token0Price, isLoading: token0PriceLoading} = useTokenPrice(data.token0Address, chainId)
   const { data: token1Price, isLoading: token1PriceLoading} = useTokenPrice(data.token1Address, chainId)
@@ -25,49 +26,60 @@ export const PositionCard = ({
   return (
     <>
       {
-        (token0MetaDataLoading || token1MetaDataLoading || !token0 || !token1) ?
-        <>Loading</>
+        (token0MetaDataLoading || token1MetaDataLoading || !token0 || !token1 || token0PriceLoading || token1PriceLoading) ?
+        <Skeleton className="h-[426px] rounded-xl" />
         :
         <Card className="p-6">
-          <h3 className="font-semibold">
-            Position #{positionId}
-          </h3>
           <div className="flex flex-col gap-4">
-            {
-              (data.tickLower && data.tickUpper) ?
-              <div className="flex flex-col gap-4">
-                <div>
-                  {token0?.symbol} / {token1?.symbol} Price Range
+            <div className="flex flex-row gap-2">
+              <HandCoins />
+              <h3 className="font-semibold">
+                Liquidity Position #{positionId}
+              </h3>
+            </div>
+            <div className="flex flex-col gap-4">
+              {
+                (data.tickLower && data.tickUpper) ?
+                <div className="flex flex-col gap-2">
+                  <h3>
+                    {token0?.symbol} Price Range
+                  </h3>
+                  <div className="ml-4">
+                    $ {tickToPrice(data.tickLower, token0.decimals, token1.decimals).toFixed(4)} ~ $ {tickToPrice(data.tickUpper, token0.decimals, token1.decimals).toFixed(4)}
+                  </div>
                 </div>
-                <div>
-                  {tickToPrice(data.tickLower, token0.decimals, token1.decimals).toFixed(4)} ~ {tickToPrice(data.tickUpper, token0.decimals, token1.decimals).toFixed(4)}
+                : <></>
+              }
+              <div className="flex flex-col gap-2">
+                <h3>
+                  Position Liquidity
+                </h3>
+                <div className="ml-4">
+                  {Number(formatUnits(data.principal0, token0?.decimals)).toFixed(5)} {token0?.symbol}
+                </div>
+                <div className="ml-4">
+                  {Number(formatUnits(data.principal1, token1?.decimals)).toFixed(5)} {token1?.symbol}
                 </div>
               </div>
-              : <></>
-            }
-            <div>
-              Liquidity: {formatUnits(data.principal0, token0?.decimals)} {token0?.symbol}
-            </div>
-            <div>
-              Liquidity: {formatUnits(data.principal1, token1?.decimals)} {token1?.symbol}
-            </div>
-            <div>
-              FeesEarned: {formatUnits(data.feesEarned0, token0?.decimals)} {token0?.symbol}
-            </div>
-            <div>
-              FeesEarned: {formatUnits(data.feesEarned1, token1?.decimals)} {token1?.symbol}
-            </div>
-            <div>
-              ProtocolFee: {formatUnits(data.protocolFee0, token0?.decimals)} {token0?.symbol}
-            </div>
-            <div>
-              ProtocolFee: {formatUnits(data.protocolFee1, token1?.decimals)} {token1?.symbol}
-            </div>
-            <div>
-              TVL: $ {Number(formatUnits(data.principal0, token0?.decimals)) * Number(token0Price) + Number(formatUnits(data.principal1, token1?.decimals)) * Number(token1Price)}
-            </div>
-            <div>
-              Unclaimed Fees: $ {Number(formatUnits((BigInt(data.feesEarned0) - BigInt(data.protocolFee0)), token0?.decimals)) * Number(token0Price) + Number(formatUnits(BigInt(data.feesEarned1) - BigInt(data.protocolFee1), token1?.decimals)) * Number(token1Price)}
+              <div className="flex flex-col gap-2">
+                <h3>
+                  Fees Claimable
+                </h3>
+                <div className="ml-4">
+                  {Number(formatUnits(BigInt(data.feesEarned0) - BigInt(data.protocolFee0), token0?.decimals)).toFixed(8)} {token0?.symbol}
+                </div>
+                <div className="ml-4">
+                  {Number(formatUnits(BigInt(data.feesEarned1) - BigInt(data.protocolFee1), token1?.decimals)).toFixed(8)} {token1?.symbol}
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <h3>
+                  Position Total Value
+                </h3>
+                <div className="ml-4">
+                  $ {(Number(formatUnits(data.principal0, token0?.decimals)) * Number(token0Price) + Number(formatUnits(data.principal1, token1?.decimals)) * Number(token1Price)).toFixed(3)}
+                </div>
+              </div>
             </div>
           </div>
         </Card>

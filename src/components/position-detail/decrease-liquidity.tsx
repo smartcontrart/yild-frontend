@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "../ui/button";
-import { MinusCircle } from "lucide-react";
+import { Check, Minus, MinusCircle } from "lucide-react";
 import { useState } from "react";
 import { usePositionStaticInfo } from "@/hooks/use-position-static-info";
 import { useAccount } from "wagmi";
@@ -16,6 +16,7 @@ import { ERROR_CODES, POSITION_DETAIL_PAGE_STATE } from "@/utils/types";
 import { decreaseLiquidity } from "@/utils/position-manage";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import { Skeleton } from "../ui/skeleton";
 
 export const DecreaseLiquidity = ({
   positionId,
@@ -59,30 +60,30 @@ export const DecreaseLiquidity = ({
     <>
       {
         (!isConnected || isPositionStaticInfoLoading) ? 
-        <>Loading...</>
+        <Skeleton className="h-[36px] rounded-l" />
         :
         <Dialog open={dialogOpen} onOpenChange={() => setDialogOpen(!dialogOpen)} modal>
           <DialogTrigger asChild>
-            <Button onClick={() => setDialogOpen(true)}>
-              <MinusCircle className="mr-2 h-4 w-4" />
-              Decrease Position
+            <Button onClick={() => setDialogOpen(true)} variant="outline">
+              <Minus className="h-4 w-4" />
+              Decrease Liquidity
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Decrease Position</DialogTitle>
+              <DialogTitle>Decrease Liquidity</DialogTitle>
               <DialogDescription>
-                Please input decrease amounts in terms of %.
+                Withdraw some portion of current liquidity...
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Decrease %
-                </Label>
+            <div className="flex flex-row gap-2 items-center">
+              <div>
+                Withdraw
+              </div>
+              <div className="grid items-center gap-1">
                 <Input
                   type="number"
-                  className="col-span-3"
+                  className="w-24"
                   onChange={(e) =>
                     setDecreaseRatio(e.target.value)
                   }
@@ -90,11 +91,14 @@ export const DecreaseLiquidity = ({
                 />
               </div>
               <div>
-                You are going to decrease {decreaseRatio}% of your position.
+                % of the position.
               </div>
             </div>
             <DialogFooter>
-              <Button disabled={!decreaseRatio || !parseFloat(decreaseRatio) ||parseFloat(decreaseRatio) < 0.1 || parseFloat(decreaseRatio) > 99} onClick={onClickDecreaseLiquidity}>Decrease</Button>
+              <Button disabled={!decreaseRatio || !parseFloat(decreaseRatio) ||parseFloat(decreaseRatio) < 0.1 || parseFloat(decreaseRatio) > 99} onClick={onClickDecreaseLiquidity}>
+                <Check />
+                Withdraw
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

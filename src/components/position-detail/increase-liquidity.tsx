@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "../ui/button";
-import { PlusCircle } from "lucide-react";
+import { Check, Plus, PlusCircle } from "lucide-react";
 import { useState } from "react";
 import { usePositionStaticInfo } from "@/hooks/use-position-static-info";
 import { useAccount } from "wagmi";
@@ -17,6 +17,7 @@ import { ERROR_CODES, POSITION_DETAIL_PAGE_STATE } from "@/utils/types";
 import { approveToken } from "@/utils/erc20";
 import { increaseLiquidity } from "@/utils/position-manage";
 import { getManagerContractAddressFromChainId } from "@/utils/constants";
+import { Skeleton } from "../ui/skeleton";
 
 export const IncreaseLiquidity = ({
   positionId,
@@ -81,20 +82,20 @@ export const IncreaseLiquidity = ({
     <>
       {
         (!isConnected || isPositionStaticInfoLoading) ? 
-        <>Loading...</>
+        <Skeleton className="h-[36px] rounded-l" />
         :
         <Dialog open={dialogOpen} onOpenChange={() => setDialogOpen(!dialogOpen)} modal>
           <DialogTrigger asChild>
-            <Button onClick={() => setDialogOpen(true)}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Increase Position
+            <Button onClick={() => setDialogOpen(true)} variant="outline" >
+              <Plus className="h-4 w-4" />
+              Increase Liquidity
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Increase Position</DialogTitle>
+              <DialogTitle>Increase Liquidity</DialogTitle>
               <DialogDescription>
-                Please input increase amounts.
+                Deposit more tokens, earn more fee...
               </DialogDescription>
             </DialogHeader>
             <IncreaseLiquidityAmountSetter 
@@ -111,7 +112,9 @@ export const IncreaseLiquidity = ({
               }}
             />
             <DialogFooter>
-              <Button onClick={() => onClickIncreaseLiquidity()}>Increase</Button>
+              <Button disabled={!Number(increaseToken0Amount) || Number(increaseToken0Amount) <= 0 || !Number(increaseToken1Amount) || Number(increaseToken1Amount) <= 0} onClick={() => onClickIncreaseLiquidity()}>
+                <Check />Deposit
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

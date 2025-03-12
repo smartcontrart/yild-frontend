@@ -16,7 +16,7 @@ export default function PositionControlPanel({
 }) {
 
   return (
-    <>
+    <div className="grid gap-4 md:grid-cols-2">
       <IncreaseLiquidity 
         positionId={positionId}
         chainId={chainId} 
@@ -47,6 +47,6 @@ export default function PositionControlPanel({
         chainId={chainId}
         setPageStatus={(newPageStatus: any) => setPageStatus(newPageStatus)}
       />
-    </>
+    </div>
   )
 }

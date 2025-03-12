@@ -11,14 +11,10 @@ import { YildLoading } from "@/components/global/yild-loading";
 import { PositionInfoFirstPage } from "@/components/position-detail/position-info-firstpage";
 
 export default function Home() {
-  const { isConnected, address, isReconnecting, isDisconnected } = useAccount();
+  const { isConnected, address, isDisconnected } = useAccount();
   const chainId = useChainId();
   const [positions, setPositions] = useState([])
   const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    console.log(`isCon: ${isConnected}, isRe: ${isReconnecting}, isDis: ${isDisconnected}, addy: ${address}`)
-  }, [isConnected, address, isReconnecting, isDisconnected])
 
   useEffect(() => {
     const fetchData = async () => {

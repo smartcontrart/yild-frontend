@@ -22,9 +22,6 @@ export default function FeeCollectEstimator({
   return (
     <>
       <div>
-        You are going to collect
-      </div>
-      <div>
         {formatUnits((BigInt(fundsInfo.feesEarned0) - BigInt(fundsInfo.protocolFee0)), token0.decimals)} {token0?.symbol}
       </div>
       <div>

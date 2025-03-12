@@ -18,7 +18,7 @@ export const PositionInfo = ({
 
   if (!isConnected || !isPositionStaticInfoLoading && !positionStaticInfo) 
     return (
-      <>No pool unfortunately</>
+      <>Position Not Found...</>
     )
 
   return (
@@ -26,7 +26,7 @@ export const PositionInfo = ({
       <div className="grid gap-4 md:grid-cols-2">
         {
           isPositionFundsInfoLoading ?
-          <Skeleton className="w-[120px] h-[24px] rounded-l"/>
+          <Skeleton className="h-[426px] rounded-xl"/>
           :
           <PositionCard 
             positionId={positionId}
@@ -40,7 +40,7 @@ export const PositionInfo = ({
         }
         {
           isPositionStaticInfoLoading ? 
-          <Skeleton className="w-[120px] h-[24px] rounded-l"/>
+          <Skeleton className="h-[426px] rounded-xl"/>
           :
           <PoolCard 
             address={positionStaticInfo.poolAddress} 

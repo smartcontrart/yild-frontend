@@ -29,6 +29,9 @@ export const POSITION_DETAIL_PAGE_STATE = {
   COMPOUNDING_POSITION: "compounding-position",
   COMPOUND_POSITION_FAILED: "compound-position-failed",
   POSITION_COMPOUNDED: "position-compounded",
+  SETTING_MAX_SLIPPAGE: "setting-max-slippage",
+  SET_MAX_SLIPPAGE: "set-max-slippage",
+  SET_MAX_SLIPPAGE_FAILED: "set-max-slippage-failed",
   USER_REJECTED: "user-rejected",
   PARASWAP_ERROR: "paraswap-error"
 }

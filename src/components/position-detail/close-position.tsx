@@ -8,12 +8,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "../ui/button";
-import { PlusCircle } from "lucide-react";
+import { Ban, Check, PlusCircle } from "lucide-react";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { ERROR_CODES, POSITION_DETAIL_PAGE_STATE } from "@/utils/types";
 import { closePosition } from "@/utils/position-manage";
 import { sendClosePositionReport } from "@/utils/requests";
+import { Skeleton } from "../ui/skeleton";
 
 export const ClosePosition = ({
   positionId,
@@ -52,12 +53,12 @@ export const ClosePosition = ({
     <>
       {
         (!isConnected) ? 
-        <>Loading...</>
+        <Skeleton className="h-[36px] rounded-l" />
         :
         <Dialog open={dialogOpen} onOpenChange={() => setDialogOpen(!dialogOpen)} modal>
           <DialogTrigger asChild>
-            <Button onClick={() => setDialogOpen(true)}>
-              <PlusCircle className="mr-2 h-4 w-4" />
+            <Button onClick={() => setDialogOpen(true)} variant="outline">
+              <Ban className=" h-4 w-4" />
               Close position
             </Button>
           </DialogTrigger>
@@ -65,12 +66,15 @@ export const ClosePosition = ({
             <DialogHeader>
               <DialogTitle>Close position</DialogTitle>
               <DialogDescription>
-                Please input increase amounts.
+                Close the position and withdraw total funds...
               </DialogDescription>
             </DialogHeader>
 
             <DialogFooter>
-              <Button onClick={() => onClickClose()}>Confirm</Button>
+              <Button onClick={() => onClickClose()}>
+                <Check />
+                Confirm
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

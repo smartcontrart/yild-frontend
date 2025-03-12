@@ -17,9 +17,10 @@ import { useToast } from "@/hooks/use-toast";
 import { POSITION_DETAIL_PAGE_STATE } from "@/utils/types";
 import { PositionInfo } from "@/components/position-detail/position-info";
 import PositionControlPanel from "@/components/position-detail/position-control-panel";
+import { YildLoading } from "@/components/global/yild-loading";
 
 export default function PositionPage() {
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, isDisconnected } = useAccount();
   const chainId = useChainId();
   const router = useRouter();
   const { toast } = useToast();
@@ -55,6 +56,12 @@ export default function PositionPage() {
         variant: "default",
         title: "Info",
         description: "Successfully compounded fees back into the position.",
+      })
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.SET_MAX_SLIPPAGE)
+      toast({
+        variant: "default",
+        title: "Info",
+        description: "Successfully updated max slippage",
       })
     if (pageStatus === POSITION_DETAIL_PAGE_STATE.COMPOUND_POSITION_FAILED)
       toast({
@@ -92,6 +99,12 @@ export default function PositionPage() {
         title: "Error",
         description: "Failed to decrease liquidity in the position.",
       })
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.SET_MAX_SLIPPAGE_FAILED)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update max slippage",
+      })
     if (pageStatus === POSITION_DETAIL_PAGE_STATE.PARASWAP_ERROR)
       toast({
         variant: "destructive",
@@ -103,6 +116,7 @@ export default function PositionPage() {
   if (!isConnected) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <YildLoading loading={!isDisconnected && !isConnected} />
         <h2 className="text-2xl font-bold mb-4">
           Connect your wallet to continue
         </h2>
@@ -115,6 +129,7 @@ export default function PositionPage() {
 
   return (
     <div className="space-y-6">
+      <YildLoading loading={!isDisconnected && !isConnected} />
       {
         (!Number(router.query.id) || !chainId)
         ? <>Loading Panel...</>
@@ -136,7 +151,8 @@ export default function PositionPage() {
           pageStatus === POSITION_DETAIL_PAGE_STATE.COLLECTING_FEES ||
           pageStatus === POSITION_DETAIL_PAGE_STATE.COMPOUNDING_POSITION ||
           pageStatus === POSITION_DETAIL_PAGE_STATE.DECREASING_LIQUIDITY ||
-          pageStatus === POSITION_DETAIL_PAGE_STATE.INCREASING_LIQUIDITY
+          pageStatus === POSITION_DETAIL_PAGE_STATE.INCREASING_LIQUIDITY ||
+          pageStatus === POSITION_DETAIL_PAGE_STATE.SETTING_MAX_SLIPPAGE
         }
       >
         <AlertDialogContent>
@@ -155,6 +171,8 @@ export default function PositionPage() {
                 ? "Decreasing liquidity, proceed with your wallet."
                 : pageStatus === POSITION_DETAIL_PAGE_STATE.INCREASING_LIQUIDITY
                 ? "Increasing liquidity, proceed with your wallet."
+                : pageStatus === POSITION_DETAIL_PAGE_STATE.SETTING_MAX_SLIPPAGE
+                ? "Updating max slippage, this might take a second."
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
