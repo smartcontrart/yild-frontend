@@ -213,7 +213,7 @@ export default function NewPositionPage() {
             <Undo2 /> Cancel
           </Button>
           <Button 
-            disabled={!selectedToken0 || !selectedToken1 || !selectedFeeTier || !tickLower || !tickUpper}
+            disabled={!selectedToken0 || !selectedToken1 || !selectedFeeTier || !tickLower || !tickUpper || !Number(sortedToken0Amount) || Number(sortedToken0Amount) <= 0 || !Number(sortedToken1Amount) || Number(sortedToken1Amount) <= 0}
             onClick={onOpenPosition}>
             <HandCoins /> Create Position
           </Button>
