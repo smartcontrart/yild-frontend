@@ -10,6 +10,7 @@ import Head from "next/head";
 import { Cog } from 'lucide-react';
 import { ThemeSwitch } from '@/components/global/theme-switch';
 import CustomWalletButton from '@/components/global/custom-wallet-button';
+import { Button } from '@/components/ui/button';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -39,11 +40,11 @@ export default function App({ Component, pageProps }: AppProps) {
                     <div className='absolute bottom-[-8px] font-kirsty text-[16px] mx-auto w-full'>FINANCE</div>
                   </div>
                 </Link>
-                {/* <Link href="/settings" className="hover:cursor-pointer self-center shadow-[0px_6px_12px_rgba(0,0,0,0.1)] p-2 rounded-md">
-                  <Cog />
-                </Link> */}
               </div>
               <div className='flex flex-row gap-2 items-center'>
+                <Link href="/settings" >
+                  <Button variant="outline" size="icon" ><Cog /></Button>
+                </Link>
                 <ThemeSwitch />
                 <CustomWalletButton />
                 {/* <ConnectButton label='Sign In' accountStatus={{
