@@ -17,6 +17,8 @@ import { decreaseLiquidity } from "@/utils/position-manage";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Skeleton } from "../ui/skeleton";
+import { usePositionFundsInfo } from "@/hooks/use-position-funds-info";
+import { formatUnits } from "viem";
 
 export const DecreaseLiquidity = ({
   positionId,
@@ -30,6 +32,7 @@ export const DecreaseLiquidity = ({
 
   const { isConnected, address } = useAccount();
   const [decreaseRatio, setDecreaseRatio] = useState("")
+  const { data: positionFundsInfo, isLoading: isPositionFundsInfoLoading } = usePositionFundsInfo(positionId, chainId)
   const { data: positionStaticInfo, isLoading: isPositionStaticInfoLoading } = usePositionStaticInfo(address || "", positionId, chainId)
   const [dialogOpen, setDialogOpen] = useState(false)
 
@@ -93,6 +96,10 @@ export const DecreaseLiquidity = ({
               <div>
                 % of the position.
               </div>
+            </div>
+            <div className={` flex-col gap-2 items-center ${Number(decreaseRatio) >= 100 || Number(decreaseRatio) < 1 ? "hidden" : "flex"}`}>
+              <div>{(Number(formatUnits(positionFundsInfo.principal0, positionStaticInfo.token0?.decimals)) * Number(decreaseRatio) / 100).toFixed(6)} {positionStaticInfo.token0.symbol}</div>
+              <div>{(Number(formatUnits(positionFundsInfo.principal1, positionStaticInfo.token1?.decimals)) * Number(decreaseRatio) / 100).toFixed(6)} {positionStaticInfo.token1.symbol}</div>
             </div>
             <DialogFooter>
               <Button disabled={!decreaseRatio || !parseFloat(decreaseRatio) ||parseFloat(decreaseRatio) < 0.1 || parseFloat(decreaseRatio) > 99} onClick={onClickDecreaseLiquidity}>
