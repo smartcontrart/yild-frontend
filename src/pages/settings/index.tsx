@@ -18,20 +18,22 @@ import { MinusCircle, Pencil } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { TokenSelector } from "@/components/token/token-selector";
 import { YildLoading } from "@/components/global/yild-loading";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Settings() {
   const { isConnected, address, isDisconnected } = useAccount();
   const chainId = useChainId();
   const [currentAccountingUnit, setCurrentAccountingUnit] = useState<ERC20TokenInfo | null>(null)
+  const [currentAccountingUnitAddress, setCurrentAccountingUnitAddress] = useState("")
   const [newUnitAddress, setNewUnitAddress] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
 
   useEffect(() => {
     if (address) {
       const fetchAccountingUnit = async () => {
-        const accountingUnitAddress = await getAccountingUnitFromAddress(address, chainId)
-        const unit = await getERC20TokenInfo(accountingUnitAddress, chainId)
-        setCurrentAccountingUnit(unit)
+        const accountingUnit = await getAccountingUnitFromAddress(address, chainId)
+        setCurrentAccountingUnit(accountingUnit)
+        setCurrentAccountingUnitAddress(accountingUnit.address)
       }
       fetchAccountingUnit()
     }
@@ -42,7 +44,12 @@ export default function Settings() {
       await setAccountingUnit(newUnitAddress, chainId)
       const newAccountingUnit = await getAccountingUnitFromAddress(address, chainId)
       setCurrentAccountingUnit(newAccountingUnit)
+      setCurrentAccountingUnitAddress(newAccountingUnit.address)
     }
+  }
+
+  if (!isDisconnected && !isConnected) {
+    return (<YildLoading loading={!isDisconnected && !isConnected} />)
   }
 
   if (!isConnected) {
@@ -58,69 +65,74 @@ export default function Settings() {
     );
   }
 
-  if (!currentAccountingUnit) {
-    return <YildLoading loading={true} />
-  }
-
   return (
     <div className="flex flex-col gap-4 items-center justify-center min-h-[60vh]">
-      <YildLoading loading={!isDisconnected && !isConnected} />
       <div className="flex flex-col gap-4 md:flex-row">
         <h2 className="text-xl font-bold">
           Cuurent Accounting Unit 
         </h2>
-        <div className="flex flex-row gap-2 items-center text-center mx-auto">
-          <ERC20Image 
-            chainId={chainId}
-            tokenAddress={currentAccountingUnit.address}
-          />
-          <span>{currentAccountingUnit?.symbol}</span>
-        </div>
-      </div>
-      <Dialog open={dialogOpen} onOpenChange={() => setDialogOpen(!dialogOpen)} modal>
-        <DialogTrigger asChild>
-          <Button onClick={() => setDialogOpen(true)} className="mt-4 md:mt-0" variant="outline">
-            <Pencil className="mr-2 h-4 w-4" />
-            Update Accounting Unit
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Update Accounting Unit</DialogTitle>
-            <DialogDescription>
-              Please select new accounting unit and update with connected wallet.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-row justify-between items-center">
-            <Label htmlFor="name" className="text-right">Current Unit</Label>
-            <div className="flex flex-row gap-2">
+        {
+          currentAccountingUnit ? (
+            <div className="flex flex-row gap-2 items-center text-center mx-auto">
               <ERC20Image 
                 chainId={chainId}
-                tokenAddress={currentAccountingUnit.address}
+                tokenAddress={currentAccountingUnitAddress as `0x${string}`}
               />
-              <span>{currentAccountingUnit?.symbol}</span>
+              <span>{currentAccountingUnit.symbol}</span>
             </div>
-          </div>
-          <div className="flex flex-row justify-between items-center">
-            <Label htmlFor="name" className="text-right">
-              New Unit
-            </Label>
-            <div className="w-[200px]">
-              <TokenSelector
-                chainId={chainId}
-                onSelectionChange={(info) => {
-                  if (info && info.address && info.address !== currentAccountingUnit.address) {
-                    setNewUnitAddress(info.address)
-                  }
-                }}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={updateAccountingUnit}>Update</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          ) : (
+            <Skeleton className="w-20" />
+          )
+        }
+      </div>
+      {
+        currentAccountingUnit && (
+          <Dialog open={dialogOpen} onOpenChange={() => setDialogOpen(!dialogOpen)} modal>
+            <DialogTrigger asChild>
+              <Button onClick={() => setDialogOpen(true)} className="mt-4 md:mt-0" variant="outline">
+                <Pencil className="mr-2 h-4 w-4" />
+                Update Accounting Unit
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Update Accounting Unit</DialogTitle>
+                <DialogDescription>
+                  Please select new accounting unit and update with connected wallet.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-row justify-between items-center">
+                <Label htmlFor="name" className="text-right">Current Unit</Label>
+                <div className="flex flex-row gap-2">
+                  <ERC20Image 
+                    chainId={chainId}
+                    tokenAddress={currentAccountingUnitAddress as `0x${string}`}
+                  />
+                  <span>{currentAccountingUnit.symbol}</span>
+                </div>
+              </div>
+              <div className="flex flex-row justify-between items-center">
+                <Label htmlFor="name" className="text-right">
+                  New Unit
+                </Label>
+                <div className="w-[200px]">
+                  <TokenSelector
+                    chainId={chainId}
+                    onSelectionChange={(info) => {
+                      if (info && info.address && info.address !== currentAccountingUnit.address) {
+                        setNewUnitAddress(info.address)
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={updateAccountingUnit}>Update</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )
+      }
     </div>
   )
 }

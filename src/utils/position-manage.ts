@@ -7,7 +7,7 @@ import { PositionManagerABI } from "@/abi/PositionManager";
 
 import { getUniswapV3FactoryContractAddressFromChainId, getManagerContractAddressFromChainId } from "./constants";
 import { ERROR_CODES } from "./types";
-import { getERC20TokenBalance } from './erc20'
+import { getERC20TokenBalance, getERC20TokenInfo } from './erc20'
 import { fetchParaswapRoute, fetchTokenPrice } from "./requests";
 import { multiplyBigIntWithFloat } from "./functions";
 
@@ -370,7 +370,8 @@ export const getAccountingUnitFromAddress = async (address: string, chainId: num
     functionName: "accountingUnit",
     args: [address]
   })
-  return res
+  const tokenInfo = await getERC20TokenInfo(res, chainId)
+  return tokenInfo
 }
 
 export const setAccountingUnit = async (unitAddress: string, chainId: number) => {
