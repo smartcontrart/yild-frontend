@@ -19,6 +19,7 @@ import { PositionInfo } from "@/components/position-detail/position-info";
 import PositionControlPanel from "@/components/position-detail/position-control-panel";
 import { YildLoading } from "@/components/global/yild-loading";
 import WaitingAnimation from "@/components/global/waiting-animation";
+import { Button } from "@/components/ui/button";
 
 export default function PositionPage() {
   const { isConnected, address, isDisconnected } = useAccount();
@@ -70,6 +71,12 @@ export default function PositionPage() {
         title: "Error",
         description: "Failed to compound fees back into the position.",
       })
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.TOKEN_APPROVE_FAILED)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "User rejected token approval.",
+      })        
     if (pageStatus === POSITION_DETAIL_PAGE_STATE.USER_REJECTED)
       toast({
         variant: "destructive",

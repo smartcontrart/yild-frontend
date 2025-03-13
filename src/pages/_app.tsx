@@ -47,10 +47,6 @@ export default function App({ Component, pageProps }: AppProps) {
                 </Link>
                 <ThemeSwitch />
                 <CustomWalletButton />
-                {/* <ConnectButton label='Sign In' accountStatus={{
-                  smallScreen: "avatar",
-                  largeScreen: "full",
-                }} /> */}
               </div>
             </nav>
           </header>
