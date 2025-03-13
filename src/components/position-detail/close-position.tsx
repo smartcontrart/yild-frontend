@@ -35,6 +35,7 @@ export const ClosePosition = ({
       const { success, result } = await closePosition(positionId, chainId);
       if (success) {
         setPageStatus(POSITION_DETAIL_PAGE_STATE.POSITION_CLOSED)
+        setDialogOpen(false)
         await sendClosePositionReport(address as `0x${string}`, chainId, positionId)
       }
       else if (result === ERROR_CODES.USER_REJECTED) {

@@ -29,12 +29,14 @@ export default function PositionPage() {
   const [pageStatus, setPageStatus] = useState(POSITION_DETAIL_PAGE_STATE.PAGE_LOADED);
 
   useEffect(() => {
-    if (pageStatus === POSITION_DETAIL_PAGE_STATE.POSITION_CLOSED)
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.POSITION_CLOSED) {
       toast({
         variant: "default",
         title: "Info",
         description: "Successfully closed the position.",
       })
+      setTimeout(() => router.push('/'), 2000)
+    }
     if (pageStatus === POSITION_DETAIL_PAGE_STATE.FEES_COLLECTED)
       toast({
         variant: "default",
