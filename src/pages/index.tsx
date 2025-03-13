@@ -83,11 +83,11 @@ export default function Home() {
                   )
                 }
             </div>
-            <div>
+            <div className="md:text-center md:mt-40">
               {
                 positions.length === 0 && (
                   <>
-                  You do not have any open positions at the moment.
+                  You do not have any open positions at the moment. Provide liquidity to open a new position.
                   </>
                 )
               }
