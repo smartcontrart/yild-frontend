@@ -73,7 +73,7 @@ export function TokenSelector({ chainId, onSelectionChange }: TokenSelectorProps
 
           {(customTokenAddressInput && customToken) && (
             <SelectItem value={customTokenAddressInput}>
-              <div className="flex flex-row gap-4">
+              <div className="flex flex-row gap-4 items-center">
                 <ERC20Image tokenAddress={customTokenAddressInput as `0x${string}`} chainId={chainId} />
                 <div className="flex flex-col gap-2">
                   <span>
@@ -91,9 +91,9 @@ export function TokenSelector({ chainId, onSelectionChange }: TokenSelectorProps
 
           {getDefaultTokensFromChainId(chainId).map((elem: any) => (
             <SelectItem key={elem.name} value={elem.address}>
-              <div className="flex flex-row gap-4">
+              <div className="flex flex-row gap-4 items-center">
                 <ERC20Image tokenAddress={elem.address} chainId={chainId} />
-                <div className="flex flex-col gap-0">
+                <div className="flex flex-col gap-2">
                   <span>
                     {elem.name}
                   </span>

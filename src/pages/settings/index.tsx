@@ -14,12 +14,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { MinusCircle } from "lucide-react";
+import { MinusCircle, Pencil } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { TokenSelector } from "@/components/token/token-selector";
+import { YildLoading } from "@/components/global/yild-loading";
 
 export default function Settings() {
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, isDisconnected } = useAccount();
   const chainId = useChainId();
   const [currentAccountingUnit, setCurrentAccountingUnit] = useState<ERC20TokenInfo | null>(null)
   const [newUnitAddress, setNewUnitAddress] = useState("")
@@ -58,50 +59,53 @@ export default function Settings() {
   }
 
   if (!currentAccountingUnit) {
-    return (
-      <>Loading...</>
-    )
+    return <YildLoading loading={true} />
   }
-  
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh]">
-      <h2 className="text-xl font-bold mb-4">
-        Your Accounting Unit
-      </h2>
-      <div className="flex flex-row gap-2">
-        <ERC20Image 
-          chainId={chainId}
-          tokenAddress={currentAccountingUnit.address}
-        />
-        <span>{currentAccountingUnit?.symbol}</span>
+    <div className="flex flex-col gap-4 items-center justify-center min-h-[60vh]">
+      <YildLoading loading={!isDisconnected && !isConnected} />
+      <div className="flex flex-col gap-4 md:flex-row">
+        <h2 className="text-xl font-bold">
+          Cuurent Accounting Unit 
+        </h2>
+        <div className="flex flex-row gap-2 items-center text-center mx-auto">
+          <ERC20Image 
+            chainId={chainId}
+            tokenAddress={currentAccountingUnit.address}
+          />
+          <span>{currentAccountingUnit?.symbol}</span>
+        </div>
       </div>
       <Dialog open={dialogOpen} onOpenChange={() => setDialogOpen(!dialogOpen)} modal>
         <DialogTrigger asChild>
-          <Button onClick={() => setDialogOpen(true)}>
-            <MinusCircle className="mr-2 h-4 w-4" />
+          <Button onClick={() => setDialogOpen(true)} className="mt-4 md:mt-0" variant="outline">
+            <Pencil className="mr-2 h-4 w-4" />
             Update Accounting Unit
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Set Max Slippage</DialogTitle>
+            <DialogTitle>Update Accounting Unit</DialogTitle>
             <DialogDescription>
-              Please input decrease amounts in terms of %.
+              Please select new accounting unit and update with connected wallet.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="flex flex-row justify-between items-center">
+            <Label htmlFor="name" className="text-right">Current Unit</Label>
             <div className="flex flex-row gap-2">
-              <Label htmlFor="name" className="text-right">Current Accounting Unit: </Label>
               <ERC20Image 
                 chainId={chainId}
                 tokenAddress={currentAccountingUnit.address}
               />
               <span>{currentAccountingUnit?.symbol}</span>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                New Accounting Unit
-              </Label>
+          </div>
+          <div className="flex flex-row justify-between items-center">
+            <Label htmlFor="name" className="text-right">
+              New Unit
+            </Label>
+            <div className="w-[200px]">
               <TokenSelector
                 chainId={chainId}
                 onSelectionChange={(info) => {
