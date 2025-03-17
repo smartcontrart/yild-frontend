@@ -56,10 +56,14 @@ export const fetchParaswapRoute = async (
   try {
     const response = await fetch(`${PARASWAP_API_URL}&srcToken=${srcToken}&srcDecimals=${srcDecimals}&destToken=${destToken}&destDecimals=${destDecimals}&amount=${Number(amount).toFixed(0)}&side=SELL&network=${chainId}&slippage=${slippage}&userAddress=${userAddress}`);
     const response_json = await response.json();
+    console.log(response_json)
     if (response_json && response_json.txParams && response_json.priceRoute) {
       const { data } = response_json.txParams;
       const { destAmount } = response_json.priceRoute
       return { success: true, data, destAmount }
+    }
+    else if (response_json && response_json.error === "No routes found with enough liquidity") {
+      return { success: false, data: "not enough liquidity" }
     }
     return { success: false, data: "invalid response" }
   } catch (error) {
