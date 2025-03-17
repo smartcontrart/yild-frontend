@@ -217,53 +217,24 @@ export const LiquidityMathABI = [
   },
   {
     "type": "function",
-    "name": "convertAmount",
+    "name": "getZeroForOne",
     "inputs": [
       {
-        "name": "amountIn",
-        "type": "uint256",
-        "internalType": "uint256"
+        "name": "tokenIn",
+        "type": "address",
+        "internalType": "address"
       },
       {
-        "name": "sqrtPriceX96",
-        "type": "uint160",
-        "internalType": "uint160"
+        "name": "tokenOut",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [
       {
-        "name": "amountOut",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "pure"
-  },
-  {
-    "type": "function",
-    "name": "getMinAmountOut",
-    "inputs": [
-      {
-        "name": "amountIn",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "sqrtPriceX96",
-        "type": "uint160",
-        "internalType": "uint160"
-      },
-      {
-        "name": "maxSlippage",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "minAmountOut",
-        "type": "uint256",
-        "internalType": "uint256"
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
       }
     ],
     "stateMutability": "pure"

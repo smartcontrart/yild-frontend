@@ -56,8 +56,8 @@ export const SUPPORTED_CHAINS = [
     name: "base",
     secondaryRPC: "https://rpc.ankr.com/base",
     explorerURL: "https://basescan.org",
-    positionManager: "0x5E346b40AB351b20E61E2525315c77ca049eA4dc" as `0x${string}`,
-    liquidityMath: "0xd19c09c46803dcb6c926c5102bda7d9833e9c56d" as `0x${string}`,
+    positionManager: "0xAe1FeF5D66b651D33cd884c9320aB65E2A2cd5e0" as `0x${string}`,
+    liquidityMath: "0x322ccfa790b6ef619e1fb69115e349d306dba1a7" as `0x${string}`,
     uniswapFactory: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD" as `0x${string}`,
     defaultTokens: [
       {
