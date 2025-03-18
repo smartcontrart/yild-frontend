@@ -73,6 +73,12 @@ export default function PositionPage() {
         title: "Error",
         description: "Failed to compound fees back into the position.",
       })
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.NOT_ENOUGH_FEES_EARNED)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "The position did not earn enough fees to compound yet.",
+      })
     if (pageStatus === POSITION_DETAIL_PAGE_STATE.TOKEN_APPROVE_FAILED)
       toast({
         variant: "destructive",

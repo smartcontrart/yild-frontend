@@ -80,8 +80,11 @@ export const compoundFees = async (
       _pSwapData0 = paraswapData
       _minAmountOut0 = Number(amountOut0)
     }
-    else if (paraswapData === "not enough liquidity") {
-
+    else if (paraswapData.toString().indexOf("too small to proceed") > -1) {
+      return {
+        success: false,
+        result: ERROR_CODES.NOT_ENOUGH_FEES_EARNED
+      }
     }
     else
       return {
@@ -102,8 +105,11 @@ export const compoundFees = async (
       _pSwapData1 = paraswapData
       _minAmountOut0 = Number(amountOut1)
     }
-    else if (paraswapData === "not enough liquidity") {
-
+    else if (paraswapData.toString().indexOf("too small to proceed") > -1) {
+      return {
+        success: false,
+        result: ERROR_CODES.NOT_ENOUGH_FEES_EARNED
+      }
     }
     else
       return {

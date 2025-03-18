@@ -33,10 +33,12 @@ export const POSITION_DETAIL_PAGE_STATE = {
   SET_MAX_SLIPPAGE: "set-max-slippage",
   SET_MAX_SLIPPAGE_FAILED: "set-max-slippage-failed",
   USER_REJECTED: "user-rejected",
-  PARASWAP_ERROR: "paraswap-error"
+  PARASWAP_ERROR: "paraswap-error",
+  NOT_ENOUGH_FEES_EARNED: "not enough fees earned"
 }
 
 export const ERROR_CODES = {
   USER_REJECTED: "User rejected open position",
-  UNKNOWN_ERROR: "Unknown error"
+  UNKNOWN_ERROR: "Unknown error",
+  NOT_ENOUGH_FEES_EARNED: "not enough fees earned"
 }

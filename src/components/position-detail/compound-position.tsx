@@ -38,6 +38,9 @@ export const CompoundPosition = ({
       else if (result === ERROR_CODES.USER_REJECTED) {
         setPageStatus(POSITION_DETAIL_PAGE_STATE.USER_REJECTED)
       }
+      else if (result === ERROR_CODES.NOT_ENOUGH_FEES_EARNED) {
+        setPageStatus(POSITION_DETAIL_PAGE_STATE.NOT_ENOUGH_FEES_EARNED)
+      }
       else if (result === ERROR_CODES.UNKNOWN_ERROR) {
         setPageStatus(POSITION_DETAIL_PAGE_STATE.PARASWAP_ERROR)
       }
