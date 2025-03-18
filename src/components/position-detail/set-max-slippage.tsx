@@ -49,7 +49,7 @@ export const SetMaxSlippage = ({
     try {
       if (!maxSlippageInput)
         return
-      const res = await updateMaxSlippageForPosition(positionId, chainId, parseInt(maxSlippageInput))
+      const res = await updateMaxSlippageForPosition(positionId, chainId, parseInt((Number(maxSlippageInput) * 100).toString()))
       const newSlippage = await getMaxSlippageForPosition(positionId, chainId)
       setCurrentMaxSlippage(newSlippage)
       setPageStatus(POSITION_DETAIL_PAGE_STATE.SET_MAX_SLIPPAGE)
@@ -81,7 +81,7 @@ export const SetMaxSlippage = ({
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div>
-                Current Slippage: {currentMaxSlippage}
+                Current Slippage: {Number(currentMaxSlippage) / 100} %
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="name" className="text-right">
