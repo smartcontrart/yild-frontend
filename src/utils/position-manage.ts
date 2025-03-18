@@ -81,10 +81,10 @@ export const compoundFees = async (
       _minAmountOut0 = Number(amountOut0)
     }
     else if (paraswapData.toString().indexOf("too small to proceed") > -1) {
-      return {
-        success: false,
-        result: ERROR_CODES.NOT_ENOUGH_FEES_EARNED
-      }
+      // return {
+      //   success: false,
+      //   result: ERROR_CODES.NOT_ENOUGH_FEES_EARNED
+      // }
     }
     else
       return {
@@ -106,10 +106,10 @@ export const compoundFees = async (
       _minAmountOut0 = Number(amountOut1)
     }
     else if (paraswapData.toString().indexOf("too small to proceed") > -1) {
-      return {
-        success: false,
-        result: ERROR_CODES.NOT_ENOUGH_FEES_EARNED
-      }
+      // return {
+      //   success: false,
+      //   result: ERROR_CODES.NOT_ENOUGH_FEES_EARNED
+      // }
     }
     else
       return {
@@ -131,6 +131,7 @@ export const compoundFees = async (
       result: hash
     }
   } catch (error: any) {
+    console.log(error)
     if (error?.message?.includes("User rejected") || error?.code === 4001) {
       return {
         success: false,

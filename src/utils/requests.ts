@@ -56,7 +56,6 @@ export const fetchParaswapRoute = async (
   try {
     const response = await fetch(`${PARASWAP_API_URL}&srcToken=${srcToken}&srcDecimals=${srcDecimals}&destToken=${destToken}&destDecimals=${destDecimals}&amount=${Number(amount).toFixed(0)}&side=SELL&network=${chainId}&slippage=${slippage}&userAddress=${userAddress}`);
     const response_json = await response.json();
-    console.log(response_json)
     if (response_json && response_json.txParams && response_json.priceRoute) {
       const { data } = response_json.txParams;
       const { destAmount } = response_json.priceRoute
@@ -65,11 +64,14 @@ export const fetchParaswapRoute = async (
     else if (response_json && response_json.error === "No routes found with enough liquidity") {
       return { success: false, data: "not enough liquidity" }
     }
+    else if (response_json && response_json.error.indexOf("too small to proceed") > -1) {
+      return { success: false, data: "too small to proceed" }
+    }
     return { success: false, data: "invalid response" }
   } catch (error) {
-    console.log(`Error while Paraswap API call...`)
-    console.error(error)
-    return { success: false }
+    // console.log(`Error while Paraswap API call...`)
+    // console.error(error)
+    return { success: false, data: error }
   }
 }
 
