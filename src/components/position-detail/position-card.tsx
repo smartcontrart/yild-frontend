@@ -5,6 +5,8 @@ import { useTokenPrice } from "@/hooks/use-token-price"
 import { useTokenMeta } from "@/hooks/use-token-meta"
 import { formatUnits } from "viem"
 import { HandCoins } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs"
+import { useState } from "react"
 
 export const PositionCard = ({
   data,
@@ -18,6 +20,7 @@ export const PositionCard = ({
   if (!data || !chainId)
     return <Skeleton className="h-[426px] rounded-xl" />
   
+  const [direction, setDirection] = useState<"0p1" | "1p0">("0p1")
   const { data: token0Price, isLoading: token0PriceLoading} = useTokenPrice(data.token0Address, chainId)
   const { data: token1Price, isLoading: token1PriceLoading} = useTokenPrice(data.token1Address, chainId)
   const { data: token0, isLoading: token0MetaDataLoading} = useTokenMeta(data.token0Address, chainId)
@@ -41,11 +44,41 @@ export const PositionCard = ({
               {
                 (data.tickLower && data.tickUpper) ?
                 <div className="flex flex-col gap-2">
-                  <h3>
-                    {token0?.symbol} Price Range
-                  </h3>
+                  <div className="flex flex-row gap-2">
+                    <Tabs
+                      value={direction}
+                      onValueChange={(value: string) => {
+                        setDirection(value as "0p1" | "1p0")
+                      }}
+                      className="w-full"
+                    >
+                      <TabsList>
+                        <TabsTrigger value="0p1">{token0.symbol}/{token1.symbol}</TabsTrigger>
+                        <TabsTrigger value="1p0">{token1.symbol}/{token0.symbol}</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+
+                  {
+                    direction === "0p1" ? 
+                    (
+                      <div className="ml-4">
+                        Range: {tickToPrice(data.tickLower, token0.decimals, token1.decimals).toFixed(4)} ~ {tickToPrice(data.tickUpper, token0.decimals, token1.decimals).toFixed(4)}
+                      </div>
+                    )
+                    :
+                    (
+                      <div className="ml-4">
+                        Range: {Number(1 / Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals))).toFixed(4)} ~ {Number(1 / Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals))).toFixed(4)}
+                      </div>
+                    )
+                  }
+
                   <div className="ml-4">
-                    $ {tickToPrice(data.tickLower, token0.decimals, token1.decimals).toFixed(4)} ~ $ {tickToPrice(data.tickUpper, token0.decimals, token1.decimals).toFixed(4)}
+                    1 {token0.symbol} = $ {token0Price}
+                  </div>
+                  <div className="ml-4">
+                    1 {token1.symbol} = $ {token1Price}
                   </div>
                 </div>
                 : <></>

@@ -39,19 +39,14 @@ export const PoolCard = ({
               <div className="ml-4">
                 {Number(poolData.token0Balance).toFixed(2)} {poolData.token0.symbol}
               </div>
+              <div className="ml-8">
+                $ {formatNumber(Number((poolData.token0Balance)) * Number(poolData.token0Price))}
+              </div>
               <div className="ml-4">
                 {Number(poolData.token1Balance).toFixed(2)} {poolData.token1.symbol}
               </div>
-            </div>
-            <div className="flex flex-col gap-4">
-              <h3>
-                Current Price
-              </h3>
-              <div className="ml-4">
-                {poolData.token0.symbol} : $ {poolData.token0Price}
-              </div>
-              <div className="ml-4">
-                {poolData.token1.symbol} : $ {poolData.token1Price}
+              <div className="ml-8">
+                $ {formatNumber(Number((poolData.token1Balance)) * Number(poolData.token1Price))}
               </div>
             </div>
             <div className="flex flex-col gap-4">
@@ -65,6 +60,17 @@ export const PoolCard = ({
                 <Link className="cursor-pointer" href={`${getExplorerURLFromChainId(chainId)}/address/${address}#multichain-portfolio`} target="_blank">
                   <ExternalLink />
                 </Link>
+              </div>
+            </div>
+            <div className="flex flex-col gap-4">
+              <h3>
+                Current Price
+              </h3>
+              <div className="ml-4">
+                {poolData.token0.symbol} : $ {poolData.token0Price}
+              </div>
+              <div className="ml-4">
+                {poolData.token1.symbol} : $ {poolData.token1Price}
               </div>
             </div>
           </div>
