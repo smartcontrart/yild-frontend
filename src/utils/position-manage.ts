@@ -87,6 +87,9 @@ export const compoundFees = async (
       //   result: ERROR_CODES.NOT_ENOUGH_FEES_EARNED
       // }
     }
+    else if (paraswapData === "not enough liquidity") {
+      _pSwapData1 = "0x"
+    }
     else
       return {
         success: false,
@@ -111,6 +114,9 @@ export const compoundFees = async (
       //   success: false,
       //   result: ERROR_CODES.NOT_ENOUGH_FEES_EARNED
       // }
+    }
+    else if (paraswapData === "not enough liquidity") {
+      _pSwapData1 = "0x"
     }
     else
       return {
@@ -344,13 +350,17 @@ export const closePosition = async (tokenId: number, chainId: number) => {
   let _pSwapData0 = "0x", _pSwapData1 = "0x", _minBuyAmount0 = BigInt(0), _minBuyAmount1 = BigInt(0)
   if (token0Address !== ownerAccountingUnit) {
     const { success: paraswapAPISuccess, data: paraswapData, destAmount } = await fetchParaswapRoute(token0Address, token0Decimals, ownerAccountingUnit, ownerAccountingUnitDecimals, BigInt(totalAmount0ToSwap), chainId, userMaxSlippage, getManagerContractAddressFromChainId(chainId))
-    if (paraswapAPISuccess) _pSwapData0 = paraswapData
-    _minBuyAmount0 = BigInt((Number(destAmount) * (10000 - userMaxSlippage) / 10000).toFixed(0))
+    if (paraswapAPISuccess) {
+      _pSwapData0 = paraswapData
+      _minBuyAmount0 = BigInt((Number(destAmount) * (10000 - userMaxSlippage) / 10000).toFixed(0))
+    }
   }
   if (token1Address !== ownerAccountingUnit) {
     const { success: paraswapAPISuccess, data: paraswapData, destAmount } = await fetchParaswapRoute(token1Address, token1Decimals, ownerAccountingUnit, ownerAccountingUnitDecimals, BigInt(totalAmount1ToSwap), chainId, userMaxSlippage, getManagerContractAddressFromChainId(chainId))
-    if (paraswapAPISuccess) _pSwapData1 = paraswapData
-    _minBuyAmount1 = BigInt((Number(destAmount) * (10000 - userMaxSlippage) / 10000).toFixed(0))
+    if (paraswapAPISuccess) {
+      _pSwapData1 = paraswapData
+      _minBuyAmount1 = BigInt((Number(destAmount) * (10000 - userMaxSlippage) / 10000).toFixed(0))
+    }
   }
 
   const params = [
