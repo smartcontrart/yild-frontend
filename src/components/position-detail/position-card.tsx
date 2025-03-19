@@ -44,7 +44,7 @@ export const PositionCard = ({
               {
                 (data.tickLower && data.tickUpper) ?
                 <div className="flex flex-col gap-2">
-                  <div className="flex flex-row gap-2">
+                  <div className="flex flex-row gap-2 ml-[-10px]">
                     <Tabs
                       value={direction}
                       onValueChange={(value: string) => {
@@ -74,10 +74,10 @@ export const PositionCard = ({
                     )
                   }
 
-                  <div className="ml-4">
+                  <div className="ml-8">
                     1 {token0.symbol} = $ {token0Price}
                   </div>
-                  <div className="ml-4">
+                  <div className="ml-8">
                     1 {token1.symbol} = $ {token1Price}
                   </div>
                 </div>

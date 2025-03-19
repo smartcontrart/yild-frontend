@@ -373,8 +373,6 @@ export const closePosition = async (tokenId: number, chainId: number) => {
     userMaxSlippage
   ]
 
-  console.log(params)
-
   try {
     const hash = await writeContract(wagmiConfig, {
       abi: PositionManagerABI,
@@ -388,6 +386,7 @@ export const closePosition = async (tokenId: number, chainId: number) => {
       result: hash
     }
   } catch (error: any) {
+    console.log(error)
     if (error?.message?.includes("User rejected") || error?.code === 4001) {
       return {
         success: false,
