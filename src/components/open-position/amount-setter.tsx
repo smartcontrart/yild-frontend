@@ -5,7 +5,8 @@ import { getRequiredToken0AmountFromToken1Amount, getRequiredToken1AmountFromTok
 import TokenLiveBalance from "../token/token-live-balance"
 import { useAccount } from "wagmi"
 import { useTokenBalance } from "@/hooks/use-token-balance"
-import { parseUnits } from "viem"
+import { formatUnits, parseUnits } from "viem"
+import SetPercentageButtons from "./set-percentage-buttons"
 
 export const AmountSetter = ({
   tokens,
@@ -60,9 +61,10 @@ export const AmountSetter = ({
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <div>
+      <div className="flex flex-col gap-2">
         <label htmlFor="">{tokens[0].symbol}</label>
         <Input
+          className={parseUnits(token0Amount, tokens[0].decimals) > (token0Balance || BigInt(0)) ? "text-destructive" : ""}
           placeholder="0.0"
           value={token0Amount}
           onChange={(e) => {
@@ -70,17 +72,29 @@ export const AmountSetter = ({
             setToken0Amount((e.target.value) || "")
           }}
         />
-        <TokenLiveBalance userAddress={userAddress} token={tokens[0]} />
+        <SetPercentageButtons 
+          maxAmount={Number(formatUnits(token0Balance || BigInt(0), tokens[0].decimals))} 
+          decimals={tokens[0].decimals} 
+          onSetAmount={(newValue: number) => {
+            setIsUserEditingForToken0(true)
+            setToken0Amount(newValue.toString() || "")
+          }} 
+        />
+        <div className={parseUnits(token0Amount, tokens[0].decimals) > (token0Balance || BigInt(0)) ? "text-destructive" : ""}>
+          <TokenLiveBalance userAddress={userAddress} token={tokens[0]} />
+        </div>
         {
-          parseUnits(token0Amount, tokens[0].decimals) > (token0Balance || BigInt(0)) 
-          ?
-          <span className="text-sm ml-2">Not enough tokens...</span>
+          parseUnits(token0Amount, tokens[0].decimals) > (token0Balance || BigInt(0)) ? 
+          <div className="ml-2 text-sm text-destructive">
+            You do not have enough funds to provide liquidity, opening position will fail...
+          </div>
           : <></>
         }
       </div>
-      <div>
+      <div className="flex flex-col gap-2">
         <label htmlFor="">{tokens[1].symbol}</label>
         <Input
+          className={parseUnits(token1Amount, tokens[1].decimals) > (token1Balance || BigInt(0)) ? "text-destructive" : ""}
           placeholder="0.0"
           value={token1Amount}
           onChange={(e) => {
@@ -88,11 +102,22 @@ export const AmountSetter = ({
             setToken1Amount((e.target.value) || "")
           }}
         />
-        <TokenLiveBalance userAddress={userAddress} token={tokens[1]} />
+        <SetPercentageButtons 
+          maxAmount={Number(formatUnits(token1Balance || BigInt(0), tokens[1].decimals))} 
+          decimals={tokens[1].decimals} 
+          onSetAmount={(newValue: number) => {
+            setIsUserEditingForToken0(false)
+            setToken1Amount(newValue.toString() || "")
+          }} 
+        />
+        <div className={parseUnits(token1Amount, tokens[1].decimals) > (token1Balance || BigInt(0)) ? "text-destructive" : ""}>
+          <TokenLiveBalance userAddress={userAddress} token={tokens[1]} />
+        </div>
         {
-          parseUnits(token1Amount, tokens[1].decimals) > (token1Balance || BigInt(0)) 
-          ?
-          <span className="text-sm ml-2">Not enough tokens...</span>
+          parseUnits(token1Amount, tokens[1].decimals) > (token1Balance || BigInt(0)) ? 
+          <div className="ml-2 text-sm text-destructive">
+            You do not have enough funds to provide liquidity, opening position will fail...
+          </div>
           : <></>
         }
       </div>
