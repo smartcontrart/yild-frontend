@@ -85,6 +85,9 @@ export default function Settings() {
           )
         }
       </div>
+      <h3 className="text-l">
+        The accounting unit is the token you will get when collecting fees or getting liquidity out of the position.
+      </h3>
       {
         currentAccountingUnit && (
           <Dialog open={dialogOpen} onOpenChange={() => setDialogOpen(!dialogOpen)} modal>
