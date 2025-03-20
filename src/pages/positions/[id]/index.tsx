@@ -55,12 +55,14 @@ export default function PositionPage() {
         title: "Info",
         description: "Successfully increased liquidity in the position.",
       })
-    if (pageStatus === POSITION_DETAIL_PAGE_STATE.POSITION_COMPOUNDED)
+    if (pageStatus === POSITION_DETAIL_PAGE_STATE.POSITION_COMPOUNDED) {
       toast({
         variant: "default",
         title: "Info",
         description: "Successfully compounded fees back into the position.",
       })
+      setTimeout(() => router.push('/'), 2000)
+    }
     if (pageStatus === POSITION_DETAIL_PAGE_STATE.SET_MAX_SLIPPAGE)
       toast({
         variant: "default",
