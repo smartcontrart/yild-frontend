@@ -72,12 +72,102 @@ export const SUPPORTED_CHAINS = [
         address: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" as `0x${string}`,
         decimals: 6
       },
-      // {
-      //   name: "Virtual Protocol",
-      //   symbol: "VIRTUAL",
-      //   address: "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b" as `0x${string}`,
-      //   decimals: 18
-      // }
+      {
+        name: "Wrapped BTC",
+        symbol: "WBTC",
+        address: "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c" as `0x${string}`,
+        decimals: 8,
+      },
+      {
+        name: "Wrapped liquid staked Ether 2.0",
+        symbol: "wstETH",
+        address: "0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452" as `0x${string}`,
+        decimals: 18,
+      },
+      {
+        name: "USDS Stablecoin",
+        symbol: "USDS",
+        address: "0x820C137fa70C8691f0e44Dc420a5e53c168921Dc" as `0x${string}`,
+        decimals: 18,
+      },
+      {
+        name: "MANTRA",
+        symbol: "OM",
+        address: "0x3992B27dA26848C2b19CeA6Fd25ad5568B68AB98" as `0x${string}`,
+        decimals: 18,
+      },
+      {
+        name: "USDe",
+        symbol: "USDe",
+        address: "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34" as `0x${string}`,
+        decimals: 18,
+      },
+      {
+        name: "Dai Stablecoin",
+        symbol: "DAI",
+        address: "0x50c5725949a6f0c72e6c4a641f24049a917db0cb" as `0x${string}`,
+        decimals: 18,
+      },
+      {
+        name: "Wrapped eETH",
+        symbol: "weETH.base",
+        address: "0x04c0599ae5a44757c0af6f9ec3b93da8976c150a" as `0x${string}`,
+        decimals: 18,
+      },
+      {
+        name: "Aave Token",
+        symbol: "AAVE",
+        address: "0x63706e401c06ac8513145b7687A14804d17f814b" as `0x${string}`,
+        decimals: 18,
+      },
+      {
+        name: "Coinbase Wrapped BTC",
+        symbol: "cbBTC",
+        address: "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf" as `0x${string}`,
+        decimals: 8,
+      },
+      {
+        name: "Official Trump",
+        symbol: "TRUMP",
+        address: "0xc27468b12ffA6d714B1b5fBC87eF403F38b82AD4" as `0x${string}`,
+        decimals: 18,
+      },
+      {
+        name: "ENA",
+        symbol: "ENA",
+        address: "0x58538e6A46E07434d7E7375Bc268D3cb839C0133" as `0x${string}`,
+        decimals: 18,
+      },
+      {
+        name: "Curve DAO Token",
+        symbol: "CRV",
+        address: "0x8Ee73c484A26e0A5df2Ee2a4960B789967dd0415" as `0x${string}`,
+        decimals: 18,
+      },
+      {
+        name: "Pyth Network",
+        symbol: "PYTH",
+        address: "0x4c5d8A75F3762c1561D96f177694f67378705E98" as `0x${string}`,
+        decimals: 6,
+      },
+      {
+        name: "Virtual Protocol",
+        symbol: "VIRTUAL",
+        address: "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b" as `0x${string}`,
+        decimals: 18
+      },
+      {
+        name: "Aerodrome",
+        symbol: "AERO",
+        address: "0x940181a94a35a4569e4529a3cdfb74e38fd98631" as `0x${string}`,
+        decimals: 18,
+      },
+      {
+        name: "Pendle",
+        symbol: "PENDLE",
+        address: "0xa99f6e6785da0f5d6fb42495fe424bce029eeb3e" as `0x${string}`,
+        decimals: 18,
+      }
     ]
   }
 ]
