@@ -16,6 +16,16 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'coin-images.coingecko.com',
         port: ''
+      },
+      {
+        protocol: 'https',
+        hostname: 'basescan.org',
+        port: ''
+      },
+      {
+        protocol: 'https',
+        hostname: 'assets-cdn.trustwallet.com',
+        port: ''
       }
     ]
   }

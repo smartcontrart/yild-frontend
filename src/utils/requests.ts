@@ -149,6 +149,7 @@ export const getCoinGeckoImageURLFromTokenAddress = async (tokenAddress: string,
   try {
     const coinMeta = await fetch(`${COINGECKO_PUBLIC_API_URL}/coins/${getNetworkNameFromChainId(chainId)}/contract/${tokenAddress}`)
     const { image } = await coinMeta.json()
+    console.log(await coinMeta.json())
     return (image && image.large) ? image.large : null
   } catch (error) {
   }

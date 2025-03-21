@@ -92,7 +92,7 @@ export function TokenSelector({ chainId, onSelectionChange }: TokenSelectorProps
           {getDefaultTokensFromChainId(chainId).map((elem: any) => (
             <SelectItem key={elem.name} value={elem.address}>
               <div className="flex flex-row gap-4 items-center">
-                <ERC20Image tokenAddress={elem.address} chainId={chainId} />
+                <ERC20Image tokenAddress={elem.address} chainId={chainId} imageUri={elem.image} />
                 <div className="flex flex-col gap-2">
                   <span>
                     {elem.name}
