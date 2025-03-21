@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { gql, useQuery } from "@apollo/client";
+import { useTheme } from 'next-themes';
 
 import { ERC20TokenInfo } from "@/utils/constants";
 import { formatNumber, visualizeFeeTier } from "@/utils/functions";
@@ -44,6 +45,8 @@ function getMonthlyVolume(data: any, price0: any, price1: any) {
 
 export function PoolInfo({ tokens, address, feeTier, token0BalanceInPool, token1BalanceInPool, chainId, selected, onClickPool }: PoolInfoProps) {
 
+  const { theme } = useTheme()
+
   const timestamp = useMemo(() => getOneMonthAgoTimestamp(), []);
   const GET_DATA = useMemo(() => gql`
     {
@@ -71,7 +74,7 @@ export function PoolInfo({ tokens, address, feeTier, token0BalanceInPool, token1
   if (error) return <p>Error: {error.message}</p>;
 
   return (
-    <Card className={`p-6 cursor-pointer ${selected ? "bg-sky-50" : ""}`} key={`feeTier_${feeTier}`} onClick={() => onClickPool && onClickPool(feeTier)}>
+    <Card className={`p-6 cursor-pointer ${selected ? (theme === "dark" ? "bg-blue-600" : "bg-sky-100") : ""}`} key={`feeTier_${feeTier}`} onClick={() => onClickPool && onClickPool(feeTier)}>
       <div className="space-y-4">
         <div className="flex justify-between items-start">
           <div className="space-y-2 ">
