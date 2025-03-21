@@ -40,7 +40,7 @@ export default function PoolSelector({
       setAvailableFeeTiers(temp)
     }
     getPoolAddressFunc()
-  }, [])
+  }, [tokens])
 
   return (
     <>
