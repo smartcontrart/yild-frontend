@@ -119,8 +119,7 @@ export const PositionManagerABI = [
     "type": "function",
     "name": "collectFees",
     "inputs": [
-      { "name": "tokenId", "type": "uint256", "internalType": "uint256" },
-      { "name": "recipient", "type": "address", "internalType": "address" }
+      { "name": "tokenId", "type": "uint256", "internalType": "uint256" }
     ],
     "outputs": [
       { "name": "feesToken0", "type": "uint256", "internalType": "uint256" },
@@ -802,4 +801,4 @@ export const PositionManagerABI = [
       { "name": "caller", "type": "address", "internalType": "address" }
     ]
   }
-];
+]

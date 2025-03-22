@@ -22,7 +22,7 @@ export const collectFees = async (
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "collectFees",
-      args: [tokenId, recipient],
+      args: [tokenId],
     });
     const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
     return {
