@@ -141,3 +141,8 @@ export const multiplyBigIntWithFloat = (big: bigint, num: number): bigint => {
 }
 
 export const toChecksumAddress = (address: string): string => ethers.getAddress(address)
+
+export const roundDown = (num: number, decimals: number) => {
+  const factor = Math.pow(10, decimals);
+  return (Math.floor(num * factor) / factor).toFixed(decimals);
+}

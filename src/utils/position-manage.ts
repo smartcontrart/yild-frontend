@@ -9,7 +9,7 @@ import { getUniswapV3FactoryContractAddressFromChainId, getManagerContractAddres
 import { ERROR_CODES } from "./types";
 import { getERC20TokenBalance, getERC20TokenInfo } from './erc20'
 import { fetchParaswapRoute, fetchTokenPrice, getMaxSlippageForPosition } from "./requests";
-import { multiplyBigIntWithFloat } from "./functions";
+import { multiplyBigIntWithFloat, roundDown } from "./functions";
 
 
 export const collectFees = async (
@@ -79,7 +79,7 @@ export const compoundFees = async (
 
     if (paraswapAPISuccess) {
       _pSwapData0 = paraswapData
-      _minAmountOut0 = BigInt(Number(amountOut0) * (10000 - userMaxSlippage) / 10000)
+      _minAmountOut0 = BigInt(roundDown((Number(amountOut0) * (10000 - userMaxSlippage) / 10000), 0))
     }
     else if (paraswapData.toString().indexOf("too small to proceed") > -1) {
       // return {
@@ -107,7 +107,7 @@ export const compoundFees = async (
 
     if (paraswapAPISuccess) {
       _pSwapData1 = paraswapData
-      _minAmountOut0 = BigInt(Number(amountOut1) * (10000 - userMaxSlippage) / 10000)
+      _minAmountOut1 = BigInt(roundDown((Number(amountOut1) * (10000 - userMaxSlippage) / 10000), 0))
     }
     else if (paraswapData.toString().indexOf("too small to proceed") > -1) {
       // return {
@@ -202,17 +202,17 @@ export const decreaseLiquidity = async (
 
   let _pSwapData0 = "0x", _pSwapData1 = "0x", minAmount0 = 0, minAmount1 = 0
   if (token0Address !== ownerAccountingUnit) {
-    const totalAmount0ToSwap = (parseInt((principal0 + feesEarned0 - protocolFee0).toString()) / 10000 * amountInBPS).toFixed(0)
+    const totalAmount0ToSwap = roundDown((parseInt((principal0 + feesEarned0 - protocolFee0).toString()) / 10000 * amountInBPS), 0)
     const { success: paraswapAPISuccess, data: paraswapData, destAmount } = await fetchParaswapRoute(token0Address, token0Decimals, ownerAccountingUnit, ownerAccountingUnitDecimals, BigInt(totalAmount0ToSwap), chainId, userMaxSlippage, getManagerContractAddressFromChainId(chainId))
-    minAmount0 = parseInt((Number(destAmount) * ((10000 - userMaxSlippage) / 10000)).toFixed(0))
+    minAmount0 = parseInt(roundDown((Number(destAmount) * ((10000 - userMaxSlippage) / 10000)), 0))
     if (paraswapAPISuccess) {
       _pSwapData0 = paraswapData
     }
   }
   if (token1Address !== ownerAccountingUnit) {
-    const totalAmount1ToSwap = (parseInt(principal1) / 10000 * amountInBPS).toFixed(0)
+    const totalAmount1ToSwap = roundDown((parseInt(principal1) / 10000 * amountInBPS), 0)
     const { success: paraswapAPISuccess, data: paraswapData, destAmount } = await fetchParaswapRoute(token1Address, token1Decimals, ownerAccountingUnit, ownerAccountingUnitDecimals, BigInt(totalAmount1ToSwap), chainId, userMaxSlippage, getManagerContractAddressFromChainId(chainId))
-    minAmount1 = parseInt((Number(destAmount) * ((10000 - userMaxSlippage) / 10000)).toFixed(0))
+    minAmount1 = parseInt(roundDown((Number(destAmount) * ((10000 - userMaxSlippage) / 10000)), 0))
 
     if (paraswapAPISuccess) {
       _pSwapData1 = paraswapData
@@ -220,6 +220,7 @@ export const decreaseLiquidity = async (
   }
 
   try {
+    console.log([tokenId, amountInBPS, _pSwapData0, _pSwapData1, minAmount0, minAmount1, userMaxSlippage, userMaxSlippage])
     const hash = await writeContract(wagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
@@ -232,6 +233,7 @@ export const decreaseLiquidity = async (
       result: hash
     }
   } catch (error: any) {
+    console.log(error)
     if (error?.message?.includes("User rejected") || error?.code === 4001) {
       return {
         success: false,
@@ -344,22 +346,28 @@ export const closePosition = async (tokenId: number, chainId: number) => {
   const userMaxSlippage = await getMaxSlippageForPosition(tokenId, chainId)
   const { token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals } = fundsInfo
 
+  console.log({ token0Address, token1Address, token0Decimals, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1, principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals })
+
   const totalAmount0ToSwap = principal0 + feesEarned0 - protocolFee0
   const totalAmount1ToSwap = principal1 + feesEarned1 - protocolFee1
 
+  console.log(totalAmount0ToSwap, totalAmount1ToSwap)
+
   let _pSwapData0 = "0x", _pSwapData1 = "0x", _minBuyAmount0 = BigInt(0), _minBuyAmount1 = BigInt(0)
   if (token0Address !== ownerAccountingUnit) {
+    console.log(token0Address, token0Decimals, ownerAccountingUnit, ownerAccountingUnitDecimals, BigInt(totalAmount0ToSwap), chainId, userMaxSlippage, getManagerContractAddressFromChainId(chainId))
     const { success: paraswapAPISuccess, data: paraswapData, destAmount } = await fetchParaswapRoute(token0Address, token0Decimals, ownerAccountingUnit, ownerAccountingUnitDecimals, BigInt(totalAmount0ToSwap), chainId, userMaxSlippage, getManagerContractAddressFromChainId(chainId))
     if (paraswapAPISuccess) {
       _pSwapData0 = paraswapData
-      _minBuyAmount0 = BigInt((Number(destAmount) * (10000 - userMaxSlippage) / 10000).toFixed(0))
+      _minBuyAmount0 = BigInt(roundDown((Number(destAmount) * (10000 - userMaxSlippage) / 10000), 0))
     }
   }
   if (token1Address !== ownerAccountingUnit) {
+    console.log(token1Address, token1Decimals, ownerAccountingUnit, ownerAccountingUnitDecimals, BigInt(totalAmount1ToSwap), chainId, userMaxSlippage, getManagerContractAddressFromChainId(chainId))
     const { success: paraswapAPISuccess, data: paraswapData, destAmount } = await fetchParaswapRoute(token1Address, token1Decimals, ownerAccountingUnit, ownerAccountingUnitDecimals, BigInt(totalAmount1ToSwap), chainId, userMaxSlippage, getManagerContractAddressFromChainId(chainId))
     if (paraswapAPISuccess) {
       _pSwapData1 = paraswapData
-      _minBuyAmount1 = BigInt((Number(destAmount) * (10000 - userMaxSlippage) / 10000).toFixed(0))
+      _minBuyAmount1 = BigInt(roundDown((Number(destAmount) * (10000 - userMaxSlippage) / 10000), 0))
     }
   }
 
@@ -374,6 +382,7 @@ export const closePosition = async (tokenId: number, chainId: number) => {
   ]
 
   try {
+    console.log(params)
     const hash = await writeContract(wagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),

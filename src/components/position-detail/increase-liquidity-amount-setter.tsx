@@ -3,7 +3,7 @@ import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { ERC20TokenInfo } from "@/utils/constants"
 import { useTokenPrice } from "@/hooks/use-token-price"
-import { getRequiredToken0AmountFromToken1Amount, getRequiredToken1AmountFromToken0Amount, tickToPrice } from "@/utils/functions"
+import { getRequiredToken0AmountFromToken1Amount, getRequiredToken1AmountFromToken0Amount, roundDown, tickToPrice } from "@/utils/functions"
 
 export const IncreaseLiquidityAmountSetter = ({
   token0,
@@ -41,13 +41,13 @@ export const IncreaseLiquidityAmountSetter = ({
       const newToken1Amount = getRequiredToken1AmountFromToken0Amount(priceRatio, priceLower, priceUpper, Number(increaseToken0Amount))
       onValuesChange({
         token0Amount: increaseToken0Amount,
-        token1Amount: parseFloat(newToken1Amount.toFixed(token1.decimals)).toString()
+        token1Amount: parseFloat(roundDown(newToken1Amount, token1.decimals)).toString()
       })
     }
     else {
       const newToken0Amount = getRequiredToken0AmountFromToken1Amount(priceRatio, priceLower, priceUpper, Number(increaseToken1Amount))
       onValuesChange({
-        token0Amount: parseFloat(newToken0Amount.toFixed(token0.decimals)).toString(),
+        token0Amount: parseFloat(roundDown(newToken0Amount, token0.decimals)).toString(),
         token1Amount: increaseToken1Amount
       })
     }

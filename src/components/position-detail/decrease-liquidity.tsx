@@ -19,6 +19,7 @@ import { Input } from "../ui/input";
 import { Skeleton } from "../ui/skeleton";
 import { usePositionFundsInfo } from "@/hooks/use-position-funds-info";
 import { formatUnits } from "viem";
+import { roundDown } from "@/utils/functions";
 
 export const DecreaseLiquidity = ({
   positionId,
@@ -39,7 +40,7 @@ export const DecreaseLiquidity = ({
   const onClickDecreaseLiquidity = async () => {
     if (!positionStaticInfo)
       return
-    const amountInBPS = parseInt((parseFloat(decreaseRatio) * 100).toFixed(0))
+    const amountInBPS = parseInt(roundDown((parseFloat(decreaseRatio) * 100), 0))
     try {
       setPageStatus(POSITION_DETAIL_PAGE_STATE.DECREASING_LIQUIDITY);
       const { success, result } = await decreaseLiquidity(positionId, chainId, amountInBPS);

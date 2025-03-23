@@ -1,7 +1,7 @@
 import { ERC20TokenInfo } from "@/utils/constants"
 import { Input } from "../ui/input"
 import { useEffect, useState } from "react"
-import { getRequiredToken0AmountFromToken1Amount, getRequiredToken1AmountFromToken0Amount, reArrangeTokensByContractAddress, tickToPrice } from "@/utils/functions"
+import { getRequiredToken0AmountFromToken1Amount, getRequiredToken1AmountFromToken0Amount, reArrangeTokensByContractAddress, roundDown, tickToPrice } from "@/utils/functions"
 import TokenLiveBalance from "../token/token-live-balance"
 import { useAccount } from "wagmi"
 import { useTokenBalance } from "@/hooks/use-token-balance"
@@ -43,17 +43,17 @@ export const AmountSetter = ({
     
     if (isUserEditingForToken0) {
       const newToken1Amount = getRequiredToken1AmountFromToken0Amount(priceRatio, priceLower, priceUpper, Number(token0Amount))
-      setToken1Amount(parseFloat(newToken1Amount.toFixed(token1SortedByCA.decimals)).toString())
+      setToken1Amount(parseFloat(roundDown(newToken1Amount, token1SortedByCA.decimals)).toString())
       onAmountsChange({
         token0Amount: Number(token0Amount),
-        token1Amount: parseFloat(newToken1Amount.toFixed(token1SortedByCA.decimals)),
+        token1Amount: parseFloat(roundDown(newToken1Amount, token1SortedByCA.decimals)),
       })
     }
     else {
       const newToken0Amount = getRequiredToken0AmountFromToken1Amount(priceRatio, priceLower, priceUpper, Number(token1Amount))
-      setToken0Amount(parseFloat(newToken0Amount.toFixed(token0SortedByCA.decimals)).toString())
+      setToken0Amount(parseFloat(roundDown(newToken0Amount, token0SortedByCA.decimals)).toString())
       onAmountsChange({
-        token0Amount: parseFloat(newToken0Amount.toFixed(token0SortedByCA.decimals)),
+        token0Amount: parseFloat(roundDown(newToken0Amount, token0SortedByCA.decimals)),
         token1Amount: Number(token1Amount)
       })
     }
