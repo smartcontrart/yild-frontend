@@ -233,7 +233,6 @@ export const decreaseLiquidity = async (
       simulationSuccess = true
   } catch (error) {
     console.log(error)
-    return
   }
 
   if (!simulationSuccess) {
