@@ -231,15 +231,16 @@ export const decreaseLiquidity = async (
     });
     if (simulation && simulation.result)
       simulationSuccess = true
-  } catch (error) { }
+  } catch (error) {
+    console.log(error)
+    return
+  }
 
   if (!simulationSuccess) {
-    console.log(`Paraswap simulation failed, doing on Uniswap...`)
     params = [tokenId, amountInBPS, "0x", "0x", minAmount0, minAmount1, userMaxSlippage, userMaxSlippage]
   }
 
   try {
-    console.log(params)
     const hash = await writeContract(wagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
@@ -405,7 +406,9 @@ export const closePosition = async (tokenId: number, chainId: number) => {
     if (simulation && simulation.result) {
       simulationSuccess = true;
     }
-  } catch (error) {}
+  } catch (error) {
+    console.log(error)
+  }
 
   // if simulation fails, we swap on Uniswap
   if (!simulationSuccess) {

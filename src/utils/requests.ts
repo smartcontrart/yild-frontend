@@ -55,7 +55,7 @@ export const fetchParaswapRoute = async (
   userAddress: string
 ) => {
   try {
-    const response = await fetch(`${PARASWAP_API_URL}&srcToken=${srcToken}&srcDecimals=${srcDecimals}&destToken=${destToken}&destDecimals=${destDecimals}&amount=${roundDown(Number(amount), 0)}&side=SELL&network=${chainId}&slippage=${slippage}&userAddress=${userAddress}`);
+    const response = await fetch(`${PARASWAP_API_URL}&srcToken=${srcToken}&srcDecimals=${srcDecimals}&destToken=${destToken}&destDecimals=${destDecimals}&amount=${roundDown(Number(amount) * 0.999, 0)}&side=SELL&network=${chainId}&slippage=${slippage}&userAddress=${userAddress}`);
     const response_json = await response.json();
     if (response_json && response_json.txParams && response_json.priceRoute) {
       const { data } = response_json.txParams;
