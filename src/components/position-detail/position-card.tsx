@@ -63,13 +63,13 @@ export const PositionCard = ({
                     direction === "0p1" ? 
                     (
                       <div className="ml-4">
-                        Range: {Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals).toFixed(4)) * Number(token1Price)} ~ {Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals).toFixed(4)) * Number(token1Price)}
+                        Range: {Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals)) * Number(token1Price)} ~ {Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals)) * Number(token1Price)}
                       </div>
                     )
                     :
                     (
                       <div className="ml-4">
-                        Range: {Number(Number(1 / Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals))).toFixed(4)) * Number(token0Price)} ~ {Number(Number(1 / Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals))).toFixed(4)) * Number(token0Price)}
+                        Range: {Number(1 / Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals))) * Number(token0Price)} ~ {Number(1 / Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals))) * Number(token0Price)}
                       </div>
                     )
                   }

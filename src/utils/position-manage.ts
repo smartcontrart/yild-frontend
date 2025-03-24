@@ -54,8 +54,8 @@ export const compoundFees = async (
       result: ERROR_CODES.UNKNOWN_ERROR
     }
 
-  // const userMaxSlippage = await getMaxSlippageForPosition(tokenId, chainId)
-  const userMaxSlippage = 2000
+  const userMaxSlippage = await getMaxSlippageForPosition(tokenId, chainId)
+  // const userMaxSlippage = 2000
 
   const { principal0, principal1, token0Address, token0Decimals, token1Address, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1 } = fundsInfo
 
@@ -90,11 +90,11 @@ export const compoundFees = async (
     else if (paraswapData === "not enough liquidity") {
       _pSwapData1 = "0x"
     }
-    else
-      return {
-        success: false,
-        result: ERROR_CODES.UNKNOWN_ERROR
-      }
+    // else
+    //   return {
+    //     success: false,
+    //     result: ERROR_CODES.UNKNOWN_ERROR
+    //   }
   }
   else if (expectedAmount0 > availableAmount0) {
     const swapAmount1 = BigInt((
@@ -118,19 +118,35 @@ export const compoundFees = async (
     else if (paraswapData === "not enough liquidity") {
       _pSwapData1 = "0x"
     }
-    else
-      return {
-        success: false,
-        result: ERROR_CODES.UNKNOWN_ERROR
-      }
+    // else
+    //   return {
+    //     success: false,
+    //     result: ERROR_CODES.UNKNOWN_ERROR
+    //   }
   }
   
+  let params = [tokenId, _pSwapData0, _pSwapData1, _minAmountOut0, _minAmountOut1, _token0MaxSlippage, _token1MaxSlippage]
+  let simulationSuccess = false
+  try {
+    const simulation = await simulateContract(wagmiConfig, {
+      abi: PositionManagerABI,
+      address: getManagerContractAddressFromChainId(chainId),
+      functionName: "compoundPosition",
+      args: params,
+    })
+    if (simulation && simulation.result)
+      simulationSuccess = true
+  } catch (error) { }
+
+  if (!simulationSuccess)
+    params = [tokenId, "0x", "0x", 0, 0, _token0MaxSlippage, _token1MaxSlippage]
+
   try {
     const hash = await writeContract(wagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "compoundPosition",
-      args: [tokenId, _pSwapData0, _pSwapData1, _minAmountOut0, _minAmountOut1, _token0MaxSlippage, _token1MaxSlippage],
+      args: params,
     });
     const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
     return {
@@ -158,11 +174,12 @@ export const increaseLiquidity = async (
 ) => {
   try {
     const { tokenId, amount0, amount1, decimals0, decimals1 } = data
+    const userMaxSlippage = await getMaxSlippageForPosition(tokenId, chainId)
     const hash = await writeContract(wagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "increaseLiquidity",
-      args: [parseInt(tokenId), parseUnits(amount0, decimals0), parseUnits(amount1, decimals1), 9500, 9500],
+      args: [parseInt(tokenId), parseUnits(amount0, decimals0), parseUnits(amount1, decimals1), 5000, 5000],
     });
     const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
     return {
