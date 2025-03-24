@@ -196,7 +196,6 @@ export const decreaseLiquidity = async (
       result: ERROR_CODES.UNKNOWN_ERROR
     }
 
-  console.log(fundsInfo)
   const userMaxSlippage = await getMaxSlippageForPosition(tokenId, chainId)
 
   const { principal0, principal1, ownerAccountingUnit, ownerAccountingUnitDecimals, token0Address, token0Decimals, token1Address, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1 } = fundsInfo
