@@ -98,20 +98,20 @@ export const compoundFees = async (
 
   let params = [tokenId, _pSwapData0, _pSwapData1, _minAmountOut0, _minAmountOut1, _token0MaxSlippage, _token1MaxSlippage]
 
-  // let simulationSuccess = false
-  // try {
-  //   const simulation = await simulateContract(wagmiConfig, {
-  //     abi: PositionManagerABI,
-  //     address: getManagerContractAddressFromChainId(chainId),
-  //     functionName: "compoundPosition",
-  //     args: params,
-  //   })
-  //   if (simulation && simulation.result)
-  //     simulationSuccess = true
-  // } catch (error) { }
+  let simulationSuccess = false
+  try {
+    const simulation = await simulateContract(wagmiConfig, {
+      abi: PositionManagerABI,
+      address: getManagerContractAddressFromChainId(chainId),
+      functionName: "compoundPosition",
+      args: params,
+    })
+    if (simulation && simulation.result)
+      simulationSuccess = true
+  } catch (error) { }
 
-  // if (!simulationSuccess)
-  //   params = [tokenId, "0x", "0x", 0, 0, _token0MaxSlippage, _token1MaxSlippage]
+  if (!simulationSuccess)
+    params = [tokenId, "0x", "0x", 0, 0, _token0MaxSlippage, _token1MaxSlippage]
 
   try {
     const hash = await writeContract(wagmiConfig, {
