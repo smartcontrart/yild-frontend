@@ -31,7 +31,7 @@ export const CompoundPosition = ({
   const onClickCompound = async () => {
     try {
       setPageStatus(POSITION_DETAIL_PAGE_STATE.COMPOUNDING_POSITION)
-      const { success, result } = await compoundFees(positionId, chainId)
+      const { success, result } = await compoundFees(address || "", positionId, chainId)
       if (success) {
         setPageStatus(POSITION_DETAIL_PAGE_STATE.POSITION_COMPOUNDED)
       }

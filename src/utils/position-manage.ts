@@ -4,11 +4,12 @@ import { writeContract, waitForTransactionReceipt, readContract, simulateContrac
 import { parseUnits } from "viem";
 
 import { PositionManagerABI } from "@/abi/PositionManager";
+import { LiquidityMathABI } from "@/abi/LiquidityMath";
 
-import { getManagerContractAddressFromChainId } from "./constants";
+import { getLiquidityMathContractAddressFromChainId, getManagerContractAddressFromChainId } from "./constants";
 import { ERROR_CODES } from "./types";
 import { getERC20TokenInfo } from './erc20'
-import { fetchParaswapRoute, fetchTokenPrice, getMaxSlippageForPosition } from "./requests";
+import { fetchParaswapRoute, fetchTokenPrice, getMaxSlippageForPosition, getPositionStaticInfo } from "./requests";
 import { multiplyBigIntWithFloat, roundDown } from "./functions";
 
 
@@ -44,6 +45,7 @@ export const collectFees = async (
 }
 
 export const compoundFees = async (
+  userAddress: string,
   tokenId: number,
   chainId: number,
 ) => {
@@ -54,92 +56,62 @@ export const compoundFees = async (
       result: ERROR_CODES.UNKNOWN_ERROR
     }
 
+  const poolInfo = await getPositionStaticInfo(userAddress, tokenId, chainId)
+  if (!poolInfo)
+    return {
+      success: false,
+      result: ERROR_CODES.UNKNOWN_ERROR
+    }
+  const { poolAddress, tickLower, tickUpper } = poolInfo
+
   const userMaxSlippage = await getMaxSlippageForPosition(tokenId, chainId)
-  // const userMaxSlippage = 2000
 
   const { principal0, principal1, token0Address, token0Decimals, token1Address, token1Decimals, feesEarned0, feesEarned1, protocolFee0, protocolFee1 } = fundsInfo
 
   const availableAmount0 = feesEarned0 - protocolFee0
   const availableAmount1 = feesEarned1 - protocolFee1
 
-  const expectedAmount0 = principal0 * availableAmount1 / principal1
+  const rebalanceData: any = await readContract(wagmiConfig, {
+    abi: LiquidityMathABI, 
+    address: getLiquidityMathContractAddressFromChainId(chainId), 
+    functionName: "calculateRebalanceData",
+    args: [poolAddress, tickLower, tickUpper, availableAmount0, availableAmount1]
+  })
+
+  const { swapAmount0, swapAmount1, sell0For1 } = rebalanceData
 
   let _pSwapData0 = "0x", _pSwapData1 = "0x", _token0MaxSlippage = userMaxSlippage, _token1MaxSlippage = userMaxSlippage, _minAmountOut0 = BigInt(0), _minAmountOut1 = BigInt(0)
-  const price0 = await fetchTokenPrice(token0Address, chainId)
-  const price1 = await fetchTokenPrice(token1Address, chainId)
-
-  if (expectedAmount0 < availableAmount0) {
-    const swapAmount0 = BigInt((
-      (availableAmount0 * principal1) - (availableAmount1 * principal0)
-    ) / (
-      (multiplyBigIntWithFloat(principal0, price0 / price1)) + principal1
-    ))
-
+  if (sell0For1) {
     const { success: paraswapAPISuccess, data: paraswapData, destAmount: amountOut0 } = await fetchParaswapRoute(token0Address, token0Decimals, token1Address, token1Decimals, swapAmount0, chainId, _token0MaxSlippage, getManagerContractAddressFromChainId(chainId))
-
     if (paraswapAPISuccess) {
       _pSwapData0 = paraswapData
       _minAmountOut0 = BigInt(roundDown((Number(amountOut0) * (10000 - userMaxSlippage) / 10000), 0))
     }
-    else if (paraswapData.toString().indexOf("too small to proceed") > -1) {
-      // return {
-      //   success: false,
-      //   result: ERROR_CODES.NOT_ENOUGH_FEES_EARNED
-      // }
-    }
-    else if (paraswapData === "not enough liquidity") {
-      _pSwapData1 = "0x"
-    }
-    // else
-    //   return {
-    //     success: false,
-    //     result: ERROR_CODES.UNKNOWN_ERROR
-    //   }
   }
-  else if (expectedAmount0 > availableAmount0) {
-    const swapAmount1 = BigInt((
-      (availableAmount1 * principal0) - (availableAmount0 * principal1)
-    ) / (
-      (multiplyBigIntWithFloat(principal1, price0 / price1)) + principal0
-    ))
-
+  else {
     const { success: paraswapAPISuccess, data: paraswapData, destAmount: amountOut1 } = await fetchParaswapRoute(token1Address, token1Decimals, token0Address, token0Decimals, swapAmount1, chainId, _token1MaxSlippage, getManagerContractAddressFromChainId(chainId))
-
     if (paraswapAPISuccess) {
       _pSwapData1 = paraswapData
       _minAmountOut1 = BigInt(roundDown((Number(amountOut1) * (10000 - userMaxSlippage) / 10000), 0))
     }
-    else if (paraswapData.toString().indexOf("too small to proceed") > -1) {
-      // return {
-      //   success: false,
-      //   result: ERROR_CODES.NOT_ENOUGH_FEES_EARNED
-      // }
-    }
-    else if (paraswapData === "not enough liquidity") {
-      _pSwapData1 = "0x"
-    }
-    // else
-    //   return {
-    //     success: false,
-    //     result: ERROR_CODES.UNKNOWN_ERROR
-    //   }
   }
-  
-  let params = [tokenId, _pSwapData0, _pSwapData1, _minAmountOut0, _minAmountOut1, _token0MaxSlippage, _token1MaxSlippage]
-  let simulationSuccess = false
-  try {
-    const simulation = await simulateContract(wagmiConfig, {
-      abi: PositionManagerABI,
-      address: getManagerContractAddressFromChainId(chainId),
-      functionName: "compoundPosition",
-      args: params,
-    })
-    if (simulation && simulation.result)
-      simulationSuccess = true
-  } catch (error) { }
 
-  if (!simulationSuccess)
-    params = [tokenId, "0x", "0x", 0, 0, _token0MaxSlippage, _token1MaxSlippage]
+  let params = [tokenId, _pSwapData0, _pSwapData1, _minAmountOut0, _minAmountOut1, _token0MaxSlippage, _token1MaxSlippage]
+
+  // let simulationSuccess = false
+  // try {
+  //   const simulation = await simulateContract(wagmiConfig, {
+  //     abi: PositionManagerABI,
+  //     address: getManagerContractAddressFromChainId(chainId),
+  //     functionName: "compoundPosition",
+  //     args: params,
+  //   })
+  //   if (simulation && simulation.result)
+  //     simulationSuccess = true
+  // } catch (error) { }
+
+  // if (!simulationSuccess)
+  //   params = [tokenId, "0x", "0x", 0, 0, _token0MaxSlippage, _token1MaxSlippage]
 
   try {
     const hash = await writeContract(wagmiConfig, {
