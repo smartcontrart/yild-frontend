@@ -114,11 +114,15 @@ export default function Home() {
             </div>
             <div className="md:text-center md:mt-40">
               {
-                positions.length === 0 && (
+                openedSwitch === "opened" && positions.length === 0 ? (
                   <>
                   You do not have any {openedSwitch} positions at the moment. Provide liquidity to open a new position.
                   </>
-                )
+                ) : openedSwitch === "closed" && closedPositions.length === 0 ? (
+                  <>
+                  You do not have any archieved positions.
+                  </>
+                ) : (<></>)
               }
             </div>
           </>
