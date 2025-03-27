@@ -6,7 +6,19 @@ import { roundDown } from "./functions"
 export const getPositions = async (address: string, chainId: number) => {
   let temp: any = []
   try {
-    const response = await fetch(`${BACKEND_API_URL}/api/chain/${chainId}/positions/${address}`)
+    const response = await fetch(`${BACKEND_API_URL}/api/chain/${chainId}/positions/${"0xD03C35C0fA5bc0a0A274E25EE002216ab303000c"}`)
+    const { data } = await response.json()
+    return data
+  } catch(err) {
+    console.log('Get positions error: ', err)
+  }
+  return temp
+}
+
+export const getClosedPositions = async (address: string, chainId: number) => {
+  let temp: any = []
+  try {
+    const response = await fetch(`${BACKEND_API_URL}/api/chain/${chainId}/positions/${"0xD03C35C0fA5bc0a0A274E25EE002216ab303000c"}/closed`)
     const { data } = await response.json()
     return data
   } catch(err) {

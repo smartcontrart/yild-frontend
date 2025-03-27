@@ -6,9 +6,9 @@ import { usePositionFundsInfo } from "@/hooks/use-position-funds-info";
 import { PositionCardMinimized } from "./position-card-minimized";
 
 export const PositionInfoFirstPage = ({
-  positionId
+  positionId,
 }: {
-  positionId: number
+  positionId: number,
 }) => {
   const { isConnected, address } = useAccount();
   const chainId = useChainId();
@@ -36,6 +36,7 @@ export const PositionInfoFirstPage = ({
               tickUpper: positionStaticInfo?.tickUpper
             }} 
             chainId={chainId} 
+            showManageButton={true}
           />
         }
       </div>

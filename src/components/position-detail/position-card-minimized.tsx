@@ -14,12 +14,14 @@ export const PositionCardMinimized = ({
   data,
   positionId,
   staticInfo,
-  chainId
+  chainId,
+  showManageButton
 }: {
   data: any,
   positionId: number,
   staticInfo: any,
-  chainId: number
+  chainId: number,
+  showManageButton: boolean
 }) => {
   if (!data || !chainId)
     return <Skeleton className="h-[215px] rounded-xl" />
@@ -45,7 +47,7 @@ export const PositionCardMinimized = ({
               </h3>
             </div>
             <Link href={`/positions/${positionId}`} target="_self">
-              <Button variant="ghost" size="sm">
+              <Button className={showManageButton ? "" : "hidden"} variant="ghost" size="sm">
                 <Wrench />
                 <span className="font-semibold">Manage</span>
               </Button>

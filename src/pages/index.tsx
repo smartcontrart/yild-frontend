@@ -5,15 +5,19 @@ import { Coins, Plus, WavesLadder } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAccount, useChainId } from "wagmi";
-import { getPositions } from "@/utils/requests";
+import { getClosedPositions, getPositions } from "@/utils/requests";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { YildLoading } from "@/components/global/yild-loading";
 import { PositionInfoFirstPage } from "@/components/position-detail/position-info-firstpage";
+import { ClosedPosition } from "@/components/position-detail/closed-position";
 
 export default function Home() {
   const { isConnected, address, isDisconnected } = useAccount();
   const chainId = useChainId();
+  const [openedSwitch, setOpenedSwitch] = useState("opened")
   const [positions, setPositions] = useState([])
+  const [closedPositions, setClosedPositions] = useState([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -22,6 +26,8 @@ export default function Home() {
         setLoading(true)
         const positionsData = await getPositions(address as `0x${string}`, chainId) || []
         setPositions(positionsData)
+        const closedPostionsData = await getClosedPositions(address as `0x${string}`, chainId) || []
+        setClosedPositions(closedPostionsData)
       } catch (err) {
         console.error('Error fetching positions:', err)
         setPositions([])
@@ -62,6 +68,18 @@ export default function Home() {
           </Button>
         </Link>
       </div>
+      <Tabs
+        value={openedSwitch}
+        onValueChange={(value: string) => {
+          setOpenedSwitch(value)
+        }}
+        className="w-full"
+      >
+        <TabsList>
+          <TabsTrigger value="opened">Open Positions</TabsTrigger>
+          <TabsTrigger value="closed">Closed Positions</TabsTrigger>
+        </TabsList>
+      </Tabs>
       {
         loading ? 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -75,19 +93,30 @@ export default function Home() {
           <>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {
-                positions.length > 0 && positions.map((positionData:any, i) =>
+                (openedSwitch === "opened" && positions.length > 0) && positions.map((positionData:any, i) =>
                   <PositionInfoFirstPage
                     key={i}
                     positionId={positionData.tokenId}
                   />
-                  )
-                }
+                )
+              }
+              {
+                (openedSwitch === "closed" && closedPositions.length > 0) && closedPositions.map((positionData:any, i) =>
+                  <ClosedPosition
+                    key={i}
+                    positionId={positionData.tokenId}
+                    poolAddress={positionData.poolAddress}
+                    tickLower={positionData.lowerTick}
+                    tickUpper={positionData.upperTick}
+                  />
+                )
+              }
             </div>
             <div className="md:text-center md:mt-40">
               {
                 positions.length === 0 && (
                   <>
-                  You do not have any open positions at the moment. Provide liquidity to open a new position.
+                  You do not have any {openedSwitch} positions at the moment. Provide liquidity to open a new position.
                   </>
                 )
               }
