@@ -21,8 +21,8 @@ export const SUPPORTED_CHAINS = [
     name: "arbitrum",
     secondaryRPC: "https://rpc.ankr.com/arbitrum",
     explorerURL: "https://arbiscan.io",
-    positionManager: "0x0000000000000000000000000000000000000000" as `0x${string}`,
-    liquidityMath: "0x0000000000000000000000000000000000000000" as `0x${string}`,
+    positionManager: "0x0609446827ab693779ECEA7DFA7778352f4E4464" as `0x${string}`,
+    liquidityMath: "0x3cf31d8a2F2504111EEbc6281777D0Fc3a07B156" as `0x${string}`,
     uniswapFactory: "0x1F98431c8aD98523631AE4a59f267346ea31F984" as `0x${string}`,
     defaultTokens: [
       {
