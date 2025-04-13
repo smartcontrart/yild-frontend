@@ -28,6 +28,14 @@ const nextConfig = {
         port: ''
       }
     ]
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/proxy/:path*',
+        destination: 'https://api.yild.finance/api/:path*'
+      }
+    ]
   }
 };
 

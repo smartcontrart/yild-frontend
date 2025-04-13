@@ -6,7 +6,7 @@ import { roundDown } from "./functions"
 export const getPositions = async (address: string, chainId: number) => {
   let temp: any = []
   try {
-    const response = await fetch(`${BACKEND_API_URL}/api/chain/${chainId}/positions/${address}`)
+    const response = await fetch(`${BACKEND_API_URL}/positions/${address}`)
     const { data } = await response.json()
     return data
   } catch(err) {
@@ -18,7 +18,7 @@ export const getPositions = async (address: string, chainId: number) => {
 export const getClosedPositions = async (address: string, chainId: number) => {
   let temp: any = []
   try {
-    const response = await fetch(`${BACKEND_API_URL}/api/chain/${chainId}/positions/${address}/closed`)
+    const response = await fetch(`${BACKEND_API_URL}/positions/${address}/closed`)
     const { data } = await response.json()
     return data
   } catch(err) {
@@ -108,7 +108,7 @@ export const fetchTokenPrice = async (tokenAddress: string, chainId: number) => 
 
 export const sendClosePositionReport = async (userAddress: string, chainId: number, positionId: number) => {
   try {
-    const response = await fetch(`${BACKEND_API_URL}/api/chain/${chainId}/positions/${positionId}/close`, {
+    const response = await fetch(`${BACKEND_API_URL}/positions/${positionId}/close`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -125,7 +125,7 @@ export const sendClosePositionReport = async (userAddress: string, chainId: numb
 
 export const getMaxSlippageForPosition = async (positionId: number, chainId: number): Promise<number> => {
   try {
-    const response = await fetch(`${BACKEND_API_URL}/api/chain/${chainId}/positions/${positionId}/maxSlippage`, {
+    const response = await fetch(`${BACKEND_API_URL}/positions/${positionId}/maxSlippage`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -142,7 +142,7 @@ export const getMaxSlippageForPosition = async (positionId: number, chainId: num
 
 export const updateMaxSlippageForPosition = async (positionId: number, chainId: number, maxSlippage: number): Promise<boolean> => {
   try {
-    const response = await fetch(`${BACKEND_API_URL}/api/chain/${chainId}/positions/${positionId}/updateMaxSlippage`, {
+    const response = await fetch(`${BACKEND_API_URL}/positions/${positionId}/updateMaxSlippage`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
