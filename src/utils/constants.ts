@@ -8,7 +8,8 @@ export const USER_ERC_TOKEN_BALANCE_FETCH_INTERVAL = 15000
 export const POSITION_INFO_FETCH_INTERVAL = 60000
 export const POOL_DATA_FETCH_INTERVAL = 300000
 
-export const BACKEND_API_URL = "https://api.yild.finance";
+// export const BACKEND_API_URL = "https://api.yild.finance/api";
+export const BACKEND_API_URL = "/api/proxy";
 export const PARASWAP_API_URL = "https://api.paraswap.io/swap?version=6.2"
 export const COINGECKO_PUBLIC_API_URL = "https://api.coingecko.com/api/v3"
 export const UNISWAP_GITHUB_CLOUD_URL = "https://raw.githubusercontent.com/Uniswap/assets/master/blockchains"
@@ -21,7 +22,7 @@ export const SUPPORTED_CHAINS = [
     name: "arbitrum",
     secondaryRPC: "https://rpc.ankr.com/arbitrum",
     explorerURL: "https://arbiscan.io",
-    positionManager: "0x0609446827ab693779ECEA7DFA7778352f4E4464" as `0x${string}`,
+    positionManager: "0xad0CA4223CB8b7B1A18BD6AF99Dc942251d227Aa" as `0x${string}`,
     liquidityMath: "0x3cf31d8a2F2504111EEbc6281777D0Fc3a07B156" as `0x${string}`,
     uniswapFactory: "0x1F98431c8aD98523631AE4a59f267346ea31F984" as `0x${string}`,
     defaultTokens: [
@@ -56,8 +57,8 @@ export const SUPPORTED_CHAINS = [
     name: "base",
     secondaryRPC: "https://rpc.ankr.com/base",
     explorerURL: "https://basescan.org",
-    positionManager: "0x0115408f82c87322cb1f9ff54dd6c32ecb09fef7" as `0x${string}`,
-    liquidityMath: "0x322CcFa790b6EF619E1fb69115E349D306DbA1A7" as `0x${string}`,
+    positionManager: "0x4fa2C2a6b46fC8E7a79cc15B115d9F80Ca7fCf6a" as `0x${string}`,
+    liquidityMath: "0x3cf31d8a2F2504111EEbc6281777D0Fc3a07B156" as `0x${string}`,
     uniswapFactory: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD" as `0x${string}`,
     defaultTokens: [
       {
