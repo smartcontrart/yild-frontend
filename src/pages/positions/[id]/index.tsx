@@ -28,8 +28,10 @@ export default function PositionPage() {
   useEffect(() => {
     const switchPromise = async () => {
       if (router.query.chain) {
-        await switchChain({ chainId: Number(router.query.chain)})
-        await connect({ connector: connectors[0] })
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: Number(router.query.chain) === 8453 ? "0x2105" : "0xA4B1" }], // Chain ID in hex
+        });
       }
     }
     switchPromise()
