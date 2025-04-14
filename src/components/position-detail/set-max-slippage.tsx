@@ -31,7 +31,7 @@ export const SetMaxSlippage = ({
   const { isConnected, address } = useAccount();
   const [maxSlippageInput, setMaxSlippageInput] = useState("")
   const [currentMaxSlippage, setCurrentMaxSlippage] = useState(0)
-  const { data: positionStaticInfo, isLoading: isPositionStaticInfoLoading } = usePositionStaticInfo(address || "", positionId, chainId)
+  const { data: positionStaticInfo, isLoading: isPositionStaticInfoLoading } = usePositionStaticInfo(address || "", positionId)
   const [dialogOpen, setDialogOpen] = useState(false)
 
   useEffect(() => {

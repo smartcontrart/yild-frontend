@@ -98,6 +98,7 @@ export const RangeAndAmountSetter = ({
               data.token0Amount && onInfoChange({ token0Amount: data.token0Amount })
               data.token1Amount && onInfoChange({ token1Amount: data.token1Amount })
             }}
+            chainId={chainId}
           />
         </>
         : <></>

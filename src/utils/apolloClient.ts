@@ -6,7 +6,7 @@ export const mainnetClient = new ApolloClient({
 });
 
 export const arbitrumClient = new ApolloClient({
-  uri: `https://gateway.thegraph.com/api/${process.env.NEXT_PUBLIC_SUBGRAPH_API_KEY}/subgraphs/id/FQ6JYszEKApsBpAmiHesRsd9Ygc6mzmpNRANeVQFYoVX`,
+  uri: `https://gateway.thegraph.com/api/${process.env.NEXT_PUBLIC_SUBGRAPH_API_KEY}/subgraphs/id/FbCGRftH4a3yZugY7TnbYgPJVEv2LvMT6oF1fxPe9aJM`,
   cache: new InMemoryCache(),
 });
 

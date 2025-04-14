@@ -1,5 +1,5 @@
 import { writeContract, waitForTransactionReceipt, readContract } from "@wagmi/core";
-import { config as wagmiConfig } from "@/components/global/providers";
+import { config as wagmiConfig, baseWagmiConfig, arbitrumWagmiConfig } from "@/components/global/providers";
 import { erc20Abi, parseUnits } from "viem";
 import { ERROR_CODES } from "./types";
 import { ERC20TokenInfo } from "./constants";
@@ -8,17 +8,17 @@ export const getERC20TokenInfo = async (address: string, chainId: number): Promi
   try {
     const contractAddress = address as `0x${string}`
     const [name, symbol, decimals] = await Promise.all([
-      readContract(wagmiConfig, {
+      readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
         abi: erc20Abi, 
         address: contractAddress as `0x${string}`, 
         functionName: "name",
       }),
-      readContract(wagmiConfig, {
+      readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
         abi: erc20Abi, 
         address: contractAddress as `0x${string}`, 
         functionName: "symbol",
       }),
-      readContract(wagmiConfig, {
+      readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
         abi: erc20Abi, 
         address: contractAddress as `0x${string}`, 
         functionName: "decimals",
@@ -114,9 +114,9 @@ export const approveToken = async (userAddress: string, tokenAddress: string, sp
   };
 }
 
-export const getERC20TokenBalance = async (tokenAddress: string, holderAddress: string) => {
+export const getERC20TokenBalance = async (tokenAddress: string, holderAddress: string, chainId: number) => {
   if (tokenAddress && holderAddress) {
-    const balance = await readContract(wagmiConfig, {
+    const balance = await readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: erc20Abi, 
       address: tokenAddress as `0x${string}`, 
       functionName: "balanceOf",

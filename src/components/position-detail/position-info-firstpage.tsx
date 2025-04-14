@@ -7,12 +7,13 @@ import { PositionCardMinimized } from "./position-card-minimized";
 
 export const PositionInfoFirstPage = ({
   positionId,
+  chainId
 }: {
   positionId: number,
+  chainId: number
 }) => {
   const { isConnected, address } = useAccount();
-  const chainId = useChainId();
-  const { data: positionStaticInfo, isLoading: isPositionStaticInfoLoading } = usePositionStaticInfo(address || "", positionId, chainId)
+  const { data: positionStaticInfo, isLoading: isPositionStaticInfoLoading } = usePositionStaticInfo(address || "", positionId)
   const { data: positionFundsInfo, isLoading: isPositionFundsInfoLoading } = usePositionFundsInfo(positionId, chainId)
 
   if (!isConnected || !isPositionStaticInfoLoading && !positionStaticInfo) 
@@ -35,7 +36,6 @@ export const PositionInfoFirstPage = ({
               tickLower: positionStaticInfo?.tickLower,
               tickUpper: positionStaticInfo?.tickUpper
             }} 
-            chainId={chainId} 
             showManageButton={true}
           />
         }

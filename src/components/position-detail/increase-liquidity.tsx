@@ -32,7 +32,7 @@ export const IncreaseLiquidity = ({
   const { isConnected, address } = useAccount();
   const [increaseToken0Amount, setIncreaseToken0Amount] = useState("")
   const [increaseToken1Amount, setIncreaseToken1Amount] = useState("")
-  const { data: positionStaticInfo, isLoading: isPositionStaticInfoLoading } = usePositionStaticInfo(address || "", positionId, chainId)
+  const { data: positionStaticInfo, isLoading: isPositionStaticInfoLoading } = usePositionStaticInfo(address || "", positionId)
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const onClickIncreaseLiquidity = async () => {

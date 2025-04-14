@@ -5,32 +5,30 @@ import { useTokenPrice } from "@/hooks/use-token-price"
 import { useTokenMeta } from "@/hooks/use-token-meta"
 import { formatUnits } from "viem"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "../ui/button"
 import { HandCoins, Wrench } from "lucide-react"
-import ERC20Image from "../common/erc20-image"
 import { usePoolData } from "@/hooks/use-pool-data"
 
 export const PositionCardMinimized = ({
   data,
   positionId,
   staticInfo,
-  chainId,
   showManageButton
 }: {
   data: any,
   positionId: number,
   staticInfo: any,
-  chainId: number,
   showManageButton: boolean
 }) => {
-  if (!data || !chainId)
+  if (!data)
     return <Skeleton className="h-[215px] rounded-xl" />
   
-  const { data: token0Price, isLoading: token0PriceLoading} = useTokenPrice(data.token0Address, chainId)
-  const { data: token1Price, isLoading: token1PriceLoading} = useTokenPrice(data.token1Address, chainId)
-  const { data: token0, isLoading: token0MetaDataLoading} = useTokenMeta(data.token0Address, chainId)
-  const { data: token1, isLoading: token1MetaDataLoading} = useTokenMeta(data.token1Address, chainId)
-  const { data: poolData, isLoading: poolDataLoading } = usePoolData(staticInfo.poolAddress, chainId)
+  const { data: token0Price, isLoading: token0PriceLoading} = useTokenPrice(data.token0Address, staticInfo.chainId)
+  const { data: token1Price, isLoading: token1PriceLoading} = useTokenPrice(data.token1Address, staticInfo.chainId)
+  const { data: token0, isLoading: token0MetaDataLoading} = useTokenMeta(data.token0Address, staticInfo.chainId)
+  const { data: token1, isLoading: token1MetaDataLoading} = useTokenMeta(data.token1Address, staticInfo.chainId)
+  const { data: poolData, isLoading: poolDataLoading } = usePoolData(staticInfo.poolAddress, staticInfo.chainId)
   
   return (
     <>
@@ -45,8 +43,15 @@ export const PositionCardMinimized = ({
               <h3 className="font-semibold">
                 {positionId}
               </h3>
+              <Image 
+                src={`/chainIcons/${staticInfo.chainId}.png`} 
+                className='ml-1 h-5 w-5 rounded-full' 
+                width={256} 
+                height={256} 
+                alt='NA' 
+              />
             </div>
-            <Link href={`/positions/${positionId}`} target="_self">
+            <Link href={`/positions/${positionId}?chain=${staticInfo.chainId}`} target="_self">
               <Button className={showManageButton ? "" : "hidden"} variant="ghost" size="sm">
                 <Wrench />
                 <span className="font-semibold">Manage</span>
@@ -58,14 +63,6 @@ export const PositionCardMinimized = ({
               (data.tickLower && data.tickUpper) ?
               <div className="flex flex-col gap-2">
                 <div className="flex flex-row gap-0">
-                  {/* <ERC20Image 
-                    chainId={chainId}
-                    tokenAddress={token0?.address}
-                  />
-                  <ERC20Image 
-                    chainId={chainId}
-                    tokenAddress={token1?.address}
-                  /> */}
                   {token0?.symbol} / {token1?.symbol} ({visualizeFeeTier(poolData?.feeTier)})
                 </div>
                 <div>

@@ -1,4 +1,4 @@
-import { config as wagmiConfig } from "@/components/global/providers";
+import { config as wagmiConfig, baseWagmiConfig, arbitrumWagmiConfig } from "@/components/global/providers";
 
 import { writeContract, waitForTransactionReceipt, readContract, simulateContract } from "@wagmi/core";
 import { parseUnits } from "viem";
@@ -19,18 +19,19 @@ export const collectFees = async (
   recipient: string
 ) => {
   try {
-    const hash = await writeContract(wagmiConfig, {
+    const hash = await writeContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "collectFees",
       args: [tokenId],
     });
-    const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
+    const receipt = await waitForTransactionReceipt(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, { hash });
     return {
       success: true,
       result: hash
     }
   } catch (error: any) {
+    console.log(error)
     if (error?.message?.includes("User rejected") || error?.code === 4001) {
       return {
         success: false,
@@ -56,7 +57,7 @@ export const compoundFees = async (
       result: ERROR_CODES.UNKNOWN_ERROR
     }
 
-  const poolInfo = await getPositionStaticInfo(userAddress, tokenId, chainId)
+  const poolInfo = await getPositionStaticInfo(userAddress, tokenId)
   if (!poolInfo)
     return {
       success: false,
@@ -71,7 +72,7 @@ export const compoundFees = async (
   const availableAmount0 = feesEarned0 - protocolFee0
   const availableAmount1 = feesEarned1 - protocolFee1
 
-  const rebalanceData: any = await readContract(wagmiConfig, {
+  const rebalanceData: any = await readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
     abi: LiquidityMathABI, 
     address: getLiquidityMathContractAddressFromChainId(chainId), 
     functionName: "calculateRebalanceData",
@@ -100,7 +101,7 @@ export const compoundFees = async (
 
   let simulationSuccess = false
   try {
-    const simulation = await simulateContract(wagmiConfig, {
+    const simulation = await simulateContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "compoundPosition",
@@ -114,13 +115,13 @@ export const compoundFees = async (
     params = [tokenId, "0x", "0x", 0, 0, _token0MaxSlippage, _token1MaxSlippage]
 
   try {
-    const hash = await writeContract(wagmiConfig, {
+    const hash = await writeContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "compoundPosition",
       args: params,
     });
-    const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
+    const receipt = await waitForTransactionReceipt(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, { hash });
     return {
       success: true,
       result: hash
@@ -147,13 +148,13 @@ export const increaseLiquidity = async (
   try {
     const { tokenId, amount0, amount1, decimals0, decimals1 } = data
     const userMaxSlippage = await getMaxSlippageForPosition(tokenId, chainId)
-    const hash = await writeContract(wagmiConfig, {
+    const hash = await writeContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "increaseLiquidity",
       args: [parseInt(tokenId), parseUnits(amount0, decimals0), parseUnits(amount1, decimals1), 5000, 5000],
     });
-    const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
+    const receipt = await waitForTransactionReceipt(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, { hash });
     return {
       success: true,
       result: hash
@@ -211,7 +212,7 @@ export const decreaseLiquidity = async (
   let params = [tokenId, amountInBPS, _pSwapData0, _pSwapData1, minAmount0, minAmount1, userMaxSlippage, userMaxSlippage]
   let simulationSuccess = false
   try {
-    const simulation = await simulateContract(wagmiConfig, {
+    const simulation = await simulateContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "decreaseLiquidity",
@@ -228,13 +229,13 @@ export const decreaseLiquidity = async (
   }
 
   try {
-    const hash = await writeContract(wagmiConfig, {
+    const hash = await writeContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "decreaseLiquidity",
       args: params,
     });
-    const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
+    const receipt = await waitForTransactionReceipt(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, { hash });
     return {
       success: true,
       result: hash
@@ -301,13 +302,13 @@ export const openPosition = async (
   };
 
   try {
-    const hash = await writeContract(wagmiConfig, {
+    const hash = await writeContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "openPosition",
       args: [params._params, ownerAddress],
     });
-    const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
+    const receipt = await waitForTransactionReceipt(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, { hash });
     return {
       success: true,
       result: hash
@@ -327,7 +328,7 @@ export const openPosition = async (
 }
 
 export const getPositionFundsInfo = async (tokenId: number, chainId: number) => {
-  const res: any = await readContract(wagmiConfig, {
+  const res: any = await readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
     abi: PositionManagerABI, 
     address: getManagerContractAddressFromChainId(chainId), 
     functionName: "getPositionInfo",
@@ -384,7 +385,7 @@ export const closePosition = async (tokenId: number, chainId: number) => {
 
   let simulationSuccess = false;
   try {
-    const simulation = await simulateContract(wagmiConfig, {
+    const simulation = await simulateContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "closePosition",
@@ -412,13 +413,13 @@ export const closePosition = async (tokenId: number, chainId: number) => {
   }
 
   try {
-    const hash = await writeContract(wagmiConfig, {
+    const hash = await writeContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "closePosition",
       args: params,
     });
-    const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
+    const receipt = await waitForTransactionReceipt(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, { hash });
     return {
       success: true,
       result: hash
@@ -439,7 +440,7 @@ export const closePosition = async (tokenId: number, chainId: number) => {
 }
 
 export const getAccountingUnitFromAddress = async (address: string, chainId: number) => {
-  const res: any = await readContract(wagmiConfig, {
+  const res: any = await readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
     abi: PositionManagerABI, 
     address: getManagerContractAddressFromChainId(chainId), 
     functionName: "accountingUnit",
@@ -451,13 +452,13 @@ export const getAccountingUnitFromAddress = async (address: string, chainId: num
 
 export const setAccountingUnit = async (unitAddress: string, chainId: number) => {
   try {
-    const hash = await writeContract(wagmiConfig, {
+    const hash = await writeContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: PositionManagerABI,
       address: getManagerContractAddressFromChainId(chainId),
       functionName: "setAccountingUnit",
       args: [unitAddress],
     });
-    const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
+    const receipt = await waitForTransactionReceipt(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, { hash });
     return {
       success: true,
       result: hash

@@ -1,4 +1,4 @@
-import { config as wagmiConfig } from "@/components/global/providers";
+import { config as wagmiConfig, arbitrumWagmiConfig, baseWagmiConfig } from "@/components/global/providers";
 
 import { readContract } from "@wagmi/core";
 import { getUniswapV3FactoryContractAddressFromChainId } from "./constants";
@@ -9,19 +9,19 @@ import { fetchTokenPrice } from "./requests";
 
 export const getPoolInfoDetail = async (poolAddress: string, chainId: number) => {
   const [feeTier, token0Address, token1Address] = await Promise.all([
-    readContract(wagmiConfig, {
+    readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: UniswapV3PoolABI, 
       address: poolAddress as `0x${string}`, 
       functionName: "fee",
       args: []
     }),
-    readContract(wagmiConfig, {
+    readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: UniswapV3PoolABI, 
       address: poolAddress as `0x${string}`, 
       functionName: "token0",
       args: []
     }),
-    readContract(wagmiConfig, {
+    readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: UniswapV3PoolABI, 
       address: poolAddress as `0x${string}`, 
       functionName: "token1",
@@ -31,8 +31,8 @@ export const getPoolInfoDetail = async (poolAddress: string, chainId: number) =>
   const [token0, token1, token0Balance, token1Balance, token0Price, token1Price] = await Promise.all([
     getERC20TokenInfo(token0Address as `0x${string}`, chainId),
     getERC20TokenInfo(token1Address as `0x${string}`, chainId),
-    getERC20TokenBalance(token0Address as `0x${string}`, poolAddress),
-    getERC20TokenBalance(token1Address as `0x${string}`, poolAddress),
+    getERC20TokenBalance(token0Address as `0x${string}`, poolAddress, chainId),
+    getERC20TokenBalance(token1Address as `0x${string}`, poolAddress, chainId),
     fetchTokenPrice(token0Address as `0x${string}`, chainId),
     fetchTokenPrice(token1Address as `0x${string}`, chainId)
   ])
@@ -49,7 +49,7 @@ export const getPoolInfoDetail = async (poolAddress: string, chainId: number) =>
 
 export const getFeeTierFromPoolAddress = async (poolAddress: string, chainId: number) => {
   try {
-    const res: any = await readContract(wagmiConfig, {
+    const res: any = await readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: UniswapV3PoolABI, 
       address: poolAddress as `0x${string}`, 
       functionName: "fee",
@@ -66,7 +66,7 @@ export const findPoolsFromTokens = async (token0Address: string, token1Address: 
   try {
     if (!token0Address || !token1Address || !feeTier || !chainId)
       return null
-    const poolAddress = await readContract(wagmiConfig, {
+    const poolAddress = await readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       address: getUniswapV3FactoryContractAddressFromChainId(chainId),
       abi: [
         {
@@ -86,7 +86,7 @@ export const findPoolsFromTokens = async (token0Address: string, token1Address: 
     });
     if (poolAddress && poolAddress !== "0x0000000000000000000000000000000000000000") {
       const tokens = [token0Address, token1Address]
-      const balances = await Promise.all(tokens.map((tokenAddress) => getERC20TokenBalance(tokenAddress, poolAddress)))
+      const balances = await Promise.all(tokens.map((tokenAddress) => getERC20TokenBalance(tokenAddress, poolAddress, chainId)))
       return poolAddress === "0x0000000000000000000000000000000000000000" ? null : {
         poolAddress,
         feeTier,

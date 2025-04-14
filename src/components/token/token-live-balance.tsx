@@ -8,15 +8,17 @@ import { formatUnits } from "viem"
 export default function TokenLiveBalance({
   userAddress,
   token,
+  chainId
 }: {
   userAddress: `0x${string}` | undefined,
   token: ERC20TokenInfo,
+  chainId: number
 }) {
 
   if (!userAddress || !token)
     return <></>
 
-  const { data, isLoading } = useTokenBalance(userAddress, token.address)
+  const { data, isLoading } = useTokenBalance(userAddress, token.address, chainId)
 
   return (
     <div className="flex items-center mt-2">

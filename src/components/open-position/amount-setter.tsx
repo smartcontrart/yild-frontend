@@ -14,22 +14,24 @@ export const AmountSetter = ({
   tickUpper,
   token0Price,
   token1Price,
-  onAmountsChange
+  onAmountsChange,
+  chainId
 }: {
   tokens: ERC20TokenInfo[],
   tickLower: number,
   tickUpper: number,
   token0Price: number,
   token1Price: number,
-  onAmountsChange: Function
+  onAmountsChange: Function,
+  chainId: number
 }) => {
 
   const { address: userAddress } = useAccount();
   const [isUserEditingForToken0, setIsUserEditingForToken0] = useState(false)
   const [token0Amount, setToken0Amount] = useState("0")
   const [token1Amount, setToken1Amount] = useState("0")
-  const { data: token0Balance } = useTokenBalance(userAddress || "", tokens[0].address)
-  const { data: token1Balance } = useTokenBalance(userAddress || "", tokens[1].address)  
+  const { data: token0Balance } = useTokenBalance(userAddress || "", tokens[0].address, chainId)
+  const { data: token1Balance } = useTokenBalance(userAddress || "", tokens[1].address, chainId)  
 
   useEffect(() => {
     const [token0SortedByCA, token1SortedByCA] = reArrangeTokensByContractAddress(tokens)
@@ -81,7 +83,7 @@ export const AmountSetter = ({
           }} 
         />
         <div className={parseUnits(token0Amount, tokens[0].decimals) > (token0Balance || BigInt(0)) ? "text-destructive" : ""}>
-          <TokenLiveBalance userAddress={userAddress} token={tokens[0]} />
+          <TokenLiveBalance userAddress={userAddress} token={tokens[0]} chainId={chainId} />
         </div>
         {
           parseUnits(token0Amount, tokens[0].decimals) > (token0Balance || BigInt(0)) ? 
@@ -111,7 +113,7 @@ export const AmountSetter = ({
           }} 
         />
         <div className={parseUnits(token1Amount, tokens[1].decimals) > (token1Balance || BigInt(0)) ? "text-destructive" : ""}>
-          <TokenLiveBalance userAddress={userAddress} token={tokens[1]} />
+          <TokenLiveBalance userAddress={userAddress} token={tokens[1]} chainId={chainId} />
         </div>
         {
           parseUnits(token1Amount, tokens[1].decimals) > (token1Balance || BigInt(0)) ? 

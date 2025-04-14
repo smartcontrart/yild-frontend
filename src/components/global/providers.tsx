@@ -21,6 +21,20 @@ export const config = getDefaultConfig({
   ssr: true,
 });
 
+export const baseWagmiConfig = getDefaultConfig({
+  appName: 'Yild Finance',
+  projectId,
+  chains: [base],
+  ssr: true,
+})
+
+export const arbitrumWagmiConfig = getDefaultConfig({
+  appName: 'Yild Finance',
+  projectId,
+  chains: [arbitrum],
+  ssr: true,    
+})
+
 const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: React.ReactNode }) {

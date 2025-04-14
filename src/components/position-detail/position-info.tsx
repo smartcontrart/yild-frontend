@@ -7,13 +7,14 @@ import { usePositionFundsInfo } from "@/hooks/use-position-funds-info";
 import { PositionCard } from "./position-card";
 
 export const PositionInfo = ({
-  positionId
+  positionId,
+  chainId
 }: {
-  positionId: number
+  positionId: number,
+  chainId: number
 }) => {
   const { isConnected, address } = useAccount();
-  const chainId = useChainId();
-  const { data: positionStaticInfo, isLoading: isPositionStaticInfoLoading } = usePositionStaticInfo(address || "", positionId, chainId)
+  const { data: positionStaticInfo, isLoading: isPositionStaticInfoLoading } = usePositionStaticInfo(address || "", positionId)
   const { data: positionFundsInfo, isLoading: isPositionFundsInfoLoading } = usePositionFundsInfo(positionId, chainId)
 
   if (!isConnected || !isPositionStaticInfoLoading && !positionStaticInfo) 

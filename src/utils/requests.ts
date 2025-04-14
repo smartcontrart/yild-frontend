@@ -3,7 +3,7 @@ import { getPositionFundsInfo } from "./position-manage"
 import { getERC20TokenInfo } from "./erc20"
 import { roundDown } from "./functions"
 
-export const getPositions = async (address: string, chainId: number) => {
+export const getPositions = async (address: string) => {
   let temp: any = []
   try {
     const response = await fetch(`${BACKEND_API_URL}/positions/${address}`)
@@ -15,7 +15,7 @@ export const getPositions = async (address: string, chainId: number) => {
   return temp
 }
 
-export const getClosedPositions = async (address: string, chainId: number) => {
+export const getClosedPositions = async (address: string) => {
   let temp: any = []
   try {
     const response = await fetch(`${BACKEND_API_URL}/positions/${address}/closed`)
@@ -27,17 +27,17 @@ export const getClosedPositions = async (address: string, chainId: number) => {
   return temp
 }
 
-export const getPositionStaticInfo = async (address: string, positionId: number, chainId: number) => {
-  if (!address || !positionId || !chainId)
+export const getPositionStaticInfo = async (address: string, positionId: number) => {
+  if (!address || !positionId)
     return null
 
-  const positions = await getPositions(address, chainId)
+  const positions = await getPositions(address)
   const filtered = positions.filter((elem: any) => Number(elem.tokenId) === positionId)
 
   if (!filtered || filtered.length < 1)
     return null
   
-  const { id: dbId, lowerTick: tickLower, upperTick: tickUpper, createdAt, updatedAt, poolAddress, ownerAddress } = filtered[0]
+  const { id: dbId, lowerTick: tickLower, upperTick: tickUpper, createdAt, updatedAt, poolAddress, ownerAddress, chainId } = filtered[0]
 
   const fundsInfo = await getPositionFundsInfo(positionId, chainId)
   if (!fundsInfo)
@@ -52,7 +52,7 @@ export const getPositionStaticInfo = async (address: string, positionId: number,
   ])
 
   return {
-    dbId, positionId, tickLower, tickUpper, createdAt, updatedAt, poolAddress, token0, token1, accountingUnit
+    dbId, positionId, chainId, tickLower, tickUpper, createdAt, updatedAt, poolAddress, token0, token1, accountingUnit
   }
 }
 
@@ -162,7 +162,6 @@ export const getCoinGeckoImageURLFromTokenAddress = async (tokenAddress: string,
   try {
     const coinMeta = await fetch(`${COINGECKO_PUBLIC_API_URL}/coins/${getNetworkNameFromChainId(chainId)}/contract/${tokenAddress}`)
     const { image } = await coinMeta.json()
-    console.log(await coinMeta.json())
     return (image && image.large) ? image.large : null
   } catch (error) {
   }

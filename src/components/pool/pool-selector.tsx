@@ -25,7 +25,6 @@ export default function PoolSelector({
 
   useEffect(() => {
     onSelectPool(INVALID_FEE_TIER)
-    console.log('refresh')
     const getPoolAddressFunc = async () => {
       if (!tokens || tokens.length != 2 || !tokens[0] || !tokens[1]) {
         setAvailableFeeTiers([])

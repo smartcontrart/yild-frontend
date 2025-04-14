@@ -3,15 +3,12 @@
 import { useRouter } from "next/router";
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useAccount, useChainId } from "wagmi";
+import { useAccount, useSwitchChain, useConnect } from "wagmi";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { POSITION_DETAIL_PAGE_STATE } from "@/utils/types";
@@ -19,14 +16,24 @@ import { PositionInfo } from "@/components/position-detail/position-info";
 import PositionControlPanel from "@/components/position-detail/position-control-panel";
 import { YildLoading } from "@/components/global/yild-loading";
 import WaitingAnimation from "@/components/global/waiting-animation";
-import { Button } from "@/components/ui/button";
 
 export default function PositionPage() {
   const { isConnected, address, isDisconnected } = useAccount();
-  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const { connect, connectors } = useConnect();
   const router = useRouter();
   const { toast } = useToast();
   const [pageStatus, setPageStatus] = useState(POSITION_DETAIL_PAGE_STATE.PAGE_LOADED);
+
+  useEffect(() => {
+    const switchPromise = async () => {
+      if (router.query.chain) {
+        await switchChain({ chainId: Number(router.query.chain)})
+        await connect({ connector: connectors[0] })
+      }
+    }
+    switchPromise()
+  }, [router.query.chain])
 
   useEffect(() => {
     if (pageStatus === POSITION_DETAIL_PAGE_STATE.POSITION_CLOSED) {
@@ -149,14 +156,14 @@ export default function PositionPage() {
     <div className="space-y-6">
       <YildLoading loading={!isDisconnected && !isConnected} />
       {
-        (!Number(router.query.id) || !chainId)
+        (!Number(router.query.id) || !(Number(router.query.chain)))
         ? <>Loading Panel...</>
         :
         <>
-          <PositionInfo positionId={Number(router.query.id)} />
+          <PositionInfo positionId={Number(router.query.id)} chainId={Number(router.query.chain)} />
           <PositionControlPanel 
             positionId={Number(router.query.id)} 
-            chainId={chainId} 
+            chainId={(Number(router.query.chain))} 
             setPageStatus={(newPageStatus: any) => setPageStatus(newPageStatus)} 
           />
         </>

@@ -34,7 +34,7 @@ export const DecreaseLiquidity = ({
   const { isConnected, address } = useAccount();
   const [decreaseRatio, setDecreaseRatio] = useState("")
   const { data: positionFundsInfo, isLoading: isPositionFundsInfoLoading } = usePositionFundsInfo(positionId, chainId)
-  const { data: positionStaticInfo, isLoading: isPositionStaticInfoLoading } = usePositionStaticInfo(address || "", positionId, chainId)
+  const { data: positionStaticInfo, isLoading: isPositionStaticInfoLoading } = usePositionStaticInfo(address || "", positionId)
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const onClickDecreaseLiquidity = async () => {

@@ -16,17 +16,19 @@ export default function Home() {
   const { isConnected, address, isDisconnected } = useAccount();
   const chainId = useChainId();
   const [openedSwitch, setOpenedSwitch] = useState("opened")
-  const [positions, setPositions] = useState([])
-  const [closedPositions, setClosedPositions] = useState([])
+  const [positions, setPositions] = useState<any[]>([])
+  const [closedPositions, setClosedPositions] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const positionsData = await getPositions(address as `0x${string}`, chainId) || []
+        const [positionsData, closedPostionsData] = await Promise.all([
+          getPositions(address as `0x${string}`),
+          getClosedPositions(address as `0x${string}`),
+        ])
         setPositions(positionsData)
-        const closedPostionsData = await getClosedPositions(address as `0x${string}`, chainId) || []
         setClosedPositions(closedPostionsData)
       } catch (err) {
         console.error('Error fetching positions:', err)
@@ -97,6 +99,7 @@ export default function Home() {
                   <PositionInfoFirstPage
                     key={i}
                     positionId={positionData.tokenId}
+                    chainId={positionData.chainId}
                   />
                 )
               }
