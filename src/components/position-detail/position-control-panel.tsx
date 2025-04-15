@@ -3,7 +3,7 @@ import { CollectFees } from "./collect-fees";
 import { CompoundPosition } from "./compound-position";
 import { DecreaseLiquidity } from "./decrease-liquidity";
 import { IncreaseLiquidity } from "./increase-liquidity";
-import { SetMaxSlippage } from "./set-max-slippage";
+import { AdvancedSettings } from "./advanced-settings";
 
 export default function PositionControlPanel({
   positionId,
@@ -42,7 +42,7 @@ export default function PositionControlPanel({
         chainId={chainId}
         setPageStatus={(newPageStatus: any) => setPageStatus(newPageStatus)}
       />
-      <SetMaxSlippage 
+      <AdvancedSettings 
         positionId={positionId}
         chainId={chainId}
         setPageStatus={(newPageStatus: any) => setPageStatus(newPageStatus)}

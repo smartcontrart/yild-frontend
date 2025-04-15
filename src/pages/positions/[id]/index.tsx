@@ -76,7 +76,7 @@ export default function PositionPage() {
       toast({
         variant: "default",
         title: "Info",
-        description: "Successfully updated max slippage",
+        description: "Successfully updated advanced settings",
       })
     if (pageStatus === POSITION_DETAIL_PAGE_STATE.COMPOUND_POSITION_FAILED)
       toast({
@@ -130,7 +130,7 @@ export default function PositionPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update max slippage",
+        description: "Failed to update advanced settings",
       })
     if (pageStatus === POSITION_DETAIL_PAGE_STATE.PARASWAP_ERROR)
       toast({
@@ -199,7 +199,7 @@ export default function PositionPage() {
                 : pageStatus === POSITION_DETAIL_PAGE_STATE.INCREASING_LIQUIDITY
                 ? "Increasing liquidity, proceed with your wallet."
                 : pageStatus === POSITION_DETAIL_PAGE_STATE.SETTING_MAX_SLIPPAGE
-                ? "Updating max slippage, this might take a second."
+                ? "Updating advanced settings, this might take a second."
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -140,6 +140,21 @@ export const getMaxSlippageForPosition = async (positionId: number, chainId: num
   return -1
 }
 
+export const getTickBuffersForPosition = async (address: string, positionId: number, chainId: number): Promise<any> => {
+  try {
+    const positions = await getPositions(address)
+    const filtered = positions.filter((elem: any) => Number(elem.tokenId) === positionId)
+
+    if (!filtered || filtered.length < 1)
+      return {}
+  
+    return filtered[0]
+  } catch (error) {
+    console.error('Error getMaxSlippageForPosition:', error);
+  }
+  return {}
+}
+
 export const updateMaxSlippageForPosition = async (positionId: number, chainId: number, maxSlippage: number): Promise<boolean> => {
   try {
     const response = await fetch(`${BACKEND_API_URL}/positions/${positionId}/updateMaxSlippage`, {
@@ -154,6 +169,24 @@ export const updateMaxSlippageForPosition = async (positionId: number, chainId: 
       return true
   } catch (error) {
     console.error('Error sending close position report:', error);
+  }
+  return false
+}
+
+export const updateTickBuffers = async (positionId: number, upperTickBuffer: number, lowerTickBuffer: number): Promise<boolean> => {
+  try {
+    const response = await fetch(`${BACKEND_API_URL}/positions/${positionId}/updateTickBuffers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ upperTickBuffer, lowerTickBuffer }),
+    });
+    const data = await response.json();
+    if (data && (data.success || data.success === "true"))
+      return true
+  } catch (error) {
+    console.error('Error updating ticker buffers:', error);
   }
   return false
 }
