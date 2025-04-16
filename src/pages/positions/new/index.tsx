@@ -21,7 +21,7 @@ import { useState, useEffect } from "react";
 import { reArrangeTokensByContractAddress } from "@/utils/functions";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { openPosition } from "@/utils/position-manage";
+import { getAccountingUnitFromAddress, openPosition } from "@/utils/position-manage";
 import { approveToken } from "@/utils/erc20";
 import { CREATE_POSITION_PAGE_STATE } from "@/utils/types";
 import { ERC20TokenInfo, INVALID_FEE_TIER, getManagerContractAddressFromChainId } from "@/utils/constants";
@@ -30,6 +30,7 @@ import PoolSelector from "@/components/pool/pool-selector";
 import { RangeAndAmountSetter } from "@/components/open-position/range-and-amount-setter";
 import { HandCoins, Undo2 } from "lucide-react";
 import WaitingAnimation from "@/components/global/waiting-animation";
+import { getAvailablePools } from "@/utils/pools";
 
 export default function NewPositionPage() {
   const { isConnected, address: userAddress } = useAccount();
@@ -43,13 +44,45 @@ export default function NewPositionPage() {
   const [selectedToken1, setSelectedToken1] = useState<ERC20TokenInfo | null>(null);
   const [sortedToken0Amount, setSortedToken0Amount] = useState(0)
   const [sortedToken1Amount, setSortedToken1Amount] = useState(0)
+  const [currentAccountingUnit, setCurrentAccountingUnit] = useState<ERC20TokenInfo | null>(null)
   const [selectedFeeTier, setSelectedFeeTier] = useState(INVALID_FEE_TIER)
   const [tickUpper, setTickUpper] = useState(0)
   const [tickLower, setTickLower] = useState(0)
+  const [poolsExist, setPoolsExist] = useState(true)
 
   useEffect(() => {
     setSelectedFeeTier(INVALID_FEE_TIER)
   }, [selectedToken0, selectedToken1])
+
+  useEffect(() => {
+    if (userAddress) {
+      const fetchAccountingUnit = async () => {
+        const accountingUnit = await getAccountingUnitFromAddress(userAddress, chainId)
+        setCurrentAccountingUnit(accountingUnit)
+      }
+      fetchAccountingUnit()
+    }
+  }, [userAddress])
+
+  useEffect(() => {
+    if (selectedToken0 && selectedToken1 && currentAccountingUnit) {
+      const checkPools = async () => {
+        const [accountingUnitPoolFor0, accountingUnitPoolFor1] = await Promise.all([
+          getAvailablePools(selectedToken0.address, currentAccountingUnit.address, chainId),
+          getAvailablePools(selectedToken1.address, currentAccountingUnit.address, chainId)
+        ])
+        const existingPoolsFor0 = accountingUnitPoolFor0.filter((elem: any) => elem !== null)
+        const existingPoolsFor1 = accountingUnitPoolFor1.filter((elem: any) => elem !== null)
+        if (selectedToken0.address.toLowerCase() !== currentAccountingUnit.address.toLowerCase() && (existingPoolsFor0.length === 0))
+          setPoolsExist(false)
+        else if (selectedToken1.address.toLowerCase() !== currentAccountingUnit.address.toLowerCase() && (existingPoolsFor1.length === 0))
+          setPoolsExist(false)
+        else
+          setPoolsExist(true)
+      }
+      checkPools()
+    }
+  }, [selectedToken0, selectedToken1, currentAccountingUnit])
 
   useEffect(() => {
     if (pageStatus === CREATE_POSITION_PAGE_STATE.POSITION_OPENED)
@@ -214,7 +247,12 @@ export default function NewPositionPage() {
           </Button>
           <Button 
             disabled={!selectedToken0 || !selectedToken1 || !selectedFeeTier || !tickLower || !tickUpper || !Number(sortedToken0Amount) || Number(sortedToken0Amount) <= 0 || !Number(sortedToken1Amount) || Number(sortedToken1Amount) <= 0}
-            onClick={onOpenPosition}>
+            onClick={() => {
+              if (poolsExist)
+                onOpenPosition()
+              else
+                setPageStatus(CREATE_POSITION_PAGE_STATE.CONFIRMING_ACCOUNTING_UNIT)
+            }}>
             <HandCoins /> Create Position
           </Button>
         </div>
@@ -256,6 +294,45 @@ export default function NewPositionPage() {
               </AlertDialogAction>
             </AlertDialogFooter>
           )}
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={
+          pageStatus === CREATE_POSITION_PAGE_STATE.CONFIRMING_ACCOUNTING_UNIT
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>wt Heck</AlertDialogTitle>
+            <AlertDialogDescription>
+              {"Confirm your accounting unit for safety of your funds"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div>
+            Your current accounting unit is {currentAccountingUnit?.symbol}.
+            Please carefully check if pools exist for both {currentAccountingUnit?.symbol}/{selectedToken0?.symbol} and {currentAccountingUnit?.symbol}/{selectedToken1?.symbol}.
+            If any of those pools does not exist, your position will not be protected by Yild fail-safe functions.
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setPageStatus(CREATE_POSITION_PAGE_STATE.FEE_TIER_SELECTED)
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogCancel onClick={() => {
+              router.push("/settings")
+            }}>
+              Change accounting unit
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                onOpenPosition()
+              }}
+            >
+              Confirm to Open
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>

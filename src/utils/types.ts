@@ -6,7 +6,8 @@ export const CREATE_POSITION_PAGE_STATE = {
   TOKEN_APPROVE_FAILED: "approve-failed",
   OPENING_POSITION: "opening-position",
   POSITION_OPENED: "position-opened",
-  OPEN_POSITION_FAILED: "open-position-failed"
+  OPEN_POSITION_FAILED: "open-position-failed",
+  CONFIRMING_ACCOUNTING_UNIT: "confirming-accounting-unit"
 }
 
 export const POSITION_DETAIL_PAGE_STATE = {
