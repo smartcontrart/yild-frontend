@@ -14,7 +14,7 @@ export default function SetPercentageButtons({
       <span className="px-2 py-1 text-sm border rounded-l cursor-pointer" onClick={() => onSetAmount(Number(roundDown((maxAmount * 0.25), decimals)))}>25%</span>
       <span className="px-2 py-1 text-sm border rounded-l cursor-pointer" onClick={() => onSetAmount(Number(roundDown((maxAmount * 0.5), decimals)))}>50%</span>
       <span className="px-2 py-1 text-sm border rounded-l cursor-pointer" onClick={() => onSetAmount(Number(roundDown((maxAmount * 0.75), decimals)))}>75%</span>
-      <span className="px-2 py-1 text-sm border rounded-l cursor-pointer" onClick={() => onSetAmount(maxAmount)}>Max</span>
+      <span className="px-2 py-1 text-sm border rounded-l cursor-pointer" onClick={() => onSetAmount(Number(roundDown((maxAmount), decimals)))}>Max</span>
     </div>
   )
 }
