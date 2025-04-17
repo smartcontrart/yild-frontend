@@ -464,6 +464,7 @@ export const setAccountingUnit = async (unitAddress: string, chainId: number) =>
       result: hash
     }
   } catch (error: any) {
+    console.log(error)
     if (error?.message?.includes("User rejected") || error?.code === 4001) {
       return {
         success: false,

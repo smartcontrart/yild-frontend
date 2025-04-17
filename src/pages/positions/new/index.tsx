@@ -28,9 +28,11 @@ import { ERC20TokenInfo, INVALID_FEE_TIER, getManagerContractAddressFromChainId 
 import TokenLivePrice from "@/components/token/token-live-price";
 import PoolSelector from "@/components/pool/pool-selector";
 import { RangeAndAmountSetter } from "@/components/open-position/range-and-amount-setter";
-import { HandCoins, Undo2 } from "lucide-react";
+import { CalendarDaysIcon, HandCoins, Loader2, Undo2 } from "lucide-react";
 import WaitingAnimation from "@/components/global/waiting-animation";
 import { getAvailablePools } from "@/utils/pools";
+import Link from "next/link";
+import LoadingSpinner from "@/components/common/loading-spinner";
 
 export default function NewPositionPage() {
   const { isConnected, address: userAddress } = useAccount();
@@ -49,6 +51,7 @@ export default function NewPositionPage() {
   const [tickUpper, setTickUpper] = useState(0)
   const [tickLower, setTickLower] = useState(0)
   const [poolsExist, setPoolsExist] = useState(true)
+  const [preloadingBeforeOpen, setPreloadingBeforeOpen] = useState(false)
 
   useEffect(() => {
     setSelectedFeeTier(INVALID_FEE_TIER)
@@ -104,6 +107,29 @@ export default function NewPositionPage() {
         description: "Token approval failed",
       })
   }, [pageStatus])
+
+  const handleCreatePosition = async () => {
+    setPreloadingBeforeOpen(true)
+    if (userAddress) {
+      const accountingUnit = await getAccountingUnitFromAddress(userAddress, chainId)
+      setCurrentAccountingUnit(accountingUnit)
+      if (selectedToken0 && selectedToken1 && accountingUnit) {
+        const [accountingUnitPoolFor0, accountingUnitPoolFor1] = await Promise.all([
+          getAvailablePools(selectedToken0.address, accountingUnit.address, chainId),
+          getAvailablePools(selectedToken1.address, accountingUnit.address, chainId)
+        ])
+        const existingPoolsFor0 = accountingUnitPoolFor0.filter((elem: any) => elem !== null)
+        const existingPoolsFor1 = accountingUnitPoolFor1.filter((elem: any) => elem !== null)
+        if (selectedToken0.address.toLowerCase() !== accountingUnit.address.toLowerCase() && (existingPoolsFor0.length === 0))
+          setPageStatus(CREATE_POSITION_PAGE_STATE.CONFIRMING_ACCOUNTING_UNIT)
+        else if (selectedToken1.address.toLowerCase() !== accountingUnit.address.toLowerCase() && (existingPoolsFor1.length === 0))
+          setPageStatus(CREATE_POSITION_PAGE_STATE.CONFIRMING_ACCOUNTING_UNIT)
+        else
+          onOpenPosition()
+      }
+    }
+    setPreloadingBeforeOpen(false)
+  }
 
   const onOpenPosition = async () => {
     if (!selectedToken0 || !selectedToken1)
@@ -248,12 +274,12 @@ export default function NewPositionPage() {
           <Button 
             disabled={!selectedToken0 || !selectedToken1 || !selectedFeeTier || !tickLower || !tickUpper || !Number(sortedToken0Amount) || Number(sortedToken0Amount) <= 0 || !Number(sortedToken1Amount) || Number(sortedToken1Amount) <= 0}
             onClick={() => {
-              if (poolsExist)
-                onOpenPosition()
-              else
-                setPageStatus(CREATE_POSITION_PAGE_STATE.CONFIRMING_ACCOUNTING_UNIT)
+              handleCreatePosition()
             }}>
-            <HandCoins /> Create Position
+              {
+                preloadingBeforeOpen ? <LoadingSpinner /> : <HandCoins />
+              }
+              Create Position
           </Button>
         </div>
       </Card>
@@ -320,11 +346,11 @@ export default function NewPositionPage() {
             }}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogCancel onClick={() => {
-              router.push("/settings")
-            }}>
-              Change accounting unit
-            </AlertDialogCancel>
+            <Link href={"/settings"} target="_blank">
+              <AlertDialogCancel onClick={() => { }}>
+                Change accounting unit
+              </AlertDialogCancel>
+            </Link>
             <AlertDialogAction
               onClick={(e) => {
                 onOpenPosition()
