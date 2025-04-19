@@ -7,29 +7,33 @@ import { formatUnits } from "viem"
 import { HandCoins } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs"
 import { useState } from "react"
+import { ERC20TokenInfo } from "@/utils/constants"
 
 export const PositionCard = ({
   data,
+  accountingUnit,
   positionId,
   chainId
 }: {
   data: any,
+  accountingUnit: ERC20TokenInfo | undefined,
   positionId: number,
   chainId: number
 }) => {
-  if (!data || !chainId)
+  if (!data || !chainId || !accountingUnit)
     return <Skeleton className="h-[426px] rounded-xl" />
   
   const [direction, setDirection] = useState<"0p1" | "1p0">("0p1")
   const { data: token0Price, isLoading: token0PriceLoading} = useTokenPrice(data.token0Address, chainId)
   const { data: token1Price, isLoading: token1PriceLoading} = useTokenPrice(data.token1Address, chainId)
+  const { data: accountingUnitPrice, isLoading: isAccountingUnitPriceLoading} = useTokenPrice(accountingUnit.address, chainId)
   const { data: token0, isLoading: token0MetaDataLoading} = useTokenMeta(data.token0Address, chainId)
   const { data: token1, isLoading: token1MetaDataLoading} = useTokenMeta(data.token1Address, chainId)
   
   return (
     <>
       {
-        (token0MetaDataLoading || token1MetaDataLoading || !token0 || !token1 || token0PriceLoading || token1PriceLoading) ?
+        (token0MetaDataLoading || token1MetaDataLoading || !token0 || !token1 || token0PriceLoading || token1PriceLoading || isAccountingUnitPriceLoading) ?
         <Skeleton className="h-[426px] rounded-xl" />
         :
         <Card className="p-6">
@@ -53,8 +57,8 @@ export const PositionCard = ({
                       className="w-full"
                     >
                       <TabsList>
-                        <TabsTrigger value="0p1">{token0.symbol}/{token1.symbol}</TabsTrigger>
-                        <TabsTrigger value="1p0">{token1.symbol}/{token0.symbol}</TabsTrigger>
+                        <TabsTrigger value="0p1">{token0.symbol}</TabsTrigger>
+                        <TabsTrigger value="1p0">{token1.symbol}</TabsTrigger>
                       </TabsList>
                     </Tabs>
                   </div>
@@ -62,14 +66,24 @@ export const PositionCard = ({
                   {
                     direction === "0p1" ? 
                     (
-                      <div className="ml-4">
-                        Range: {Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals)) * Number(token1Price)} ~ {Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals)) * Number(token1Price)}
+                      <div>
+                        <div>
+                          {token0.symbol}/{accountingUnit.symbol} Price Range
+                        </div>
+                        <div className="ml-4 mt-2">
+                          $ {Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals)) * Number(token1Price) / Number(accountingUnitPrice)} ~ $ {Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals)) * Number(token1Price) / Number(accountingUnitPrice)}
+                        </div>
                       </div>
                     )
                     :
                     (
-                      <div className="ml-4">
-                        Range: {Number(1 / Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals))) * Number(token0Price)} ~ {Number(1 / Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals))) * Number(token0Price)}
+                      <div className="ml-0">
+                        <div>
+                          {token1.symbol}/{accountingUnit.symbol} Price Range
+                        </div>
+                        <div className="ml-4 mt-2">
+                          $ {Number(1 / Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals))) * Number(token0Price) / Number(accountingUnitPrice)} ~ $ {Number(1 / Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals))) * Number(token0Price) / Number(accountingUnitPrice)}
+                        </div>
                       </div>
                     )
                   }

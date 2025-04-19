@@ -5,6 +5,7 @@ import { Skeleton } from "../ui/skeleton";
 import { PoolCard } from "./pool-card";
 import { usePositionFundsInfo } from "@/hooks/use-position-funds-info";
 import { PositionCard } from "./position-card";
+import { useAccountingUnit } from "@/hooks/use-accounting-unit";
 
 export const PositionInfo = ({
   positionId,
@@ -14,6 +15,7 @@ export const PositionInfo = ({
   chainId: number
 }) => {
   const { isConnected, address } = useAccount();
+  const { data: accountingUnit, isLoading: isAccountingUnitLoading } = useAccountingUnit(address || "", chainId)
   const { data: positionStaticInfo, isLoading: isPositionStaticInfoLoading } = usePositionStaticInfo(address || "", positionId)
   const { data: positionFundsInfo, isLoading: isPositionFundsInfoLoading } = usePositionFundsInfo(positionId, chainId)
 
@@ -26,10 +28,11 @@ export const PositionInfo = ({
     <>
       <div className="grid gap-4 md:grid-cols-2">
         {
-          isPositionFundsInfoLoading ?
+          (isPositionFundsInfoLoading || isAccountingUnitLoading) ?
           <Skeleton className="h-[426px] rounded-xl"/>
           :
           <PositionCard 
+            accountingUnit={accountingUnit}
             positionId={positionId}
             data={{
               ...positionFundsInfo,
