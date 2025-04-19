@@ -66,6 +66,12 @@ export const AdvancedSettings = ({
       const res = await updateMaxSlippageForPosition(positionId, chainId, parseInt((Number(maxSlippageInput) * 100).toString()))
       const re = await updateTickBuffers(positionId, parseInt((Number(upperTickBufferInput) * 100).toString()), parseInt((Number(lowerTickBufferInput) * 100).toString()))
       const newSlippage = await getMaxSlippageForPosition(positionId, chainId)
+      const buffers = await getTickBuffersForPosition(address || "", positionId, chainId)
+      const { upperTickBuffer: uTickBuffer, lowerTickBuffer: lTickBuffer } = buffers
+      setCurrentLowerTickBuffer(lTickBuffer)
+      setLowerTickBufferInput(Number(lTickBuffer / 100).toString())
+      setCurrentUpperTickBuffer(uTickBuffer)
+      setUpperTickBufferInput(Number(uTickBuffer / 100).toString())
       setCurrentMaxSlippage(newSlippage)
       setPageStatus(POSITION_DETAIL_PAGE_STATE.SET_MAX_SLIPPAGE)
     } catch (error) {
