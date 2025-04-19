@@ -63,37 +63,73 @@ export const PositionCard = ({
                     </Tabs>
                   </div>
 
+                  <div>
+                    <div>
+                      Tokens Price
+                    </div>
+                    <div className="ml-4 mt-2">
+                      1 {token0.symbol} = $ {token0Price}
+                    </div>
+                    <div className="ml-4 mt-2">
+                      1 {token1.symbol} = $ {token1Price}
+                    </div>
+                    <div className="mt-4">
+                      Curent Accounting Unit: {accountingUnit.symbol}
+                    </div>
+                  </div>
+
                   {
                     direction === "0p1" ? 
                     (
-                      <div>
+                      <div className="mt-4">
                         <div>
-                          {token0.symbol}/{accountingUnit.symbol} Price Range
+                          {token0.symbol}/{token1.symbol} Price Range
                         </div>
                         <div className="ml-4 mt-2">
-                          {Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals)) * Number(token1Price) / Number(accountingUnitPrice)} ~ {Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals)) * Number(token1Price) / Number(accountingUnitPrice)}
+                          {Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals))} ~ {Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals))}
                         </div>
+                        {
+                          accountingUnit.address.toLowerCase() !== token1.address.toLowerCase() ? (
+                            <>
+                              <div className="mt-2">
+                                {token0.symbol}/{accountingUnit.symbol} Price Range
+                              </div>
+                              <div className="ml-4 mt-2">
+                                {Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals)) * Number(token1Price) / Number(accountingUnitPrice)} ~ {Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals)) * Number(token1Price) / Number(accountingUnitPrice)}
+                              </div>
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
                       </div>
                     )
                     :
                     (
-                      <div className="ml-0">
+                      <div className="mt-4">
                         <div>
-                          {token1.symbol}/{accountingUnit.symbol} Price Range
+                          {token1.symbol}/{token0.symbol} Price Range
                         </div>
                         <div className="ml-4 mt-2">
-                          {Number(1 / Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals))) * Number(token0Price) / Number(accountingUnitPrice)} ~ {Number(1 / Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals))) * Number(token0Price) / Number(accountingUnitPrice)}
+                          {Number(1 / Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals)))} ~ {Number(1 / Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals)))}
                         </div>
+                        {
+                          accountingUnit.address.toLowerCase() !== token0.address.toLowerCase() ? (
+                            <>
+                              <div className="mt-2">
+                                {token1.symbol}/{accountingUnit.symbol} Price Range
+                              </div>
+                              <div className="ml-4 mt-2">
+                                {Number(1 / Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals))) * Number(token0Price) / Number(accountingUnitPrice)} ~ {Number(1 / Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals))) * Number(token0Price) / Number(accountingUnitPrice)}
+                              </div>
+                            </>
+                          ) : (
+                            <></>
+                          )
+                        }
                       </div>
                     )
                   }
-
-                  <div className="ml-8">
-                    1 {token0.symbol} = $ {token0Price}
-                  </div>
-                  <div className="ml-8">
-                    1 {token1.symbol} = $ {token1Price}
-                  </div>
                 </div>
                 : <></>
               }
