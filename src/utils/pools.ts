@@ -8,34 +8,54 @@ import { formatUnits } from "viem";
 import { fetchTokenPrice } from "./requests";
 
 export const getPoolInfoDetail = async (poolAddress: string, chainId: number) => {
-  const [feeTier, token0Address, token1Address] = await Promise.all([
-    readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
-      abi: UniswapV3PoolABI, 
-      address: poolAddress as `0x${string}`, 
-      functionName: "fee",
-      args: []
-    }),
-    readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
-      abi: UniswapV3PoolABI, 
-      address: poolAddress as `0x${string}`, 
-      functionName: "token0",
-      args: []
-    }),
-    readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
-      abi: UniswapV3PoolABI, 
-      address: poolAddress as `0x${string}`, 
-      functionName: "token1",
-      args: []
-    })
-  ])
-  const [token0, token1, token0Balance, token1Balance, token0Price, token1Price] = await Promise.all([
-    getERC20TokenInfo(token0Address as `0x${string}`, chainId),
-    getERC20TokenInfo(token1Address as `0x${string}`, chainId),
-    getERC20TokenBalance(token0Address as `0x${string}`, poolAddress, chainId),
-    getERC20TokenBalance(token1Address as `0x${string}`, poolAddress, chainId),
-    fetchTokenPrice(token0Address as `0x${string}`, chainId),
-    fetchTokenPrice(token1Address as `0x${string}`, chainId)
-  ])
+  const cacheKey = `poolMetadata-${poolAddress}-${chainId}`;
+  const cachedData = localStorage.getItem(cacheKey);
+
+  let feeTier, token0Address, token1Address
+  if (cachedData) {
+    const cachedJSON = JSON.parse(cachedData)
+    feeTier = cachedJSON.feeTier
+    token0Address = cachedJSON.token0Address
+    token1Address = cachedJSON.token1Address
+  }
+  else {
+    [feeTier, token0Address, token1Address] = await Promise.all([
+      readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
+        abi: UniswapV3PoolABI, 
+        address: poolAddress as `0x${string}`, 
+        functionName: "fee",
+        args: []
+      }),
+      readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
+        abi: UniswapV3PoolABI, 
+        address: poolAddress as `0x${string}`, 
+        functionName: "token0",
+        args: []
+      }),
+      readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
+        abi: UniswapV3PoolABI, 
+        address: poolAddress as `0x${string}`, 
+        functionName: "token1",
+        args: []
+      })
+    ])
+    localStorage.setItem(cacheKey, JSON.stringify({feeTier, token0Address, token1Address}))
+  }
+
+  // const [token0, token1, token0Balance, token1Balance, token0Price, token1Price] = await Promise.all([
+  //   getERC20TokenInfo(token0Address as `0x${string}`, chainId),
+  //   getERC20TokenInfo(token1Address as `0x${string}`, chainId),
+  //   getERC20TokenBalance(token0Address as `0x${string}`, poolAddress, chainId),
+  //   getERC20TokenBalance(token1Address as `0x${string}`, poolAddress, chainId),
+  //   fetchTokenPrice(token0Address as `0x${string}`, chainId),
+  //   fetchTokenPrice(token1Address as `0x${string}`, chainId)
+  // ])
+  const token0 = await getERC20TokenInfo(token0Address as `0x${string}`, chainId)
+  const token1 = await getERC20TokenInfo(token1Address as `0x${string}`, chainId)
+  const token0Balance = await getERC20TokenBalance(token0Address as `0x${string}`, poolAddress, chainId)
+  const token1Balance = await getERC20TokenBalance(token1Address as `0x${string}`, poolAddress, chainId)
+  const token0Price = await fetchTokenPrice(token0Address as `0x${string}`, chainId)
+  const token1Price = await fetchTokenPrice(token1Address as `0x${string}`, chainId)
   return {
     feeTier,
     token0,

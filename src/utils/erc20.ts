@@ -7,24 +7,49 @@ import { ERC20TokenInfo } from "./constants";
 export const getERC20TokenInfo = async (address: string, chainId: number): Promise<ERC20TokenInfo> => {
   try {
     const contractAddress = address as `0x${string}`
-    const [name, symbol, decimals] = await Promise.all([
-      readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
-        abi: erc20Abi, 
-        address: contractAddress as `0x${string}`, 
-        functionName: "name",
-      }),
-      readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
-        abi: erc20Abi, 
-        address: contractAddress as `0x${string}`, 
-        functionName: "symbol",
-      }),
-      readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
-        abi: erc20Abi, 
-        address: contractAddress as `0x${string}`, 
-        functionName: "decimals",
-      })
-    ])
-    return { name, symbol, decimals, address: contractAddress }    
+    const cacheKey = `tokenMetadata-${address}-${chainId}`;
+    const cachedData = localStorage.getItem(cacheKey);
+
+    if (cachedData) {
+      return JSON.parse(cachedData);
+    }
+
+    // const [name, symbol, decimals] = await Promise.all([
+    //   readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
+    //     abi: erc20Abi, 
+    //     address: contractAddress as `0x${string}`, 
+    //     functionName: "name",
+    //   }),
+    //   readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
+    //     abi: erc20Abi, 
+    //     address: contractAddress as `0x${string}`, 
+    //     functionName: "symbol",
+    //   }),
+    //   readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
+    //     abi: erc20Abi, 
+    //     address: contractAddress as `0x${string}`, 
+    //     functionName: "decimals",
+    //   })
+    // ])
+    const name = await readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
+      abi: erc20Abi, 
+      address: contractAddress as `0x${string}`, 
+      functionName: "name",
+    })
+    const symbol = await readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
+      abi: erc20Abi, 
+      address: contractAddress as `0x${string}`, 
+      functionName: "symbol",
+    })
+    const decimals = await readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
+      abi: erc20Abi, 
+      address: contractAddress as `0x${string}`, 
+      functionName: "decimals",
+    })
+
+    const metadata = { name, symbol, decimals, address: contractAddress }
+    localStorage.setItem(cacheKey, JSON.stringify(metadata))
+    return metadata
   } catch (error) {
     console.log(error)
   }
