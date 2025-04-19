@@ -71,7 +71,7 @@ export const PositionCard = ({
                           {token0.symbol}/{accountingUnit.symbol} Price Range
                         </div>
                         <div className="ml-4 mt-2">
-                          $ {Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals)) * Number(token1Price) / Number(accountingUnitPrice)} ~ $ {Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals)) * Number(token1Price) / Number(accountingUnitPrice)}
+                          {Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals)) * Number(token1Price) / Number(accountingUnitPrice)} ~ {Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals)) * Number(token1Price) / Number(accountingUnitPrice)}
                         </div>
                       </div>
                     )
@@ -82,7 +82,7 @@ export const PositionCard = ({
                           {token1.symbol}/{accountingUnit.symbol} Price Range
                         </div>
                         <div className="ml-4 mt-2">
-                          $ {Number(1 / Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals))) * Number(token0Price) / Number(accountingUnitPrice)} ~ $ {Number(1 / Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals))) * Number(token0Price) / Number(accountingUnitPrice)}
+                          {Number(1 / Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals))) * Number(token0Price) / Number(accountingUnitPrice)} ~ {Number(1 / Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals))) * Number(token0Price) / Number(accountingUnitPrice)}
                         </div>
                       </div>
                     )
