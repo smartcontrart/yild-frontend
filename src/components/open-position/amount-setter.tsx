@@ -75,7 +75,7 @@ export const AmountSetter = ({
           }}
         />
         <SetPercentageButtons 
-          maxAmount={Number(formatUnits(token0Balance || BigInt(0), tokens[0].decimals))} 
+          maxAmount={formatUnits(token0Balance || BigInt(0), tokens[0].decimals)} 
           decimals={tokens[0].decimals} 
           onSetAmount={(newValue: number) => {
             setIsUserEditingForToken0(true)
@@ -105,7 +105,7 @@ export const AmountSetter = ({
           }}
         />
         <SetPercentageButtons 
-          maxAmount={Number(formatUnits(token1Balance || BigInt(0), tokens[1].decimals))} 
+          maxAmount={formatUnits(token1Balance || BigInt(0), tokens[1].decimals)} 
           decimals={tokens[1].decimals} 
           onSetAmount={(newValue: number) => {
             setIsUserEditingForToken0(false)
