@@ -66,7 +66,7 @@ export const PositionCardMinimized = ({
                   {token0?.symbol} / {token1?.symbol} ({visualizeFeeTier(poolData?.feeTier)})
                 </div>
                 <div>
-                  $ {tickToPrice(data.tickLower, token0.decimals, token1.decimals).toFixed(2)} ~ $ {tickToPrice(data.tickUpper, token0.decimals, token1.decimals).toFixed(2)}
+                  {tickToPrice(data.tickLower, token0.decimals, token1.decimals)} ~ {tickToPrice(data.tickUpper, token0.decimals, token1.decimals)}
                 </div>
               </div>
               : <></>

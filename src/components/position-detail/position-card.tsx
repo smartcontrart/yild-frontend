@@ -89,7 +89,7 @@ export const PositionCard = ({
                           {Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals))} ~ {Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals))}
                         </div>
                         {
-                          accountingUnit.address.toLowerCase() !== token1.address.toLowerCase() ? (
+                          (accountingUnit.address.toLowerCase() !== token1.address.toLowerCase() && accountingUnit.address.toLowerCase() !== token0.address.toLowerCase()) ? (
                             <>
                               <div className="mt-2">
                                 {token0.symbol}/{accountingUnit.symbol} Price Range
@@ -114,7 +114,7 @@ export const PositionCard = ({
                           {Number(1 / Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals)))} ~ {Number(1 / Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals)))}
                         </div>
                         {
-                          accountingUnit.address.toLowerCase() !== token0.address.toLowerCase() ? (
+                          (accountingUnit.address.toLowerCase() !== token1.address.toLowerCase() && accountingUnit.address.toLowerCase() !== token0.address.toLowerCase()) ? (
                             <>
                               <div className="mt-2">
                                 {token1.symbol}/{accountingUnit.symbol} Price Range
