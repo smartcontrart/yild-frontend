@@ -6,7 +6,7 @@ import { parseUnits } from "viem";
 import { PositionManagerABI } from "@/abi/PositionManager";
 import { LiquidityMathABI } from "@/abi/LiquidityMath";
 
-import { getLiquidityMathContractAddressFromChainId, getManagerContractAddressFromChainId } from "./constants";
+import { ERC20TokenInfo, getLiquidityMathContractAddressFromChainId, getManagerContractAddressFromChainId } from "./constants";
 import { ERROR_CODES } from "./types";
 import { getERC20TokenInfo } from './erc20'
 import { fetchParaswapRoute, fetchTokenPrice, getMaxSlippageForPosition, getPositionStaticInfo } from "./requests";
@@ -448,11 +448,11 @@ export const getAccountingUnitFromAddress = async (address: string, chainId: num
       args: [address]
     })
     if (res.toString() === "")
-      return null
+      return { name: "UNDEFINED", symbol: "UNDEFINED", decimals: 18, address: "0x0000000000000000000000000000000" } as ERC20TokenInfo
     const tokenInfo = await getERC20TokenInfo(res, chainId)
     return tokenInfo    
   } catch (error) {
-    return null
+    return { name: "UNDEFINED", symbol: "UNDEFINED", decimals: 18, address: "0x0000000000000000000000000000000" } as ERC20TokenInfo
   }
 }
 
