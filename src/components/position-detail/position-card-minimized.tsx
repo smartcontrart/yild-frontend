@@ -68,6 +68,9 @@ export const PositionCardMinimized = ({
                 <div>
                   {tickToPrice(data.tickLower, token0.decimals, token1.decimals)} ~ {tickToPrice(data.tickUpper, token0.decimals, token1.decimals)}
                 </div>
+                <div>
+                  Current: {Number(token0Price) / Number(token1Price)}
+                </div>
               </div>
               : <></>
             }
