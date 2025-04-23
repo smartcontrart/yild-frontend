@@ -4,6 +4,9 @@ import { Label } from "../ui/label"
 import { ERC20TokenInfo } from "@/utils/constants"
 import { useTokenPrice } from "@/hooks/use-token-price"
 import { getRequiredToken0AmountFromToken1Amount, getRequiredToken1AmountFromToken0Amount, roundDown, tickToPrice } from "@/utils/functions"
+import { useTokenBalance } from "@/hooks/use-token-balance"
+import { useAccount } from "wagmi"
+import { formatUnits, parseUnits } from "viem"
 
 export const IncreaseLiquidityAmountSetter = ({
   token0,
@@ -24,11 +27,14 @@ export const IncreaseLiquidityAmountSetter = ({
   chainId: number,
   onValuesChange: Function
 }) => {
+  const { address: userAddress } = useAccount()
   const [isUserEditingForToken0, setIsUserEditingForToken0] = useState(true)
   const [increaseToken0Amount, setIncreaseToken0Amount] = useState(token0Amount)
   const [increaseToken1Amount, setIncreaseToken1Amount] = useState(token1Amount)
   const { data: token0Price } = useTokenPrice(token0.address, chainId)
   const { data: token1Price } = useTokenPrice(token1.address, chainId)
+  const {data: token0Balance, isLoading: isToken0BalanceLoading} = useTokenBalance(userAddress || "", token0.address, chainId)
+  const {data: token1Balance, isLoading: isToken1BalanceLoading} = useTokenBalance(userAddress || "", token1.address, chainId)
 
   useEffect(() => {
     const priceForTickLower = tickToPrice(tickLower, token0.decimals, token1.decimals)
@@ -75,6 +81,12 @@ export const IncreaseLiquidityAmountSetter = ({
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
+            <Label ></Label>
+            <div className="col-span-3 text-sm">
+              Available: {formatUnits(BigInt(token0Balance || 0), token0.decimals)}
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
               {token1?.symbol}
             </Label>
@@ -87,6 +99,12 @@ export const IncreaseLiquidityAmountSetter = ({
               }}
               value={token1Amount}
             />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label ></Label>
+            <div className="col-span-3 text-sm">
+              Available: {formatUnits(BigInt(token1Balance || 0), token1.decimals)}
+            </div>
           </div>
         </div>
       }

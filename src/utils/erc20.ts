@@ -140,6 +140,7 @@ export const approveToken = async (userAddress: string, tokenAddress: string, sp
 }
 
 export const getERC20TokenBalance = async (tokenAddress: string, holderAddress: string, chainId: number) => {
+  console.log(tokenAddress)
   if (tokenAddress && holderAddress) {
     const balance = await readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
       abi: erc20Abi, 
@@ -147,8 +148,10 @@ export const getERC20TokenBalance = async (tokenAddress: string, holderAddress: 
       functionName: "balanceOf",
       args: [holderAddress as `0x${string}`]
     })
+    console.log(balance)
     if (balance)
       return balance
   }
+  console.log(0)
   return BigInt(0)
 }

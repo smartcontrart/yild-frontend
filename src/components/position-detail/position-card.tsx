@@ -88,6 +88,9 @@ export const PositionCard = ({
                         <div className="ml-4 mt-2">
                           {Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals))} ~ {Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals))}
                         </div>
+                        <div className="ml-4">
+                          Current: {Number(token0Price) / Number(token1Price)}
+                        </div>
                         {
                           (accountingUnit.address.toLowerCase() !== token1.address.toLowerCase() && accountingUnit.address.toLowerCase() !== token0.address.toLowerCase()) ? (
                             <>
@@ -96,6 +99,9 @@ export const PositionCard = ({
                               </div>
                               <div className="ml-4 mt-2">
                                 {Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals)) * Number(token1Price) / Number(accountingUnitPrice)} ~ {Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals)) * Number(token1Price) / Number(accountingUnitPrice)}
+                              </div>
+                              <div className="ml-4">
+                                Current: {Number(token0Price) / Number(accountingUnitPrice)}
                               </div>
                             </>
                           ) : (
@@ -113,6 +119,9 @@ export const PositionCard = ({
                         <div className="ml-4 mt-2">
                           {Number(1 / Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals)))} ~ {Number(1 / Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals)))}
                         </div>
+                        <div className="ml-4">
+                          Current: {Number(token1Price) / Number(token0Price)}
+                        </div>
                         {
                           (accountingUnit.address.toLowerCase() !== token1.address.toLowerCase() && accountingUnit.address.toLowerCase() !== token0.address.toLowerCase()) ? (
                             <>
@@ -121,6 +130,9 @@ export const PositionCard = ({
                               </div>
                               <div className="ml-4 mt-2">
                                 {Number(1 / Number(tickToPrice(data.tickUpper, token0.decimals, token1.decimals))) * Number(token0Price) / Number(accountingUnitPrice)} ~ {Number(1 / Number(tickToPrice(data.tickLower, token0.decimals, token1.decimals))) * Number(token0Price) / Number(accountingUnitPrice)}
+                              </div>
+                              <div className="ml-4">
+                                Current: {Number(token1Price) / Number(accountingUnitPrice)}
                               </div>
                             </>
                           ) : (
