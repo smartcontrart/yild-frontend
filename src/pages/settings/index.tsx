@@ -33,7 +33,8 @@ export default function Settings() {
       const fetchAccountingUnit = async () => {
         const accountingUnit = await getAccountingUnitFromAddress(address, chainId)
         setCurrentAccountingUnit(accountingUnit)
-        setCurrentAccountingUnitAddress(accountingUnit.address)
+        if (accountingUnit && accountingUnit.address)
+          setCurrentAccountingUnitAddress(accountingUnit.address)
       }
       fetchAccountingUnit()
     }
@@ -44,7 +45,8 @@ export default function Settings() {
       await setAccountingUnit(newUnitAddress, chainId)
       const newAccountingUnit = await getAccountingUnitFromAddress(address, chainId)
       setCurrentAccountingUnit(newAccountingUnit)
-      setCurrentAccountingUnitAddress(newAccountingUnit.address)
+      if (newAccountingUnit && newAccountingUnit.address)
+        setCurrentAccountingUnitAddress(newAccountingUnit.address)
     }
   }
 

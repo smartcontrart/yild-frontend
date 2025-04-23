@@ -140,7 +140,13 @@ export const multiplyBigIntWithFloat = (big: bigint, num: number): bigint => {
   return (big * scaledNum) / BigInt(scaleFactor); // Multiply and adjust back
 }
 
-export const toChecksumAddress = (address: string): string => ethers.getAddress(address)
+export const toChecksumAddress = (address: string): string => {
+  try {
+    return ethers.getAddress(address)
+  } catch (e) {
+    return ""
+  }
+}
 
 export const roundDown = (num: number, decimals: number) => {
   const factor = Math.pow(10, decimals);

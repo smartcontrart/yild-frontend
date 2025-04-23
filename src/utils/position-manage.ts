@@ -440,14 +440,20 @@ export const closePosition = async (tokenId: number, chainId: number) => {
 }
 
 export const getAccountingUnitFromAddress = async (address: string, chainId: number) => {
-  const res: any = await readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
-    abi: PositionManagerABI, 
-    address: getManagerContractAddressFromChainId(chainId), 
-    functionName: "accountingUnit",
-    args: [address]
-  })
-  const tokenInfo = await getERC20TokenInfo(res, chainId)
-  return tokenInfo
+  try {
+    const res: any = await readContract(chainId === 8453 ? baseWagmiConfig : arbitrumWagmiConfig, {
+      abi: PositionManagerABI, 
+      address: getManagerContractAddressFromChainId(chainId), 
+      functionName: "accountingUnit",
+      args: [address]
+    })
+    if (res.toString() === "")
+      return null
+    const tokenInfo = await getERC20TokenInfo(res, chainId)
+    return tokenInfo    
+  } catch (error) {
+    return null
+  }
 }
 
 export const setAccountingUnit = async (unitAddress: string, chainId: number) => {
