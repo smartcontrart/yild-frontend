@@ -158,7 +158,7 @@ export const AdvancedSettings = ({
                 // (Number(upperTickBufferInput) > 0 || Number(lowerTickBufferInput)) ? (
                   <div>
                     <div>
-                      New Tick Range
+                      {positionStaticInfo.token0.symbol} / {positionStaticInfo.token1.symbol} Price Range for Buffer
                     </div>
                     <div>
                       {tickToPrice(Math.floor(Number(positionStaticInfo.tickLower) * (100 - Number(lowerTickBufferInput)) / 100), positionStaticInfo.token0.decimals, positionStaticInfo.token1.decimals)} ~ {tickToPrice(Math.floor(Number(positionStaticInfo.tickUpper) * (100 + Number(upperTickBufferInput)) / 100), positionStaticInfo.token0.decimals, positionStaticInfo.token1.decimals)}
