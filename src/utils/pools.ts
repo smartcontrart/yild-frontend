@@ -42,14 +42,6 @@ export const getPoolInfoDetail = async (poolAddress: string, chainId: number) =>
     localStorage.setItem(cacheKey, JSON.stringify({feeTier, token0Address, token1Address}))
   }
 
-  // const [token0, token1, token0Balance, token1Balance, token0Price, token1Price] = await Promise.all([
-  //   getERC20TokenInfo(token0Address as `0x${string}`, chainId),
-  //   getERC20TokenInfo(token1Address as `0x${string}`, chainId),
-  //   getERC20TokenBalance(token0Address as `0x${string}`, poolAddress, chainId),
-  //   getERC20TokenBalance(token1Address as `0x${string}`, poolAddress, chainId),
-  //   fetchTokenPrice(token0Address as `0x${string}`, chainId),
-  //   fetchTokenPrice(token1Address as `0x${string}`, chainId)
-  // ])
   const token0 = await getERC20TokenInfo(token0Address as `0x${string}`, chainId)
   const token1 = await getERC20TokenInfo(token1Address as `0x${string}`, chainId)
   const token0Balance = await getERC20TokenBalance(token0Address as `0x${string}`, poolAddress, chainId)

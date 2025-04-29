@@ -18,6 +18,7 @@ import { getMaxSlippageForPosition, getTickBuffersForPosition, updateMaxSlippage
 import { Skeleton } from "../ui/skeleton";
 import { POSITION_DETAIL_PAGE_STATE } from "@/utils/types";
 import { lightTheme } from "@rainbow-me/rainbowkit";
+import { tickToPrice } from "@/utils/functions";
 
 export const AdvancedSettings = ({
   positionId,
@@ -119,23 +120,6 @@ export const AdvancedSettings = ({
                 />
               </div>
               <div className="mt-8">
-                Current UpperTickBuffer: {Number(currentUpperTickBuffer) / 100} %
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                UpperBuffer
-                </Label>
-                <Input
-                  type="number"
-                  className="col-span-3"
-                  placeholder="Type in new value here..."
-                  onChange={(e) =>
-                    setUpperTickBufferInput(e.target.value)
-                  }
-                  value={upperTickBufferInput}
-                />
-              </div>
-              <div className="mt-8">
                 Current LowerTickBuffer: {Number(currentLowerTickBuffer) / 100} %
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -152,6 +136,38 @@ export const AdvancedSettings = ({
                   value={lowerTickBufferInput}
                 />
               </div>
+              <div className="mt-8">
+                Current UpperTickBuffer: {Number(currentUpperTickBuffer) / 100} %
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                UpperBuffer
+                </Label>
+                <Input
+                  type="number"
+                  className="col-span-3"
+                  placeholder="Type in new value here..."
+                  onChange={(e) =>
+                    setUpperTickBufferInput(e.target.value)
+                  }
+                  value={upperTickBufferInput}
+                />
+              </div>
+              
+              {
+                // (Number(upperTickBufferInput) > 0 || Number(lowerTickBufferInput)) ? (
+                  <div>
+                    <div>
+                      New Tick Range
+                    </div>
+                    <div>
+                      {tickToPrice(Math.floor(Number(positionStaticInfo.tickLower) * (100 - Number(lowerTickBufferInput)) / 100), positionStaticInfo.token0.decimals, positionStaticInfo.token1.decimals)} ~ {tickToPrice(Math.floor(Number(positionStaticInfo.tickUpper) * (100 + Number(upperTickBufferInput)) / 100), positionStaticInfo.token0.decimals, positionStaticInfo.token1.decimals)}
+                    </div>
+                  </div>
+                // ) : (
+                //   <></>
+                // )
+              }
             </div>
             <DialogFooter>
               <Button onClick={onClickUpdateMaxSlippage}>
