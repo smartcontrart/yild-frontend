@@ -2,6 +2,12 @@
   "name": "yild-frontend",
   "private": true,
   "version": "0.1.0",
+  "target": "esnext",
+  "module": "commonjs",
+  "engines": {
+    "node": "20.x",
+    "npm": "9.x"
+  },
   "scripts": {
     "dev": "next dev -p 8080",
     "build": "next build",
@@ -42,6 +48,7 @@
     "@types/node": "^20.14.8",
     "@types/react": "^18.3.5",
     "autoprefixer": "^10.4.20",
+    "ignore-loader": "^0.1.2",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "5.5.2"
